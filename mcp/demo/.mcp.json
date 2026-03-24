@@ -1,0 +1,13 @@
+
+  {
+    "mcpServers": {
+      "pis-notes": {
+        "type": "stdio",
+        "command": "/Users/bob/workspace/mcp-demo/.venv/bin/python3",
+        "args": ["/Users/bob/workspace/mcp-demo/file-server-mcp.py"],
+        "env": {
+          "DEBUG": "true"
+        }
+      }
+    }
+  }

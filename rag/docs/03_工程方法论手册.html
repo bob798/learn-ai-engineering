@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 工程方法论手册</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --s1: #ffffff;
+  --s2: #f1efe8;
+  --s3: #fafaf8;
+  --border: #dedad4;
+  --border2: #c8c7be;
+  --text: #1a1a18;
+  --muted: #5f5e5a;
+  --dim: #d7d3ca;
+  /* Accent system */
+  --y: #F26419;
+  --b: #185FA5;
+  --g: #3B6D11;
+  --r: #A32D2D;
+  --p: #185FA5;
+  --o: #F26419;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  line-height: 1.75;
+  counter-reset: section;
+}
+
+/* Noise */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+/* ── NAV ── */
+.site-nav{position:sticky;top:0;z-index:120;background:rgba(245,244,240,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.site-nav-inner{max-width:1180px;margin:0 auto;min-height:54px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.site-nav-brand,.site-nav-link,.site-nav-home,.sub-nav-label,.sub-nav-link{font-family:'JetBrains Mono',monospace;font-size:11px;text-decoration:none}
+.site-nav-brand{color:#888780;letter-spacing:1.5px;text-transform:uppercase}
+.site-nav-links,.sub-nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.site-nav-link{color:var(--muted);padding:7px 10px;border-radius:999px}
+.site-nav-link.current{color:var(--g);background:#eaf3de;border:1px solid rgba(59,109,17,.16)}
+.site-nav-home{margin-left:auto;color:var(--text);padding:7px 10px;border-radius:999px;border:1px solid var(--border);background:var(--s1)}
+.sub-nav{position:sticky;top:54px;z-index:100;background:rgba(245,244,240,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.sub-nav-inner{max-width:1180px;margin:0 auto;min-height:50px;padding:0 20px;display:flex;align-items:center;gap:0}
+.sub-nav-label{color:#888780;letter-spacing:1.2px;text-transform:uppercase;margin-right:auto;white-space:nowrap}
+.sub-nav-link{color:var(--muted);text-decoration:none;padding:0 16px;height:50px;display:flex;align-items:center;border-left:1px solid var(--border);letter-spacing:1px;transition:color .15s;white-space:nowrap}
+.sub-nav-link:hover{color:var(--text)}
+.sub-nav-links{overflow-x:auto;flex-wrap:nowrap}
+.sub-nav-links::-webkit-scrollbar{display:none}
+.page-role{padding:16px 18px;border:1px solid var(--border);background:var(--s1);border-radius:14px;font-size:13px;color:var(--muted);line-height:1.8}
+.page-role strong{color:var(--text)}
+.page-role a,.action-card-body a,.intro-body a{color:var(--b);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.page-summary,.page-actions{border:1px solid var(--border);background:var(--s1);padding:22px 24px;margin-top:28px}
+.summary-kicker,.actions-kicker{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;color:var(--b)}
+.actions-kicker{color:var(--g)}
+.summary-grid,.actions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.summary-card,.action-card{background:var(--s2);border:1px solid var(--border);padding:16px}
+.summary-card-title,.action-card-title{font-size:17px;font-weight:700;margin-bottom:8px}
+.summary-card-body,.action-card-body{font-size:13px;color:var(--muted);line-height:1.9}
+.action-card-body a{color:var(--text);text-decoration:none}
+
+/* ── HERO ── */
+.page-header {
+  padding:72px 64px 56px; border:1px solid var(--border); border-radius:18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(241,239,232,.92));
+  position:relative; overflow:hidden;
+  margin-top:20px;
+}
+.page-header::after {
+  content:'PLAY\ABOOK'; white-space:pre;
+  position:absolute; right:-20px; top:-20px;
+  font-family:inherit; font-size:180px; font-weight:800;
+  color:var(--dim); opacity:.12; user-select:none; line-height:1; pointer-events:none;
+  letter-spacing:-8px;
+}
+.page-header-main{position:relative;z-index:1;display:grid;gap:12px}
+.eyebrow { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--y); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+.eyebrow::before { content:''; width:36px; height:1px; background:var(--y); }
+.page-header h1 { font-family:inherit; font-size:clamp(32px,4vw,54px); font-weight:800; letter-spacing:-2px; line-height:1.1; max-width:680px; }
+.lead { font-size:14px; color:var(--muted); max-width:640px; line-height:1.9; }
+.header-badges { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+.header-badges span { padding:5px 10px; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.75); color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:11px; }
+.page-intro { margin-top:18px; display:grid; grid-template-columns:1.1fr .9fr; gap:14px; }
+.intro-meta-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.intro-meta-card { padding:16px 18px; border:1px solid var(--border); background:var(--s1); border-radius:14px; }
+.intro-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--g); margin-bottom:8px; }
+.intro-body { font-size:13px; color:var(--muted); line-height:1.8; }
+
+/* ── LAYOUT ── */
+.container { max-width:1080px; margin:0 auto; padding:0 48px 100px; }
+
+/* ── SECTION ── */
+.section {
+  margin-top:72px; counter-increment:section;
+}
+.section-header {
+  display:flex; align-items:center; gap:14px;
+  margin-bottom:32px; padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+}
+.sec-num {
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px;
+  padding:3px 10px; border-radius:3px; white-space:nowrap;
+}
+.sec-title { font-family:inherit; font-size:22px; font-weight:700; letter-spacing:-.5px; }
+.sec-sub { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-left:auto; }
+
+/* Colors per section */
+.s-method .sec-num { background:rgba(232,255,124,.08); color:var(--y); border:1px solid rgba(232,255,124,.2); }
+.s-failure .sec-num { background:rgba(255,124,124,.08); color:var(--r); border:1px solid rgba(255,124,124,.2); }
+.s-experiment .sec-num { background:rgba(124,244,255,.08); color:var(--b); border:1px solid rgba(124,244,255,.2); }
+.s-checklist .sec-num { background:rgba(124,255,178,.08); color:var(--g); border:1px solid rgba(124,255,178,.2); }
+.s-boundary .sec-num { background:rgba(201,124,255,.08); color:var(--p); border:1px solid rgba(201,124,255,.2); }
+.s-positioning .sec-num { background:rgba(255,184,124,.08); color:var(--o); border:1px solid rgba(255,184,124,.2); }
+
+/* ── PROCESS FLOW ── */
+.process-flow { display:flex; flex-direction:column; gap:0; }
+.process-step {
+  display:grid; grid-template-columns:40px 1fr;
+  gap:0 24px; position:relative;
+}
+.process-step::before {
+  content:''; position:absolute;
+  left:19px; top:52px; bottom:0; width:2px;
+  background:var(--border);
+}
+.process-step:last-child::before { display:none; }
+.step-spine { display:flex; flex-direction:column; align-items:center; padding-top:12px; }
+.step-dot {
+  width:20px; height:20px; border-radius:50%; border:2px solid;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:500;
+  z-index:1; background:var(--bg);
+}
+.step-body-wrap { padding:12px 0 32px; }
+.step-title { font-family:inherit; font-size:16px; font-weight:700; margin-bottom:6px; }
+.step-desc { font-size:13px; color:var(--muted); line-height:1.9; margin-bottom:10px; }
+.step-detail {
+  background:var(--s2); border:1px solid var(--border);
+  padding:14px 18px; font-family:'JetBrains Mono',monospace;
+  font-size:11.5px; color:var(--muted); line-height:1.8;
+}
+.step-detail strong { color:var(--text); font-weight:500; }
+
+.step-0 .step-dot { border-color:var(--y); color:var(--y); }
+.step-1 .step-dot { border-color:var(--b); color:var(--b); }
+.step-2 .step-dot { border-color:var(--b); color:var(--b); }
+.step-3 .step-dot { border-color:var(--b); color:var(--b); }
+.step-4 .step-dot { border-color:var(--b); color:var(--b); }
+.step-5 .step-dot { border-color:var(--b); color:var(--b); }
+
+/* ── FAILURE TAXONOMY ── */
+.failure-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+@media(max-width:720px){ .failure-grid { grid-template-columns:1fr; } }
+
+.failure-card {
+  background:var(--s1); border:1px solid var(--border);
+  padding:20px 22px;
+  position:relative; overflow:hidden;
+}
+.failure-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:var(--r);
+}
+.fail-type {
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px;
+  text-transform:uppercase; color:var(--r); margin-bottom:10px;
+}
+.fail-name { font-family:inherit; font-size:15px; font-weight:700; margin-bottom:8px; }
+.fail-symptom { font-size:12.5px; color:var(--muted); margin-bottom:10px; line-height:1.8; }
+.fail-cause-label { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+.fail-cause { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); }
+.fail-fix-label { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--g); letter-spacing:2px; text-transform:uppercase; margin-top:10px; margin-bottom:4px; }
+.fail-fix { font-family:'JetBrains Mono',monospace; font-size:11px; color:rgba(124,255,178,.7); }
+
+/* ── EXPERIMENT LOG ── */
+.exp-log {
+  border:1px solid var(--border); overflow:hidden;
+}
+.exp-log-header {
+  background:var(--s2); padding:12px 20px;
+  border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase;
+}
+.exp-table { width:100%; border-collapse:collapse; }
+.exp-table th {
+  text-align:left; padding:10px 16px; background:var(--s2);
+  border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted);
+  letter-spacing:2px; text-transform:uppercase;
+}
+.exp-table td {
+  padding:12px 16px; border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);
+  vertical-align:top;
+}
+.exp-table tr:last-child td { border-bottom:none; }
+.td-ver { color:var(--b); font-weight:500; white-space:nowrap; }
+.td-what { color:var(--text); }
+.td-up { color:var(--g); }
+.td-dn { color:var(--r); }
+.td-base { color:var(--muted); }
+
+.exp-rule {
+  background:var(--s2); padding:16px 20px;
+  border-top:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); line-height:1.9;
+}
+.exp-rule strong { color:var(--y); }
+
+/* ── CHECKLIST ── */
+.checklist-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+@media(max-width:720px){ .checklist-grid { grid-template-columns:1fr; } }
+
+.checklist-group {
+  background:var(--s1); border:1px solid var(--border); padding:20px 22px;
+}
+.cg-title {
+  font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:14px;
+}
+.s-checklist .cg-title { color:var(--g); }
+.check-item {
+  display:flex; align-items:flex-start; gap:10px;
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);
+  margin-bottom:10px; line-height:1.6; cursor:pointer;
+  user-select:none;
+}
+.check-item:last-child { margin-bottom:0; }
+.check-box {
+  width:14px; height:14px; border:1px solid var(--border2); border-radius:2px;
+  flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center;
+  font-size:9px; transition:.15s; background:var(--s2);
+}
+.check-item.checked .check-box { background:var(--g); border-color:var(--g); color:#000; }
+.check-item.checked .check-label { color:var(--text); text-decoration:line-through; text-decoration-color:var(--border2); }
+.check-label { flex:1; }
+
+/* ── BOUNDARY TABLE ── */
+.boundary-wrap { overflow-x:auto; }
+.boundary-table { width:100%; border-collapse:collapse; min-width:600px; }
+.boundary-table th {
+  text-align:left; padding:10px 16px; background:var(--s2);
+  border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted);
+  letter-spacing:2px; text-transform:uppercase;
+}
+.boundary-table td {
+  padding:11px 16px; border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; vertical-align:top; line-height:1.6;
+}
+.boundary-table tr:last-child td { border-bottom:none; }
+.bt-scenario { color:var(--text); font-weight:500; }
+.bt-use { color:var(--g); }
+.bt-notuse { color:var(--r); }
+.bt-why { color:var(--muted); }
+
+/* ── POSITIONING ── */
+.pos-cards { display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; }
+@media(max-width:768px){ .pos-cards { grid-template-columns:1fr; } }
+.pos-card {
+  background:var(--s1); border:1px solid var(--border); padding:20px 22px;
+  position:relative; overflow:hidden;
+}
+.pos-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--o); }
+.pos-label { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--o); letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+.pos-title { font-family:inherit; font-size:15px; font-weight:700; margin-bottom:8px; }
+.pos-body { font-size:12.5px; color:var(--muted); line-height:1.9; }
+
+/* ── CALLOUT ── */
+.callout {
+  padding:16px 20px; margin:20px 0;
+  border-left:3px solid;
+  font-size:13px; line-height:1.9;
+}
+.callout-y { border-color:var(--y); color:rgba(232,255,124,.75); background:rgba(232,255,124,.04); }
+.callout-r { border-color:var(--r); color:rgba(255,124,124,.75); background:rgba(255,124,124,.04); }
+.callout-g { border-color:var(--g); color:rgba(124,255,178,.75); background:rgba(124,255,178,.04); }
+.callout-o { border-color:var(--o); color:rgba(255,184,124,.75); background:rgba(255,184,124,.04); }
+
+/* ── METRICS REF ── */
+.metrics-row { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
+@media(max-width:720px){ .metrics-row { grid-template-columns:1fr 1fr; } }
+.metric-card {
+  background:var(--s1); border:1px solid var(--border); padding:18px;
+}
+.metric-name { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--b); margin-bottom:8px; letter-spacing:1px; }
+.metric-formula { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--y); margin-bottom:8px; }
+.metric-desc { font-size:12px; color:var(--muted); line-height:1.8; }
+
+@media(max-width:768px){
+  .page-header, .container { padding-left:20px; padding-right:20px; }
+  .page-intro, .intro-meta-grid { grid-template-columns:1fr; }
+  nav { padding:0 20px; }
+  .sec-sub { display:none; }
+}
+</style>
+</head>
+<body>
+<div class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">RAG Docs</a>
+    <div class="site-nav-links">
+      <a href="index.html" class="site-nav-link">首页</a>
+      <a href="00_课程路线图.html" class="site-nav-link">系统学习</a>
+      <a href="03_工程方法论手册.html" class="site-nav-link current">做项目</a>
+      <a href="ai-knowledge-hub.html" class="site-nav-link">快速回查</a>
+      <a href="rag-5d.html" class="site-nav-link">讲解 / 面试</a>
+      <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
+    </div>
+    <a href="index.html" class="site-nav-home">返回首页</a>
+  </div>
+</div>
+
+<div class="sub-nav">
+  <div class="sub-nav-inner">
+    <span class="sub-nav-label">当前页 · 工程方法</span>
+    <div class="sub-nav-links">
+      <a href="#method" class="sub-nav-link">方法论</a>
+      <a href="#failure" class="sub-nav-link">失败模式</a>
+      <a href="#experiment" class="sub-nav-link">实验记录</a>
+      <a href="#checklist" class="sub-nav-link">检查清单</a>
+      <a href="#boundary" class="sub-nav-link">方案边界</a>
+      <a href="#positioning" class="sub-nav-link">定位</a>
+    </div>
+  </div>
+</div>
+
+<section class="page-header">
+  <div class="page-header-main">
+  <div class="eyebrow">Engineering Playbook / Evaluation First</div>
+  <h1>RAG 不是技术问题<br>是工程方法论问题</h1>
+  <p class="lead">这页不教你从零入门，而是回答“为什么 Demo 跑通了系统还是不好用”。重点是评估、badcase、实验设计、边界判断和项目落地顺序。</p>
+  <div class="header-badges">
+    <span>评估优先</span>
+    <span>Golden Dataset</span>
+    <span>实验记录</span>
+    <span>方案边界</span>
+  </div>
+  </div>
+</section>
+
+<div class="container">
+<section class="page-intro">
+  <div class="page-role">
+    <strong>这页负责项目落地、评估和边界判断，不负责概念入门。</strong> 如果你还在补底层概念，请回到 <a href="index.html">总站首页</a> 后进入 <a href="00_课程路线图.html">课程路线图</a> 或 <a href="01_概念手册_向量与检索.html">概念手册</a>。
+  </div>
+  <div class="intro-meta-grid">
+    <article class="intro-meta-card">
+      <div class="intro-label">适合任务</div>
+      <div class="intro-body">把“感觉不错”的 Demo 变成“可评估、可解释、可迭代”的项目执行方式。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">前置阅读</div>
+      <div class="intro-body"><a href="02_代码讲解_V1V2.html">代码讲解</a> · <a href="00_课程路线图.html">课程路线图</a></div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">下一步</div>
+      <div class="intro-body"><a href="#experiment">先看实验设计</a> · <a href="rag-5d.html">再看边界辨析</a> · <a href="ai-knowledge-hub.html">回快速回查</a></div>
+    </article>
+  </div>
+</section>
+<section class="page-summary">
+  <div class="summary-kicker">Page Summary</div>
+  <div class="summary-grid">
+    <article class="summary-card">
+      <div class="summary-card-title">这页解决什么</div>
+      <div class="summary-card-body">把“能跑 Demo”升级成“能评估、能迭代、能讲边界”的工程化方法。</div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-card-title">必须记住的结论</div>
+      <div class="summary-card-body">没有黄金数据集和指标，就没有有效优化；没有边界判断，就没有可信方案。</div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-card-title">读完后的动作</div>
+      <div class="summary-card-body">先整理 20-30 条真实 badcase，再建立 Golden Dataset 和实验记录表。</div>
+    </article>
+  </div>
+</section>
+<!-- ════ 1. 工程方法论 ════ -->
+<div id="method" class="section s-method">
+  <div class="section-header">
+    <span class="sec-num">01</span>
+    <span class="sec-title">五步工程方法论</span>
+    <span class="sec-sub">先有标准，再有系统，再有优化</span>
+  </div>
+
+  <div class="callout callout-y">
+    核心原则：不要在没有评估标准的情况下开始构建系统。"感觉还不错"不是工程结论。
+    黄金数据集要在写第一行检索代码之前就存在。
+  </div>
+
+  <div class="process-flow">
+
+    <div class="process-step step-0">
+      <div class="step-spine"><div class="step-dot">0</div></div>
+      <div class="step-body-wrap">
+        <div class="step-title" style="color:var(--y)">定义 MVP 边界（先于一切）</div>
+        <div class="step-desc">不要盲目开始写代码。三个核心问题必须先回答清楚，否则你在为一个模糊的目标优化。</div>
+        <div class="step-detail">
+          <strong>用户是谁？</strong> → 内部员工 / 外部客户 / 特定角色（如销售、客服）<br>
+          <strong>具体用例？</strong> → 一个用例，不是三个。"企业知识问答"太宽，"销售合同条款查询"才对。<br>
+          <strong>数据源清单？</strong> → 1~2 个高质量数据源，不要上来就接十个系统。<br>
+          <strong>成功标准？</strong> → 6 周内，用什么指标判断系统"可用"？先写下来。<br><br>
+          ⚠️ 避免过度扩张：每增加一个数据源，系统复杂度非线性增加。
+        </div>
+      </div>
+    </div>
+
+    <div class="process-step step-1">
+      <div class="step-spine"><div class="step-dot">1</div></div>
+      <div class="step-body-wrap">
+        <div class="step-title" style="color:var(--b)">构建黄金数据集（在建系统前）</div>
+        <div class="step-desc">这是整个项目的"尺子"。没有它，后续一切优化都是直觉驱动，而不是数据驱动。</div>
+        <div class="step-detail">
+          <strong>来源优先级：</strong>真实用户 query（最好） &gt; 手工标注 &gt; LLM 合成（最快但质量最低）<br>
+          <strong>最小规模：</strong>20 条可以起步，50~100 条才有统计意义<br>
+          <strong>覆盖维度：</strong>难度（简单/中等/困难）× 类型（事实性/概念性/流程性）<br>
+          <strong>必须做：</strong>8:2 拆分为开发集和测试集。测试集封存，不参与任何调参。<br><br>
+          ⚠️ 用测试集调参 = 在为特定数据集过拟合 = 指标虚高 = 上生产后打脸。
+        </div>
+      </div>
+    </div>
+
+    <div class="process-step step-2">
+      <div class="step-spine"><div class="step-dot">2</div></div>
+      <div class="step-body-wrap">
+        <div class="step-title" style="color:var(--b)">构建初始检索系统 + 量化评估</div>
+        <div class="step-desc">用最简单的方法建立基线，然后立刻量化。不要在没有基线数字的情况下开始优化。</div>
+        <div class="step-detail">
+          <strong>起点：</strong>向量检索（Dense）作为基线，不要上来就上混合检索<br>
+          <strong>核心指标：</strong>Recall@K（有没有找到）/ MRR（找到的排在第几位）<br>
+          <strong>分块策略：</strong>先用固定大小+overlap（200~500字，10%~20%重叠），记录基线分数<br>
+          <strong>Embedding：</strong>先用 text-embedding-3-small，有瓶颈再换<br><br>
+          ✓ 基线分数是后续所有优化的参照点。"比基线高"才是有效优化。
+        </div>
+      </div>
+    </div>
+
+    <div class="process-step step-3">
+      <div class="step-spine"><div class="step-dot">3</div></div>
+      <div class="step-body-wrap">
+        <div class="step-title" style="color:var(--b)">构建回复系统 + 手动错误分析</div>
+        <div class="step-desc">先接 LLM 生成回答，然后手动读 30~100 条失败案例。这一步不能跳过。</div>
+        <div class="step-detail">
+          <strong>为什么要手动读？</strong> 自动化评估需要你先知道"要检查什么"。手动读是发现失败模式的唯一方法。<br>
+          <strong>记录格式：</strong>query → 检索到的 chunks → 最终回答 → 失败类型 → 根因<br>
+          <strong>常见失败模式：</strong>见第二节"失败模式分类"<br>
+          <strong>自动化时机：</strong>找到规律后，用关键词检查或 LLM-as-judge 自动化高频失败模式的检测
+        </div>
+      </div>
+    </div>
+
+    <div class="process-step step-4">
+      <div class="step-spine"><div class="step-dot">4</div></div>
+      <div class="step-body-wrap">
+        <div class="step-title" style="color:var(--b)">运行受控实验 + 迭代</div>
+        <div class="step-desc">每次只改一个变量。改了两个变量，你不知道是哪个起作用的。</div>
+        <div class="step-detail">
+          <strong>实验优先级：</strong>先优化检索（数据质量、分块），再优化生成（Prompt）<br>
+          <strong>为什么检索先于生成？</strong> 检索决定天花板，Prompt 只能在这个天花板内发挥。<br>
+          <strong>实验记录：</strong>见第三节"实验记录模板"<br>
+          <strong>何时进入生产？</strong> 开发集指标稳定后，用测试集做最终评估。测试集只用一次。
+        </div>
+      </div>
+    </div>
+
+    <div class="process-step step-5">
+      <div class="step-spine"><div class="step-dot">∞</div></div>
+      <div class="step-body-wrap">
+        <div class="step-title" style="color:var(--b)">生产监控 + 持续迭代</div>
+        <div class="step-desc">上线不是终点。生产流量会暴露测试集没有覆盖的问题。</div>
+        <div class="step-detail">
+          <strong>必须监控：</strong>每次检索的 Recall（在线代理指标）/ 用户满意度 / 响应延迟<br>
+          <strong>持续更新数据集：</strong>把生产中的 badcase 手工标注后加入黄金数据集<br>
+          <strong>知识库更新策略：</strong>增量入库（只算新文档的 embedding）/ 不重算全库<br>
+          <strong>定期重评估：</strong>每月用最新黄金数据集跑一次完整评估，防止指标悄悄退化
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ 2. 失败模式 ════ -->
+<div id="failure" class="section s-failure">
+  <div class="section-header">
+    <span class="sec-num">02</span>
+    <span class="sec-title">失败模式分类手册</span>
+    <span class="sec-sub">读完 30~100 条 badcase 后的规律总结</span>
+  </div>
+
+  <div class="callout callout-r">
+    这里的失败模式来自实践归纳。遇到新的 badcase 时，先对照这个分类找根因，
+    不要上来就换模型——80% 的问题出在数据和检索上，不在生成上。
+  </div>
+
+  <div class="failure-grid">
+
+    <div class="failure-card">
+      <div class="fail-type">检索层 · F-01</div>
+      <div class="fail-name">召回缺失（Miss）</div>
+      <div class="fail-symptom">相关内容明明在知识库里，但就是没被检索到。模型要么说不知道，要么用训练数据凑答案。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① 分块太小，关键信息被切断<br>② Embedding 模型不适配领域语言<br>③ 专有名词、缩写、产品型号被泛化<br>④ top-k 设置太小</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 加大 chunk_size / 增加 overlap<br>→ 换领域适配的 Embedding 模型<br>→ 引入 BM25 混合检索（补关键词）<br>→ 增加 top-k，配合 Reranker 精排</div>
+    </div>
+
+    <div class="failure-card">
+      <div class="fail-type">检索层 · F-02</div>
+      <div class="fail-name">噪声命中（Noise）</div>
+      <div class="fail-symptom">检索到了内容，但返回的 chunk 大量不相关，稀释了真正有用的信息。模型被噪声干扰，答案跑偏。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① 分块太大，一个 chunk 包含多个主题<br>② top-k 设置太大<br>③ 相似度阈值太低，不相关 chunk 也被召回</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 减小 chunk_size，使每块主题单一<br>→ 加入相似度阈值过滤（< 0.7 直接丢弃）<br>→ 引入 Reranker 做二次精排<br>→ 使用 Parent-Child 分块策略</div>
+    </div>
+
+    <div class="failure-card">
+      <div class="fail-type">检索层 · F-03</div>
+      <div class="fail-name">排序错误（Misrank）</div>
+      <div class="fail-symptom">正确答案被召回了，但没排在前面（排在 Top-3 以外）。LLM 处理上下文时更关注靠前的内容，答案质量因此下降。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① Bi-encoder 语义相似度打分不精准<br>② 查询和正确答案表达方式差异大<br>③ 关键词命中率影响了排序</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 引入 Cross-encoder Reranker（精排专用）<br>→ 查询改写（让 query 更贴近文档表达）<br>→ 实验 HyDE（先生成假设答案再检索）</div>
+    </div>
+
+    <div class="failure-card">
+      <div class="fail-type">生成层 · F-04</div>
+      <div class="fail-name">上下文幻觉（Hallucination）</div>
+      <div class="fail-symptom">检索到了正确内容，但 LLM 没有完全基于它回答，混入了训练数据里的"记忆"，造成细节错误。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① System Prompt 约束不够强<br>② 参考资料与训练数据有矛盾<br>③ 模型倾向于"补全"而非"引用"</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 强化 Prompt："只能基于以下资料回答，不得添加资料外的内容"<br>→ 要求模型引用来源 [1][2]<br>→ 用 Faithfulness 指标自动检测幻觉</div>
+    </div>
+
+    <div class="failure-card">
+      <div class="fail-type">生成层 · F-05</div>
+      <div class="fail-name">答非所问（Irrelevance）</div>
+      <div class="fail-symptom">技术上检索和生成都"成功"了，但回答没有切中用户真正的问题。用户说"有帮助"但"不是我要的"。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① 用户意图模糊，没有做查询理解<br>② Prompt 没有引导模型聚焦核心问题<br>③ 回答过于发散</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 澄清模糊 query（让模型先确认理解）<br>→ 加强 Prompt 中的"聚焦"指令<br>→ 用 Answer Relevancy 指标检测</div>
+    </div>
+
+    <div class="failure-card">
+      <div class="fail-type">系统层 · F-06</div>
+      <div class="fail-name">知识库过时（Staleness）</div>
+      <div class="fail-symptom">回答内容在技术上是准确的，但基于的是旧版本的文档。产品已更新，文档没更新，导致误导用户。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① 没有文档版本管理机制<br>② 增量更新流程缺失<br>③ 旧文档没有被标记或删除</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 为每个 chunk 附加 metadata：version, updated_at<br>→ 检索时过滤旧版本文档<br>→ 建立文档变更触发的自动重入库流程</div>
+    </div>
+
+    <div class="failure-card">
+      <div class="fail-type">系统层 · F-07</div>
+      <div class="fail-name">多跳缺失（Multi-hop Failure）</div>
+      <div class="fail-symptom">问题需要综合两份不同文档的信息才能回答，但单次检索只拿到了其中一份，答案不完整。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① 单次检索设计，无法处理跨文档推理<br>② 用户问题包含隐式依赖关系</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 实现 Multi-hop RAG：第一次检索结果作为第二次检索的 query<br>→ 引入 Agentic RAG，让模型自主决定检索次数<br>→ 构建知识图谱（GraphRAG）</div>
+    </div>
+
+    <div class="failure-card">
+      <div class="fail-type">系统层 · F-08</div>
+      <div class="fail-name">超出知识库（Out of Scope）</div>
+      <div class="fail-symptom">用户问的问题知识库里根本没有，但系统没有识别出来，而是用相关度最高但不准确的 chunk 凑了一个答案。</div>
+      <div class="fail-cause-label">根因</div>
+      <div class="fail-cause">① 没有相似度阈值判断"是否能回答"<br>② 没有设计拒答逻辑</div>
+      <div class="fail-fix-label">修复方向</div>
+      <div class="fail-fix">→ 设置相似度阈值：全部 chunk 得分低于阈值 → 触发"超出知识库"回复<br>→ Prompt 中明确指示："如果资料中没有，必须说不知道"<br>→ 定期分析"知识盲点"并补充文档</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ 3. 实验记录 ════ -->
+<div id="experiment" class="section s-experiment">
+  <div class="section-header">
+    <span class="sec-num">03</span>
+    <span class="sec-title">实验记录模板</span>
+    <span class="sec-sub">一次只改一个变量</span>
+  </div>
+
+  <div class="callout callout-y">
+    实验的核心纪律：每次实验只改一个变量。改了两个变量，你不知道哪个起作用，下次就不知道该保留哪个。
+    "感觉更好了"不是结论，数字说话。
+  </div>
+
+  <div class="exp-log">
+    <div class="exp-log-header">实验日志示例（用于记录课程 v1→v10 的迭代过程）</div>
+    <table class="exp-table">
+      <thead>
+        <tr>
+          <th>版本</th>
+          <th>变更内容</th>
+          <th>Recall@3 变化</th>
+          <th>MRR 变化</th>
+          <th>结论 / 备注</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="td-ver">v3 基线</td>
+          <td class="td-what">ChromaDB + chunk=200 + overlap=40 + text-embedding-3-small</td>
+          <td class="td-base">— （基线）</td>
+          <td class="td-base">— （基线）</td>
+          <td class="td-base">建立基线数字，后续所有版本与此对比</td>
+        </tr>
+        <tr>
+          <td class="td-ver">v4-exp1</td>
+          <td class="td-what">Embedding 换成 BGE-M3（中文领域模型）</td>
+          <td class="td-up">+0.08 ↑</td>
+          <td class="td-up">+0.05 ↑</td>
+          <td class="td-what">中文专业术语场景显著提升；通用问题基本持平；API成本降低</td>
+        </tr>
+        <tr>
+          <td class="td-ver">v4-exp2</td>
+          <td class="td-what">Embedding 换成 text-embedding-3-large（更大维度）</td>
+          <td class="td-up">+0.03 ↑</td>
+          <td class="td-up">+0.01 ↑</td>
+          <td class="td-what">提升有限，但成本翻倍。不值得，回退到 exp1 的 BGE-M3</td>
+        </tr>
+        <tr>
+          <td class="td-ver">v5-exp1</td>
+          <td class="td-what">加入 BM25 混合检索（alpha=0.5）</td>
+          <td class="td-up">+0.12 ↑</td>
+          <td class="td-up">+0.09 ↑</td>
+          <td class="td-what">专有名词、产品型号 query 命中率大幅提升；通用 query 无明显变化</td>
+        </tr>
+        <tr>
+          <td class="td-ver">v5-exp2</td>
+          <td class="td-what">调整 alpha=0.3（减少 BM25 权重）</td>
+          <td class="td-dn">-0.02 ↓</td>
+          <td class="td-dn">-0.01 ↓</td>
+          <td class="td-what">alpha=0.5 是更好的配置，保留</td>
+        </tr>
+        <tr>
+          <td class="td-ver">v6-exp1</td>
+          <td class="td-what">加入 bge-reranker（召回 Top-20，精排取 Top-3）</td>
+          <td class="td-up">+0.06 ↑</td>
+          <td class="td-up">+0.15 ↑</td>
+          <td class="td-what">MRR 提升显著，正确答案排名更靠前；p99 延迟增加 300ms</td>
+        </tr>
+        <tr>
+          <td class="td-ver">v7-exp1</td>
+          <td class="td-what">加入 HyDE 查询改写</td>
+          <td class="td-up">+0.05 ↑</td>
+          <td class="td-up">+0.04 ↑</td>
+          <td class="td-what">概念性问题提升明显；事实性问题提升不大；额外增加一次 LLM 调用成本</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="exp-rule">
+      <strong>实验纪律：</strong>每次实验只改一个变量 · 同一数据集（开发集）评估 · 记录延迟和成本变化 · 所有实验结果保留，不删除"失败"记录
+    </div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">评估指标速查</div>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-name">Recall @ K</div>
+        <div class="metric-formula">命中数 / 查询总数</div>
+        <div class="metric-desc">前 K 个结果里有没有包含正确答案。最重要的检索指标——天花板由此决定。</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">MRR</div>
+        <div class="metric-formula">avg(1 / rank)</div>
+        <div class="metric-desc">相关文档排在第几位。不只看"找到了"，还看"排在哪里"。</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Faithfulness</div>
+        <div class="metric-formula">RAGAS 框架</div>
+        <div class="metric-desc">生成的答案有没有忠实于检索资料，没有编造内容。反映幻觉程度。</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Answer Relevancy</div>
+        <div class="metric-formula">RAGAS 框架</div>
+        <div class="metric-desc">答案有没有切中用户问题。检索和生成都正确，但答非所问仍算失败。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 4. 项目启动检查清单 ════ -->
+<div id="checklist" class="section s-checklist">
+  <div class="section-header">
+    <span class="sec-num">04</span>
+    <span class="sec-title">项目启动检查清单</span>
+    <span class="sec-sub">开始写代码之前必须全部过一遍</span>
+  </div>
+
+  <div class="checklist-grid">
+
+    <div class="checklist-group">
+      <div class="cg-title">业务定义（第 0 步）</div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">用户是谁已明确（具体到角色，不是"企业用户"）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">具体用例已定义（单一用例，不是"全能助手"）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">数据源清单已确认（1~2 个，有访问权限）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">6 周成功标准已书面定义（量化指标）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">数据安全 / 合规要求已了解（是否涉及敏感数据）</span>
+      </div>
+    </div>
+
+    <div class="checklist-group">
+      <div class="cg-title">评估准备（在写代码前）</div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">黄金数据集至少 20 条已准备（手标优先）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">开发集 / 测试集已拆分（测试集已封存）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">Recall@K 和 MRR 评估脚本已可运行</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">基线评估已完成并记录（有数字才能比对）</span>
+      </div>
+    </div>
+
+    <div class="checklist-group">
+      <div class="cg-title">检索系统</div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">分块策略已选定并有数字支撑（对比实验完成）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">Embedding 模型已选定（中文场景考虑 BGE 系列）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">向量数据库已配置（含 metadata schema 设计）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">相似度阈值已设定（低于阈值触发拒答逻辑）</span>
+      </div>
+    </div>
+
+    <div class="checklist-group">
+      <div class="cg-title">生产准备</div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">已完成 30+ 条手动错误分析（找到主要失败模式）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">主要失败模式已有自动化检测（代码或 LLM-judge）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">延迟 p50/p99 已测量（知道用户实际等待时间）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">成本估算完成（每月 embedding + LLM token 费用）</span>
+      </div>
+      <div class="check-item" onclick="this.classList.toggle('checked')">
+        <div class="check-box">✓</div>
+        <span class="check-label">测试集最终评估完成（用且仅用一次）</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ 5. 方案边界 ════ -->
+<div id="boundary" class="section s-boundary">
+  <div class="section-header">
+    <span class="sec-num">05</span>
+    <span class="sec-title">RAG 方案边界</span>
+    <span class="sec-sub">知道什么时候不该用 RAG，和知道什么时候该用同样重要</span>
+  </div>
+
+  <div class="callout callout-r">
+    RAG 不是银弹。向客户推荐方案时，如果你能说出"这个场景用 RAG 反而不合适，因为……"，
+    你的专业度会立刻比只会推 RAG 的人高出一个档次。
+  </div>
+
+  <div class="boundary-wrap">
+    <table class="boundary-table">
+      <thead>
+        <tr>
+          <th>场景</th>
+          <th>推荐方案</th>
+          <th>不推荐</th>
+          <th>判断依据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="bt-scenario">知识库有限（< 50 页），内容稳定，问题类型固定</td>
+          <td class="bt-use">Fine-tuning 或 Prompt Engineering</td>
+          <td class="bt-notuse">RAG 过度设计</td>
+          <td class="bt-why">内容少到可以直接放进 System Prompt，RAG 带来的工程复杂度不值得</td>
+        </tr>
+        <tr>
+          <td class="bt-scenario">私有文档频繁更新（每天有新内容），不能有知识截止</td>
+          <td class="bt-use">RAG（增量入库）</td>
+          <td class="bt-notuse">Fine-tuning（更新成本太高）</td>
+          <td class="bt-why">Fine-tuning 每次更新都要重新训练，成本不可接受；RAG 只需要增量 embedding</td>
+        </tr>
+        <tr>
+          <td class="bt-scenario">问题需要精确数字推理（财务计算、代码执行）</td>
+          <td class="bt-use">Tool Use + 结构化数据库查询</td>
+          <td class="bt-notuse">纯 RAG（检索文本，无法精确计算）</td>
+          <td class="bt-why">LLM 算数不可靠；结构化数据应该用 SQL/API 查询，不是向量检索</td>
+        </tr>
+        <tr>
+          <td class="bt-scenario">知识库超大（百万级文档），延迟敏感（< 200ms）</td>
+          <td class="bt-use">RAG + 语义缓存 + ANN 优化 + 向量库分级存储</td>
+          <td class="bt-notuse">朴素 RAG（单节点、无缓存）</td>
+          <td class="bt-why">朴素 RAG 在大规模下延迟不可控；需要工程优化</td>
+        </tr>
+        <tr>
+          <td class="bt-scenario">多文档综合推理（需要跨 5+ 个文档才能回答一个问题）</td>
+          <td class="bt-use">GraphRAG 或 Agentic RAG（多跳）</td>
+          <td class="bt-notuse">经典单跳 RAG（一次检索搞不定）</td>
+          <td class="bt-why">单次检索只能召回局部信息；需要有状态的多轮检索或知识图谱</td>
+        </tr>
+        <tr>
+          <td class="bt-scenario">高安全合规要求（金融、医疗），不能有任何幻觉</td>
+          <td class="bt-use">RAG + 强 Faithfulness 检测 + 人工审核机制</td>
+          <td class="bt-notuse">完全自动化无人工节点</td>
+          <td class="bt-why">LLM 幻觉无法完全消除；高风险场景必须有人工审核兜底</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════ 6. 售前转型定位 ════ -->
+<div id="positioning" class="section s-positioning">
+  <div class="section-header">
+    <span class="sec-num">06</span>
+    <span class="sec-title">售前背景的核心差异化</span>
+    <span class="sec-sub">工程能力 + 业务理解 = 稀缺组合</span>
+  </div>
+
+  <div class="callout callout-o">
+    纯工程师知道怎么写代码，但不知道这个系统在业务上解决了什么问题，
+    也不知道怎么向客户解释技术决策。这正是你的优势所在。
+  </div>
+
+  <div class="pos-cards">
+    <div class="pos-card">
+      <div class="pos-label">能力 01</div>
+      <div class="pos-title">从业务需求推导技术方案</div>
+      <div class="pos-body">客户说"我们想做知识库问答"，你能问出"用户是谁、问的是什么类型的问题、数据在哪里"——这三个问题比直接写代码更重要，也是方法论第 0 步的核心。这是大多数工程师问不出来的问题。</div>
+    </div>
+    <div class="pos-card">
+      <div class="pos-label">能力 02</div>
+      <div class="pos-title">量化标准 → 项目提案</div>
+      <div class="pos-body">黄金数据集的方法论直接对应项目提案的"成功指标"章节。你可以在方案里写："第 2 周交付 30 条黄金数据集和基线 Recall@3；第 4 周目标 Recall@3 > 0.85"——这是可落地的承诺，不是模糊的"提升效率"。</div>
+    </div>
+    <div class="pos-card">
+      <div class="pos-label">能力 03</div>
+      <div class="pos-title">向非技术人员解释技术决策</div>
+      <div class="pos-body">你能用"这个方案的边界在哪里"这张表，向客户解释为什么推荐 RAG 而不是 Fine-tuning，为什么选混合检索而不是纯向量。这不是炫技，是建立信任——客户需要知道你理解他们的场景，不是在卖技术方案。</div>
+    </div>
+  </div>
+
+  <div style="margin-top:2px;">
+    <div class="pos-card" style="grid-column:1/-1;">
+      <div class="pos-label">综合优势</div>
+      <div class="pos-title">最有价值的产出：可复用的工程资产</div>
+      <div class="pos-body">
+        每个项目积累的东西：黄金数据集（下个项目可参考结构）、失败模式记录（形成 checklist）、实验日志（形成决策依据）、方案边界文档（形成销售材料）。<br><br>
+        这些不只是技术文档，也是下一个项目的提案素材——"我们在类似场景做过，Recall@3 从 0.62 提升到 0.89，用的是这套方法论"。这才是售前转型后真正的核心竞争力。
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+<div style="max-width:1080px;margin:0 auto;padding:0 48px 80px;">
+  <section class="page-actions" style="margin-bottom:28px;">
+    <div class="actions-kicker">下一步与回查</div>
+    <div class="actions-grid">
+      <article class="action-card">
+        <div class="action-card-title">回到代码实验</div>
+        <div class="action-card-body"><a href="02_代码讲解_V1V2.html">去代码讲解页</a>，把 badcase 和分块策略联系起来。</div>
+      </article>
+      <article class="action-card">
+        <div class="action-card-title">看系统全貌</div>
+        <div class="action-card-body"><a href="rag-knowledge-map.html">去知识地图</a>，确认问题落在离线、检索还是生成环节。</div>
+      </article>
+      <article class="action-card">
+        <div class="action-card-title">讲方案边界</div>
+        <div class="action-card-body"><a href="rag-5d.html">去 5D 完全理解</a>，准备场景判断和售前讲解。</div>
+      </article>
+    </div>
+  </section>
+  <div style="padding:22px 24px;border:1px solid var(--border);background:var(--s1);">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--o);text-transform:uppercase;margin-bottom:12px;">关联阅读</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+      <div style="font-size:13px;color:var(--muted);">要回到组件全貌：去 <a href="rag-knowledge-map.html" style="color:var(--text);text-decoration:none;">知识地图</a> 看模块关系。</div>
+      <div style="font-size:13px;color:var(--muted);">要解释方案边界：去 <a href="rag-5d.html" style="color:var(--text);text-decoration:none;">5D 完全理解</a> 看对比、场景和常见误区。</div>
+      <div style="font-size:13px;color:var(--muted);">要快速找概念和参数：去 <a href="ai-knowledge-hub.html" style="color:var(--text);text-decoration:none;">文档索引</a>。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 让 checklist 项目可以点击切换状态，同时持久化到 localStorage
+document.querySelectorAll('.check-item').forEach(item => {
+  const label = item.querySelector('.check-label').textContent.trim().slice(0,20);
+  const key = 'rag-check-' + label;
+  if (localStorage.getItem(key) === '1') item.classList.add('checked');
+  item.addEventListener('click', () => {
+    const isChecked = item.classList.contains('checked');
+    localStorage.setItem(key, isChecked ? '1' : '0');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 知识地图</title>
+<style>
+:root{
+  --bg:#f5f4f0;--bg2:#f1efe8;--bg3:#fafaf8;
+  --text:#1a1a18;--text2:#5a5a56;--text3:#8a8a84;
+  --border:#dedad4;--border2:#c8c7be;
+  --info-bg:#E6F1FB;--info-text:#185FA5;
+  --success-bg:#EAF3DE;--success-text:#3B6D11;
+  --warn-bg:#FAEEDA;--warn-text:#854F0B;
+  --accent:#F26419;--accent-dark:#042C53;
+  --radius:8px;--radius-lg:12px;
+  --font:'system-ui',-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:2rem 1rem 4rem}
+.page{max-width:800px;margin:0 auto}
+.site-nav{position:sticky;top:0;z-index:120;background:rgba(245,244,240,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);margin:-2rem -1rem 0}
+.site-nav-inner{max-width:1040px;margin:0 auto;min-height:54px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.site-nav-brand,.site-nav-link,.site-nav-home,.sub-nav-label,.sub-nav-link{font-family:"JetBrains Mono",monospace;font-size:11px;text-decoration:none}
+.site-nav-brand{color:#888780;letter-spacing:1.5px;text-transform:uppercase}
+.site-nav-links,.sub-nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.site-nav-link{color:var(--text2);padding:7px 10px;border-radius:999px}
+.site-nav-link.current{color:var(--accent);background:#fef0e7;border:1px solid rgba(242,100,25,.16)}
+.site-nav-home{margin-left:auto;color:var(--text);padding:7px 10px;border-radius:999px;border:1px solid var(--border);background:#fff}
+.sub-nav{border-bottom:1px solid var(--border);background:rgba(255,255,255,.6);margin:0 -1rem 18px}
+.sub-nav-inner{max-width:1040px;margin:0 auto;min-height:44px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.sub-nav-label{color:#888780;letter-spacing:1.2px;text-transform:uppercase}
+.sub-nav-link{color:var(--text);padding:4px 0}
+.page-header{padding:28px 28px 24px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(241,239,232,.92))}
+.page-header-main{display:grid;gap:12px}
+.eyebrow,.intro-label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.eyebrow{color:var(--info-text);margin-bottom:14px}
+.page-header h1{font-size:clamp(30px,4vw,48px);font-weight:800;line-height:1.05;letter-spacing:-1.5px}
+.lead{max-width:680px;font-size:14px;color:var(--text2);line-height:1.8}
+.header-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.header-badges span{padding:5px 10px;border:1px solid var(--border);background:rgba(255,255,255,.75);border-radius:999px;color:var(--text2);font-family:"JetBrains Mono",monospace;font-size:11px}
+.page-intro{margin:18px 0 22px;display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.page-role{padding:16px 18px;border:1px solid var(--border);background:#fff;border-radius:14px;font-size:13px;color:var(--text2);line-height:1.8}
+.page-role strong{color:var(--text)}
+.page-role a,.intro-body a,.foot a{color:var(--info-text);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.intro-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.intro-meta-card{padding:16px 18px;border:1px solid var(--border);background:#fff;border-radius:14px}
+.intro-label{color:var(--info-text);margin-bottom:8px}
+.intro-body{font-size:13px;color:var(--text2);line-height:1.8}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;border-bottom:.5px solid var(--border)}
+.tab{font-size:13px;padding:.5rem 1rem;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .18s;margin-bottom:-1px;border-radius:4px 4px 0 0}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.tab:hover:not(.on){color:var(--text);background:var(--bg2)}
+.view{display:none}.view.on{display:block}
+
+/* ── PIPELINE ── */
+.section-label{font-size:11px;color:var(--text3);letter-spacing:.08em;margin-bottom:.65rem;text-transform:uppercase}
+.phase{margin-bottom:1.25rem}
+.pipe-row{display:flex;align-items:center;gap:0;flex-wrap:nowrap;overflow-x:auto;padding-bottom:.5rem}
+.pipe-node{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex:1;min-width:88px}
+.pipe-box{padding:.6rem .5rem;border-radius:var(--radius);border:.5px solid var(--border);background:var(--bg);text-align:center;width:84px;transition:all .2s}
+.pipe-node.on .pipe-box{border-color:var(--accent);border-width:1.5px;background:var(--info-bg)}
+.pipe-node:hover:not(.on) .pipe-box{background:var(--bg2)}
+.pipe-icon{font-size:18px;display:block;margin-bottom:3px}
+.pipe-name{font-size:11px;font-weight:500;color:var(--text)}
+.pipe-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.pipe-node.on .pipe-name{color:var(--info-text)}
+.pipe-arrow{font-size:18px;color:var(--border2);flex-shrink:0;padding:0 1px;align-self:center;margin-top:-10px}
+.pipe-detail{background:var(--bg2);border-radius:var(--radius);padding:.85rem 1rem;margin-top:.75rem;font-size:14px;color:var(--text2);line-height:1.7;min-height:56px;border:.5px solid var(--border)}
+.pipe-detail strong{color:var(--text);font-weight:500}
+
+/* ── WATERLINE / ICEBERG ── */
+.path-area{position:relative;padding:1.25rem 0 .75rem}
+.path-line{position:absolute;top:calc(1.25rem + 26px);left:0;right:0;height:2px;background:var(--border);z-index:0}
+.path-nodes{display:flex;justify-content:space-between;position:relative;z-index:1}
+.nw{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex:1}
+.nc{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .22s}
+.nc .ni{font-size:18px;line-height:1}
+.nc .nl{font-size:9px;color:var(--text3);font-weight:500;margin-top:1px}
+.nw.active .nc{border-color:var(--accent);border-width:2px;background:var(--info-bg);transform:scale(1.08)}
+.nw:hover:not(.active) .nc{background:var(--bg2)}
+.n-label{font-size:11px;color:var(--text2);text-align:center;line-height:1.3}
+.nw.active .n-label{color:var(--info-text);font-weight:500}
+.n-seq{font-size:10px;color:var(--text3);margin-bottom:1px}
+.nw.active .n-seq{color:var(--accent)}
+
+.waterline{height:2px;background:linear-gradient(90deg,transparent,rgba(56,139,212,.5) 15%,rgba(56,139,212,.5) 85%,transparent);margin:.6rem 0 0;position:relative}
+.waterline::after{content:'水面';position:absolute;right:0;top:-16px;font-size:10px;color:var(--text3);letter-spacing:.06em}
+
+.panel{background:var(--bg2);border-radius:0 0 var(--radius-lg) var(--radius-lg);overflow:hidden;max-height:0;opacity:0;transition:max-height .4s ease,opacity .3s ease;border:.5px solid var(--border);border-top:none}
+.panel.open{max-height:1100px;opacity:1}
+
+.panel-header{display:flex;align-items:center;gap:8px;padding:.75rem 1.1rem .65rem;border-bottom:.5px solid var(--border);background:var(--bg)}
+.ph-icon{font-size:17px}.ph-title{font-size:15px;font-weight:500;color:var(--text)}
+.ph-tag{font-size:11px;color:var(--text3);border:.5px solid var(--border);border-radius:4px;padding:2px 8px;margin-left:auto}
+.ph-close{font-size:12px;color:var(--text3);cursor:pointer;padding:3px 7px;border-radius:4px;transition:background .15s;margin-left:6px}
+.ph-close:hover{background:var(--bg3)}
+
+.layers-section{padding:.65rem .85rem .85rem;display:flex;flex-direction:column;gap:2px}
+.ly{border-radius:var(--radius);overflow:hidden;cursor:pointer}
+.ly-head{display:flex;align-items:center;gap:8px;padding:.6rem .85rem;font-size:12px;font-weight:500;user-select:none}
+.ly-body{font-size:13px;line-height:1.7;padding:.5rem .85rem .7rem;display:none}
+.ly.open .ly-body{display:block}
+.ly-body ul{list-style:none;display:flex;flex-direction:column;gap:3px}
+.ly-body li{padding-left:14px;position:relative}
+.ly-body li::before{content:'·';position:absolute;left:0;opacity:.4}
+.chev{margin-left:auto;font-size:9px;transition:transform .2s;opacity:.4}
+.ly.open .chev{transform:rotate(90deg)}
+.l1{background:#E6F1FB}.l1 .ly-head,.l1 .ly-body{color:#042C53}
+.l2{background:#B5D4F4}.l2 .ly-head,.l2 .ly-body{color:#042C53}
+.l3{background:#378ADD}.l3 .ly-head,.l3 .ly-body{color:#E6F1FB}
+.l4{background:#0C447C}.l4 .ly-head,.l4 .ly-body{color:#B5D4F4}
+@media(prefers-color-scheme:dark){
+  .l1{background:#042C53}.l1 .ly-head,.l1 .ly-body{color:#B5D4F4}
+  .l2{background:#0C447C}.l2 .ly-head,.l2 .ly-body{color:#85B7EB}
+  .l3{background:#185FA5}.l3 .ly-head,.l3 .ly-body{color:#E6F1FB}
+  .l4{background:#378ADD}.l4 .ly-head,.l4 .ly-body{color:#042C53}
+}
+
+.rel-section{padding:.65rem 1.1rem .85rem;border-top:.5px solid var(--border)}
+.rel-head{font-size:11px;color:var(--text3);letter-spacing:.07em;margin-bottom:.65rem;text-transform:uppercase}
+.mini-graph-wrap{display:flex;gap:1rem;align-items:center}
+.rel-list{flex:1;display:flex;flex-direction:column;gap:5px}
+.rel-row{display:flex;align-items:center;gap:7px;cursor:pointer;padding:5px 7px;border-radius:6px;transition:background .15s}
+.rel-row:hover{background:var(--bg3)}
+.rel-icon{font-size:13px;width:22px;text-align:center}
+.rel-name{font-size:12px;font-weight:500;color:var(--text);min-width:36px}
+.rel-label{font-size:11px;color:var(--text2);flex:1}
+.rel-bar-wrap{width:52px;height:4px;border-radius:2px;background:var(--border);overflow:hidden;flex-shrink:0}
+.rel-bar{height:100%;border-radius:2px;background:var(--accent);transition:width .4s .1s}
+
+.hint{text-align:center;padding:1.5rem;font-size:13px;color:var(--text3)}
+.hint b{color:var(--text2);font-weight:500}
+
+/* ── FOOTER NOTE ── */
+.foot{margin-top:2.5rem;padding-top:1rem;border-top:.5px solid var(--border);font-size:12px;color:var(--text3);line-height:1.7}
+@media(max-width:820px){.page-intro,.intro-meta-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">RAG Docs</a>
+    <div class="site-nav-links">
+      <a href="index.html" class="site-nav-link">首页</a>
+      <a href="00_课程路线图.html" class="site-nav-link">系统学习</a>
+      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="ai-knowledge-hub.html" class="site-nav-link">快速回查</a>
+      <a href="rag-5d.html" class="site-nav-link">讲解 / 面试</a>
+      <a href="rag-knowledge-map.html" class="site-nav-link current">知识地图</a>
+    </div>
+    <a href="index.html" class="site-nav-home">返回首页</a>
+  </div>
+</div>
+<div class="sub-nav">
+  <div class="sub-nav-inner">
+    <div class="sub-nav-label">当前页 · 系统全貌</div>
+    <div class="sub-nav-links">
+      <a href="#view-pipe" class="sub-nav-link">流程视图</a>
+      <a href="#view-ice" class="sub-nav-link">知识冰山</a>
+      <a href="ai-knowledge-hub.html" class="sub-nav-link">文档索引</a>
+      <a href="rag-5d.html" class="sub-nav-link">5D 完全理解</a>
+    </div>
+  </div>
+</div>
+<div class="page">
+<section class="page-header">
+  <div class="page-header-main">
+    <div class="eyebrow">System Overview / Knowledge Map</div>
+    <h1>RAG 知识地图</h1>
+    <p class="lead">这页用流程视图和知识冰山解释 RAG 的系统全貌，适合在学习中途校准结构感，也适合做方案讲解时快速搭起全链路心智模型。</p>
+    <div class="header-badges">
+      <span>流程视图</span>
+      <span>知识冰山</span>
+      <span>6 个核心节点</span>
+      <span>按需下潜</span>
+    </div>
+  </div>
+</section>
+
+<section class="page-intro">
+  <div class="page-role">
+    <strong>这页负责系统结构全貌，不负责第一次顺序学习。</strong> 如果你是第一次学 RAG，请回到 <a href="index.html">总站首页</a> 后先进入 <a href="00_课程路线图.html">课程路线图</a>。
+  </div>
+  <div class="intro-meta-grid">
+    <article class="intro-meta-card">
+      <div class="intro-label">适合任务</div>
+      <div class="intro-body">看清模块关系、解释离线与在线阶段、在方案沟通里快速讲清全链路。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">前置阅读</div>
+      <div class="intro-body"><a href="00_课程路线图.html">课程路线图</a> 或 <a href="ai-knowledge-hub.html">快速回查</a>，至少先建立核心术语感。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">下一步</div>
+      <div class="intro-body"><a href="rag-5d.html">去做横向辨析</a> · <a href="03_工程方法论手册.html">去看工程方法</a> · <a href="ai-knowledge-hub.html">回索引页</a></div>
+    </article>
+  </div>
+</section>
+
+<div class="tabs">
+  <div class="tab on" onclick="switchTab('pipe')">📐 流程视图</div>
+  <div class="tab" onclick="switchTab('ice')">🧊 知识冰山</div>
+</div>
+
+<!-- ══ PIPELINE VIEW ══ -->
+<div class="view on" id="view-pipe">
+  <div class="phase">
+    <div class="section-label">离线阶段 — 构建知识库</div>
+    <div class="pipe-row" id="pipe-offline"></div>
+  </div>
+  <div class="phase">
+    <div class="section-label">在线阶段 — 响应查询</div>
+    <div class="pipe-row" id="pipe-online"></div>
+  </div>
+  <div class="pipe-detail" id="pipe-detail"><strong>点击任意步骤</strong>查看详细说明</div>
+</div>
+
+<!-- ══ ICEBERG VIEW ══ -->
+<div class="view" id="view-ice">
+  <div class="path-area">
+    <div class="path-line"></div>
+    <div class="path-nodes" id="nodes-el"></div>
+  </div>
+  <div class="waterline"></div>
+  <div class="panel" id="panel">
+    <div id="hint-el" class="hint">点击节点 <b>下潜探索</b></div>
+    <div id="panel-body" style="display:none"></div>
+  </div>
+</div>
+
+<div class="foot">
+  本文件负责“从组件角度理解全貌”。如果你要顺序学习，请回到 <a href="00_课程路线图.html">课程路线图</a>；如果你要快速回查术语和参数，请打开 <a href="ai-knowledge-hub.html">文档索引</a>。
+</div>
+
+</div>
+
+<script>
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('on',['pipe','ice'][i]===t));
+  document.querySelectorAll('.view').forEach((el,i)=>el.classList.toggle('on',['pipe','ice'][i]===t));
+}
+
+// ── PIPELINE ──
+const offline=[
+  {id:'doc',icon:'📄',name:'文档加载',sub:'Load',detail:'<strong>文档加载</strong>：支持 PDF、HTML、Markdown、数据库等多种来源。使用 Document Loader 将原始内容统一抽象为文本块，是整个管道的起点。工具：LangChain Loaders、LlamaIndex Readers。'},
+  {id:'chunk',icon:'✂️',name:'文本切分',sub:'Chunk',detail:'<strong>文本切分</strong>：将长文档切割为适合模型处理的片段（通常 256–1024 token）。策略有固定大小切分、递归字符切分、语义切分。切分粒度与 overlap 直接影响检索质量。'},
+  {id:'embed',icon:'🔢',name:'向量化',sub:'Embed',detail:'<strong>向量化（Embedding）</strong>：将文本块转换为高维稠密向量，捕捉语义信息。常用模型：OpenAI text-embedding-3-small、BGE-M3、E5-large。向量维度通常 768–3072。'},
+  {id:'store',icon:'🗄️',name:'向量存储',sub:'Index',detail:'<strong>向量存储</strong>：将向量与原始文本一起存入向量数据库（Pinecone、Weaviate、Chroma、pgvector）。建立 HNSW/IVF 索引支持毫秒级近似最近邻搜索。'},
+];
+const online=[
+  {id:'query',icon:'💬',name:'查询输入',sub:'Query',detail:'<strong>查询输入</strong>：用户问题。可选做 Query Rewriting（改写为更适合检索的形式）或 HyDE（先让 LLM 生成假设答案，再用假设答案向量做检索，提升召回率）。'},
+  {id:'retrieve',icon:'🔍',name:'检索',sub:'Retrieve',detail:'<strong>检索</strong>：将查询向量化后在向量库中做相似度搜索取 Top-K 片段。可叠加 BM25 稀疏检索（混合搜索）+ Cross-Encoder Reranker 精排，显著提升精确率。'},
+  {id:'augment',icon:'🧩',name:'上下文注入',sub:'Augment',detail:'<strong>上下文注入（Augmentation）</strong>：将检索片段与用户问题组装成 Prompt 送入 LLM。System prompt 中的「只用上下文作答」约束是降低幻觉的关键。'},
+  {id:'gen',icon:'✨',name:'生成',sub:'Generate',detail:'<strong>生成</strong>：LLM 根据注入的上下文生成回答。关键参数：temperature（建议 0–0.3 以降低随机性）、max_tokens 控制长度。Streaming 输出提升体验。'},
+  {id:'eval',icon:'📊',name:'评估',sub:'Eval',detail:'<strong>评估</strong>：用 RAGAS 三指标评分：Context Relevancy（检索质量）、Faithfulness（答案忠实度）、Answer Relevancy（答案相关性）。可用 LLM-as-Judge 自动化打分。'},
+];
+
+let activePipe=null;
+function buildPipeRow(items,cid){
+  const c=document.getElementById(cid);
+  items.forEach((item,i)=>{
+    const n=document.createElement('div');
+    n.className='pipe-node';n.id='pn-'+item.id;
+    n.innerHTML=`<div class="pipe-box"><span class="pipe-icon">${item.icon}</span><div class="pipe-name">${item.name}</div><div class="pipe-sub">${item.sub}</div></div>`;
+    n.addEventListener('click',()=>{
+      if(activePipe===item.id){
+        document.querySelectorAll('.pipe-node').forEach(x=>x.classList.remove('on'));
+        document.getElementById('pipe-detail').innerHTML='<strong>点击任意步骤</strong>查看详细说明';
+        activePipe=null;return;
+      }
+      activePipe=item.id;
+      document.querySelectorAll('.pipe-node').forEach(x=>x.classList.toggle('on',x.id==='pn-'+item.id));
+      document.getElementById('pipe-detail').innerHTML=item.detail;
+    });
+    c.appendChild(n);
+    if(i<items.length-1){
+      const a=document.createElement('div');a.className='pipe-arrow';a.textContent='›';c.appendChild(a);
+    }
+  });
+}
+buildPipeRow(offline,'pipe-offline');
+buildPipeRow(online,'pipe-online');
+
+// ── ICEBERG ──
+const nodes=[
+  {id:'embed2',icon:'🔢',label:'嵌入',sublabel:'语义表示',tag:'基础层',
+   layers:[
+     {lv:1,label:'表层 — 核心用法',items:['将文本转为高维稠密向量','常用模型：text-embedding-3、BGE、E5','相似文本 → 相近向量，是检索的数学基础','batch 调用 vs 实时调用的成本权衡']},
+     {lv:2,label:'关联 — 横向延伸',items:['稀疏向量 BM25 vs 稠密向量对比','多语言嵌入模型选型指南','Fine-tune Embedding：何时需要领域微调','图像/代码嵌入的多模态扩展']},
+     {lv:3,label:'原理 — 底层机制',items:['Transformer [CLS] token 聚合 vs 平均池化','对比学习（Contrastive Learning）训练目标','向量维度 vs 表达能力 vs 计算成本三角关系','量化（int8/binary）对精度的影响']},
+     {lv:4,label:'历史 / 前沿',items:['Word2Vec(2013)→BERT→Sentence-BERT 演化','Matryoshka Representation Learning 可变维度','ColBERT 延迟交互模型','Embedding 泄露：从向量反推原文的安全研究']}
+   ]},
+  {id:'index',icon:'🗄️',label:'索引',sublabel:'知识存储',tag:'存储层',
+   layers:[
+     {lv:1,label:'表层 — 核心用法',items:['向量数据库选型：Pinecone/Weaviate/Chroma/pgvector','存储向量 + 元数据（来源、时间戳）','HNSW 索引构建与参数调优','Namespace/Collection 多租户隔离']},
+     {lv:2,label:'关联 — 横向延伸',items:['混合索引：向量 + 倒排（稀疏+稠密）','关键词过滤 + 向量搜索组合查询','Parent-Child Chunking 层级索引','知识图谱 + 向量库混合架构']},
+     {lv:3,label:'原理 — 底层机制',items:['ANN 算法：HNSW vs IVF vs PQ 对比','余弦相似度 vs 点积 vs L2 距离','增量更新 vs 全量重建的工程取舍','索引文件格式与持久化机制']},
+     {lv:4,label:'历史 / 前沿',items:['Faiss(2017 Meta) 开源向量检索库的奠基意义','向量数据库独立赛道的兴起(2020-2023)','可过滤 ANN 搜索的算法突破','DiskANN：超大规模磁盘级向量索引']}
+   ]},
+  {id:'retrieve2',icon:'🔍',label:'检索',sublabel:'相关召回',tag:'检索层',
+   layers:[
+     {lv:1,label:'表层 — 核心用法',items:['Top-K 相似度检索基本用法','Similarity Threshold 置信度过滤','MMR 最大边际相关性去重','元数据过滤组合检索']},
+     {lv:2,label:'关联 — 横向延伸',items:['混合检索：BM25 + 向量加权融合','Reranker 精排：Cross-Encoder 二阶段','Query Rewriting 与 HyDE 查询增强','多路召回 Ensemble Retriever']},
+     {lv:3,label:'原理 — 底层机制',items:['召回率 vs 精确率在 RAG 中的独特含义','近似最近邻搜索的误差边界','Reranker 为何比 Bi-Encoder 更精准','检索失败根因：语义 gap 分析']},
+     {lv:4,label:'历史 / 前沿',items:['DPR(2020) 开创密集段落检索范式','REALM、RAG 论文(2020)的原始架构','Self-RAG：LLM 自主决定何时检索','GraphRAG：微软用知识图谱增强检索']}
+   ]},
+  {id:'augment2',icon:'🧩',label:'增强',sublabel:'上下文组装',tag:'组装层',
+   layers:[
+     {lv:1,label:'表层 — 核心用法',items:['Prompt Template：context + question 格式','上下文窗口大小与 chunk 数量权衡','System prompt「只用上下文作答」约束','引用来源标注的实现方式']},
+     {lv:2,label:'关联 — 横向延伸',items:['Contextual Compression 上下文压缩','多轮对话历史 + 当前检索融合','Step-Back Prompting 抽象化查询','Agent + RAG：检索作为工具调用']},
+     {lv:3,label:'原理 — 底层机制',items:['Lost in the Middle：上下文位置影响注意力','Token 预算管理：如何选择保留哪些 chunk','Prompt Injection 通过文档注入的安全风险','Faithfulness 与 Creativity 的对立关系']},
+     {lv:4,label:'历史 / 前沿',items:['原始 RAG 论文(Lewis et al. 2020) Prompt 设计','Anthropic 长上下文研究：200K token 的影响','Speculative RAG：并行起草提速','RAG vs Long Context：两条技术路线博弈']}
+   ]},
+  {id:'gen2',icon:'✨',label:'生成',sublabel:'LLM输出',tag:'生成层',
+   layers:[
+     {lv:1,label:'表层 — 核心用法',items:['模型选型：GPT-4o / Claude / 本地 Llama','Temperature 控制创造性 vs 确定性','Streaming 输出提升用户体验','停止词与最大长度控制']},
+     {lv:2,label:'关联 — 横向延伸',items:['Structured Output：JSON/XML 强制格式','Function Calling 与 RAG 集成','本地部署（vLLM、Ollama）的成本权衡','多模型路由：简单问题用小模型']},
+     {lv:3,label:'原理 — 底层机制',items:['KV Cache 对长上下文推理的加速','幻觉产生机制：为何 LLM 会捏造事实','Attention Sink 与长文档末尾遗忘','RLHF 如何影响模型遵循指令的倾向']},
+     {lv:4,label:'历史 / 前沿',items:['GPT-3(2020) 使 LLM+检索架构成为可能','InstructGPT 让模型真正遵循 Prompt 约束','Speculative Decoding 并行解码提速','RAG 与 Fine-tune 的能力边界研究']}
+   ]},
+  {id:'eval2',icon:'📊',label:'评估',sublabel:'质量监控',tag:'评测层',
+   layers:[
+     {lv:1,label:'表层 — 核心用法',items:['RAGAS 三指标：Context Relevancy / Faithfulness / Answer Relevancy','TruLens RAG 三元组评估框架','人工标注 Golden Dataset 构建','A/B 测试比较不同 RAG 配置']},
+     {lv:2,label:'关联 — 横向延伸',items:['LLM-as-Judge 用模型自动评分','LangSmith / Langfuse 链路可观测性','在线监控：幻觉检测 + 拒答率统计','用户反馈信号驱动迭代优化']},
+     {lv:3,label:'原理 — 底层机制',items:['评估指标的局限：Faithfulness ≠ 正确性','分布偏移：测试集与真实查询的差距','端到端评估 vs 组件级评估的取舍','Goodhart 定律：优化指标导致指标失效']},
+     {lv:4,label:'历史 / 前沿',items:['NLP 评估困境：BLEU/ROUGE 的局限性','RAGAS 论文(2023) 无参考自动评估','ARES：主动检索评估系统','Agent 时代的评估难题：轨迹 vs 结果']}
+   ]}
+];
+
+const edges=[
+  ['embed2','index',   0.95,'向量化是索引前提'],
+  ['index','retrieve2',0.92,'索引支撑检索'],
+  ['embed2','retrieve2',0.85,'查询同样需嵌入'],
+  ['retrieve2','augment2',0.93,'检索结果注入上下文'],
+  ['augment2','gen2',  0.95,'组装后送入LLM'],
+  ['gen2','eval2',     0.78,'输出质量需评测'],
+  ['retrieve2','eval2',0.72,'检索质量是核心评测点'],
+  ['index','eval2',    0.52,'索引策略影响整体质量'],
+];
+
+function getRelated(id){
+  return edges.filter(e=>e[0]===id||e[1]===id)
+    .map(e=>({otherId:e[0]===id?e[1]:e[0],strength:e[2],label:e[3]}))
+    .sort((a,b)=>b.strength-a.strength);
+}
+
+const nodesEl=document.getElementById('nodes-el');
+nodes.forEach((n,i)=>{
+  const w=document.createElement('div');
+  w.className='nw';w.id='nw-'+n.id;
+  w.innerHTML=`<div class="n-seq">${i+1}</div>
+    <div class="nc"><span class="ni">${n.icon}</span><span class="nl">${n.label}</span></div>
+    <div class="n-label">${n.sublabel}</div>`;
+  w.addEventListener('click',()=>toggleIce(n.id));
+  nodesEl.appendChild(w);
+});
+
+let activeId=null;
+function toggleIce(id){
+  if(activeId===id){closeIce();return;}
+  activeId=id;
+  document.querySelectorAll('.nw').forEach(w=>w.classList.toggle('active',w.id==='nw-'+id));
+  renderPanel(id);
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('hint-el').style.display='none';
+  document.getElementById('panel-body').style.display='';
+}
+function closeIce(){
+  activeId=null;
+  document.querySelectorAll('.nw').forEach(w=>w.classList.remove('active'));
+  document.getElementById('panel').classList.remove('open');
+  setTimeout(()=>{
+    document.getElementById('hint-el').style.display='';
+    document.getElementById('panel-body').style.display='none';
+  },350);
+}
+
+function buildMiniSVG(id){
+  const related=getRelated(id);
+  const W=160,H=130,cx=54,cy=65,R=22,rR=15;
+  const count=related.length;
+  const positions=[];
+  if(count===1){positions.push({x:128,y:65});}
+  else if(count===2){positions.push({x:128,y:40},{x:128,y:92});}
+  else{
+    const sa=-62,ea=62;
+    for(let i=0;i<count;i++){
+      const a=(sa+(ea-sa)*(i/(count-1)))*Math.PI/180;
+      positions.push({x:cx+98*Math.cos(a),y:cy+82*Math.sin(a)});
+    }
+  }
+  const self=nodes.find(n=>n.id===id);
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  related.forEach((r,i)=>{
+    const p=positions[i];
+    const dx=p.x-cx,dy=p.y-cy,dist=Math.sqrt(dx*dx+dy*dy);
+    const x1=cx+dx/dist*R,y1=cy+dy/dist*R,x2=p.x-dx/dist*rR,y2=p.y-dy/dist*rR;
+    s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(56,139,212,${(0.2+r.strength*0.6).toFixed(2)})" stroke-width="${(1+r.strength*2).toFixed(1)}" stroke-linecap="round"/>`;
+  });
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/>`;
+  s+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="13" font-family="system-ui,sans-serif">${self.icon}</text>`;
+  s+=`<text x="${cx}" y="${cy+11}" text-anchor="middle" font-size="7.5" font-weight="500" font-family="system-ui,sans-serif" fill="#185FA5">${self.label}</text>`;
+  related.forEach((r,i)=>{
+    const p=positions[i];
+    const other=nodes.find(n=>n.id===r.otherId);
+    s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${rR}" fill="#ffffff" stroke="rgba(0,0,0,0.15)" stroke-width="1.5" style="cursor:pointer" onclick="window._jump('${r.otherId}')"/>`;
+    s+=`<text x="${p.x.toFixed(1)}" y="${(p.y-3).toFixed(1)}" text-anchor="middle" font-size="11" font-family="system-ui,sans-serif" style="pointer-events:none">${other.icon}</text>`;
+    s+=`<text x="${p.x.toFixed(1)}" y="${(p.y+9).toFixed(1)}" text-anchor="middle" font-size="7" font-weight="500" font-family="system-ui,sans-serif" fill="#5a5a56" style="pointer-events:none">${other.label}</text>`;
+  });
+  return s+'</svg>';
+}
+
+function renderPanel(id){
+  const node=nodes.find(n=>n.id===id);
+  const related=getRelated(id);
+  const layersHTML=node.layers.map((l,i)=>`
+    <div class="ly l${l.lv}" id="ly-${id}-${i}">
+      <div class="ly-head" onclick="window._ly('${id}-${i}')">
+        <span style="font-size:13px;opacity:.65">${['🌊','🐬','🦑','🌑'][i]}</span>
+        <span>${l.label}</span><span class="chev">▶</span>
+      </div>
+      <div class="ly-body"><ul>${l.items.map(it=>`<li>${it}</li>`).join('')}</ul></div>
+    </div>`).join('');
+  const relHTML=related.map(r=>{
+    const o=nodes.find(n=>n.id===r.otherId);
+    return `<div class="rel-row" onclick="window._jump('${r.otherId}')">
+      <span class="rel-icon">${o.icon}</span><span class="rel-name">${o.label}</span>
+      <span class="rel-label">${r.label}</span>
+      <div class="rel-bar-wrap"><div class="rel-bar" style="width:${Math.round(r.strength*100)}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('panel-body').innerHTML=`
+    <div class="panel-header">
+      <span class="ph-icon">${node.icon}</span>
+      <span class="ph-title">${node.label} · ${node.sublabel}</span>
+      <span class="ph-tag">${node.tag}</span>
+      <span class="ph-close" onclick="window._close()">✕</span>
+    </div>
+    <div class="layers-section">${layersHTML}</div>
+    ${related.length?`<div class="rel-section">
+      <div class="rel-head">知识关联</div>
+      <div class="mini-graph-wrap">
+        <div>${buildMiniSVG(id)}</div>
+        <div class="rel-list">${relHTML}</div>
+      </div>
+    </div>`:''}`;
+}
+
+window._close=closeIce;
+window._ly=id=>{document.getElementById('ly-'+id).classList.toggle('open')};
+window._jump=id=>{
+  switchTab('ice');
+  setTimeout(()=>{toggleIce(id);document.getElementById('panel').scrollIntoView({behavior:'smooth',block:'nearest'})},50);
+};
+</script>
+</body>
+</html>

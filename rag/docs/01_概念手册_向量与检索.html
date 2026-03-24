@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 概念手册 · 从零理解向量与检索</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+:root{--bg:#f5f4f0;--s1:#ffffff;--s2:#f1efe8;--s3:#fafaf8;--border:#dedad4;--border2:#c8c7be;--text:#1a1a18;--muted:#5f5e5a;--dim:#dfddd5;--y:#F26419;--b:#185FA5;--g:#3B6D11;--r:#A32D2D;--p:#8a5a00;--o:#F26419}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif;line-height:1.85;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E")}
+.site-nav{position:sticky;top:0;z-index:120;background:rgba(245,244,240,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.site-nav-inner{max-width:1020px;margin:0 auto;min-height:54px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.site-nav-brand,.site-nav-link,.site-nav-home,.sub-nav-label,.sub-nav-link{font-family:'JetBrains Mono',monospace;font-size:11px;text-decoration:none}
+.site-nav-brand{color:#888780;letter-spacing:1.5px;text-transform:uppercase}
+.site-nav-links,.sub-nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.site-nav-link{color:var(--muted);padding:7px 10px;border-radius:999px}
+.site-nav-link.current{color:var(--accent2);background:#e6f1fb;border:1px solid rgba(24,95,165,.16)}
+.site-nav-home{margin-left:auto;color:var(--text);padding:7px 10px;border-radius:999px;border:1px solid var(--border);background:var(--s1)}
+.sub-nav{position:sticky;top:54px;z-index:100;background:rgba(245,244,240,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.sub-nav-inner{max-width:1020px;margin:0 auto;min-height:50px;padding:0 20px;display:flex;align-items:center;gap:0}
+.sub-nav-label{color:#888780;letter-spacing:1.2px;text-transform:uppercase;margin-right:auto;white-space:nowrap}
+.sub-nav-link{color:var(--muted);padding:0 14px;height:50px;display:flex;align-items:center;border-left:1px solid var(--border);letter-spacing:1px;transition:color .15s;white-space:nowrap}
+.sub-nav-link:hover{color:var(--text)}
+.sub-nav-links{overflow-x:auto;flex-wrap:nowrap}
+.sub-nav-links::-webkit-scrollbar{display:none}
+.nav-brand{font-family:'JetBrains Mono',monospace;font-size:11px;color:#888780;letter-spacing:2px;margin-right:auto;white-space:nowrap}
+.nav-a{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-decoration:none;padding:0 14px;height:50px;display:flex;align-items:center;border-left:1px solid var(--border);letter-spacing:1px;transition:color .15s;white-space:nowrap}
+.nav-a:hover{color:var(--text)}
+.page-role{padding:16px 18px;border:1px solid var(--border);background:var(--s1);border-radius:14px;font-size:13px;color:var(--muted);line-height:1.8}
+.page-role strong{color:var(--text)}
+.page-role a,.info-body a,.action-card-body a,.provider-quick a,.intro-body a{color:var(--b);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.page-header{padding:44px 44px 30px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(241,239,232,.92));position:relative;overflow:hidden;margin-top:20px}
+.page-header::after{content:'VECTOR';white-space:pre;position:absolute;right:-20px;top:-20px;font-family:inherit;font-size:200px;font-weight:800;color:var(--dim);opacity:.55;user-select:none;line-height:1;pointer-events:none;letter-spacing:-8px}
+.page-header-main{position:relative;z-index:1;display:grid;gap:12px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--b);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.eyebrow::before{content:'';width:36px;height:1px;background:var(--b)}
+.page-header h1{font-family:inherit;font-size:clamp(28px,3.6vw,48px);font-weight:800;letter-spacing:-2px;line-height:1.1;max-width:700px}
+.lead{font-size:14px;color:var(--muted);max-width:640px;line-height:1.9}
+.header-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.header-badges span{padding:5px 10px;border:1px solid var(--border);background:rgba(255,255,255,.75);border-radius:999px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px}
+.page-intro{margin-top:18px;display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.intro-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.intro-meta-card{padding:16px 18px;border:1px solid var(--border);background:var(--s1);border-radius:14px}
+.intro-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--b);margin-bottom:8px}
+.intro-body{font-size:13px;color:var(--muted);line-height:1.8}
+.container{max-width:920px;margin:0 auto;padding:0 48px 100px}
+.page-summary,.page-actions,.knowledge-strip,.provider-quick{border:1px solid var(--border);background:var(--s1);margin-top:28px}
+.page-summary{padding:22px 24px}
+.summary-kicker,.actions-kicker,.strip-kicker,.provider-kicker{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.summary-kicker,.strip-kicker{color:var(--b)}
+.actions-kicker{color:var(--g)}
+.provider-kicker{color:var(--o)}
+.summary-grid,.actions-grid,.strip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.summary-card,.action-card,.strip-card{background:var(--s2);border:1px solid var(--border);padding:16px}
+.summary-card-title,.action-card-title,.strip-card-title{font-family:inherit;font-size:17px;font-weight:800;margin-bottom:8px}
+.summary-card-body,.action-card-body,.strip-card-body{font-size:13px;color:var(--muted);line-height:1.9}
+.info-rail{margin-top:28px;padding:18px 20px;border:1px solid var(--border);background:var(--s1);display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.info-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--b);text-transform:uppercase;margin-bottom:6px}
+.info-body{font-size:13px;color:var(--muted)}
+.provider-quick{padding:20px 24px}
+.provider-code{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:2.1;color:var(--muted)}
+.provider-code .dim{color:#888780}
+.provider-code .hi{color:var(--y)}
+.container.compact-bottom{padding-top:0}
+.concept{margin-top:76px}
+.c-header{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.c-num{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;padding:3px 10px;border-radius:3px;white-space:nowrap;background:rgba(24,95,165,.08);color:var(--b);border:1px solid rgba(24,95,165,.22)}
+.c-title{font-family:inherit;font-size:21px;font-weight:800;letter-spacing:-.5px}
+.c-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-left:auto}
+.prose{font-size:14px;color:var(--muted);line-height:2;margin-bottom:20px}
+.prose strong{color:var(--text);font-weight:600}
+.prose em{color:var(--y);font-style:normal}
+.callout{padding:16px 20px;margin:20px 0;border-left:3px solid;font-size:13.5px;line-height:1.95}
+.cy{border-color:var(--y);color:#8a3c16;background:rgba(242,100,25,.08)}
+.cb{border-color:var(--b);color:#185FA5;background:rgba(24,95,165,.06)}
+.cg{border-color:var(--g);color:#3B6D11;background:rgba(59,109,17,.08)}
+.cr{border-color:var(--r);color:#A32D2D;background:rgba(163,45,45,.06)}
+.cp{border-color:var(--p);color:#8a5a00;background:rgba(138,90,0,.08)}
+.step-row{display:flex;gap:14px;margin-bottom:24px;align-items:flex-start}
+.step-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--b);background:rgba(24,95,165,.08);border:1px solid rgba(24,95,165,.22);padding:4px 10px;border-radius:3px;white-space:nowrap;margin-top:2px;flex-shrink:0}
+.step-ny{color:var(--y)!important;background:rgba(242,100,25,.08)!important;border-color:rgba(242,100,25,.22)!important}
+.step-ng{color:var(--g)!important;background:rgba(59,109,17,.08)!important;border-color:rgba(59,109,17,.22)!important}
+.step-no{color:var(--o)!important;background:rgba(242,100,25,.08)!important;border-color:rgba(242,100,25,.22)!important}
+.step-content{flex:1}
+.step-title{font-family:inherit;font-size:15px;font-weight:800;margin-bottom:7px}
+.step-body{font-size:13.5px;color:var(--muted);line-height:1.95}
+.step-body strong{color:var(--text)}
+.diagram-frame{background:var(--s1);border:1px solid var(--border);margin:24px 0;overflow:hidden}
+.diagram-label{padding:10px 20px;background:var(--s2);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.diagram-body{padding:24px;display:flex;justify-content:center;overflow-x:auto}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin:20px 0}
+@media(max-width:640px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{background:var(--s1);border:1px solid var(--border);padding:20px}
+.compare-card::before{content:'';display:block;height:2px;margin-bottom:14px}
+.cc-bad::before{background:var(--r)} .cc-good::before{background:var(--g)}
+.compare-title{font-family:inherit;font-size:14px;font-weight:800;margin-bottom:10px}
+.compare-body{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);line-height:1.9}
+.cc-bad .compare-title{color:var(--r)} .cc-good .compare-title{color:var(--g)}
+.summary-box{background:var(--s1);border:1px solid var(--border);padding:28px;margin-top:32px}
+.summary-title{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--b);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+.summary-chain{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);line-height:2.2;white-space:pre-wrap}
+.sc-y{color:var(--y)} .sc-b{color:var(--b)} .sc-g{color:var(--g)} .sc-p{color:var(--p)} .sc-o{color:var(--o)}
+.timeline{display:flex;flex-direction:column}
+.tl-item{display:grid;grid-template-columns:80px 1fr;position:relative}
+.tl-item::before{content:'';position:absolute;left:79px;top:32px;bottom:-10px;width:1px;background:var(--border)}
+.tl-item:last-child::before{display:none}
+.tl-year{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--o);text-align:right;padding-top:10px}
+.tl-dot{position:absolute;left:72px;top:14px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid var(--o);z-index:1}
+.tl-body{padding:6px 0 32px 24px}
+.tl-person{font-family:inherit;font-size:14px;font-weight:800;margin-bottom:6px}
+.tl-desc{font-size:13px;color:var(--muted);line-height:1.95}
+.tl-desc strong{color:var(--text)}
+.px-demo{background:var(--s2);border:1px solid var(--border);padding:18px 22px;margin:20px 0}
+.px-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.px-row:last-child{margin-bottom:0}
+.px-swatch{width:28px;height:28px;border-radius:3px;flex-shrink:0;border:1px solid var(--border2)}
+.px-nums{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.px-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text)}
+.walls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin:20px 0}
+@media(max-width:720px){.walls{grid-template-columns:1fr}}
+.wall-card{background:var(--s1);border:1px solid var(--border);padding:18px 20px;position:relative;overflow:hidden}
+.wall-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--r)}
+.wall-num{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--r);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.wall-name{font-family:inherit;font-size:14px;font-weight:800;margin-bottom:8px;color:var(--r)}
+.wall-body{font-size:12.5px;color:var(--muted);line-height:1.9}
+.ptable{width:100%;border-collapse:collapse;margin-top:20px}
+.ptable th{text-align:left;padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.ptable td{padding:11px 14px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:11px;vertical-align:top;line-height:1.6}
+.ptable tr:last-child td{border-bottom:none}
+.pt-r{color:var(--y);font-weight:500} .pt-n{color:var(--text);font-weight:500} .pt-f{color:var(--g)} .pt-m{color:var(--muted)}
+code{font-family:'JetBrains Mono',monospace;font-size:12px;padding:2px 6px;background:var(--s2);border:1px solid var(--border);border-radius:3px;color:var(--y)}
+.word2vec-demo{margin:16px 0;background:var(--s2);border:1px solid var(--border);padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--text);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.w2v-op{color:var(--muted);font-size:13px} .w2v-eq{color:var(--muted)} .w2v-res{color:var(--y);font-weight:500}
+.w2v-note{font-size:12px;color:var(--muted);line-height:1.8;margin-top:10px;display:block}
+@media(max-width:768px){.page-header,.container{padding-left:20px;padding-right:20px}.page-intro,.intro-meta-grid{grid-template-columns:1fr}.site-nav-inner,.sub-nav-inner{padding-left:20px;padding-right:20px}.c-sub{display:none}.tl-item{grid-template-columns:56px 1fr}}
+</style>
+</head>
+<body>
+
+<div class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">RAG Docs</a>
+    <div class="site-nav-links">
+      <a href="index.html" class="site-nav-link">首页</a>
+      <a href="00_课程路线图.html" class="site-nav-link current">系统学习</a>
+      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="ai-knowledge-hub.html" class="site-nav-link">快速回查</a>
+      <a href="rag-5d.html" class="site-nav-link">讲解 / 面试</a>
+      <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
+    </div>
+    <a href="index.html" class="site-nav-home">返回首页</a>
+  </div>
+</div>
+
+<div class="sub-nav">
+  <div class="sub-nav-inner">
+    <span class="sub-nav-label">当前页 · 概念手册</span>
+    <div class="sub-nav-links">
+      <a href="#problem" class="sub-nav-link">计算机与数字</a>
+      <a href="#vector" class="sub-nav-link">什么是向量</a>
+      <a href="#dim" class="sub-nav-link">维度的真相</a>
+      <a href="#embed" class="sub-nav-link">文本→向量</a>
+      <a href="#history" class="sub-nav-link">谁发明的</a>
+      <a href="#cosine" class="sub-nav-link">为什么余弦</a>
+    </div>
+  </div>
+</div>
+
+<section class="page-header">
+  <div class="page-header-main">
+    <div class="eyebrow">Concept Handbook / Intuition First</div>
+    <h1>"把文本变成向量"<br>背后发生了什么</h1>
+    <p class="lead">这页不跳过任何关键前因，专门解释“文本为什么能表示成向量”“维度到底是什么”“为什么语义检索常用余弦相似度”。</p>
+    <div class="header-badges">
+      <span>Embedding 直觉</span>
+      <span>向量空间</span>
+      <span>余弦相似度</span>
+      <span>小白友好</span>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+<section class="page-intro">
+  <div class="page-role">
+    <strong>这页负责概念直觉，不负责工程调优。</strong> 如果你现在想解决 badcase、评估指标或方案边界，请回到 <a href="index.html">总站首页</a> 后进入 <a href="03_工程方法论手册.html">工程手册</a>。
+  </div>
+  <div class="intro-meta-grid">
+    <article class="intro-meta-card">
+      <div class="intro-label">适合任务</div>
+      <div class="intro-body">补齐 embedding、向量、维度和余弦的底层直觉，给后面的代码阅读打基础。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">前置阅读</div>
+      <div class="intro-body"><a href="00_课程路线图.html">课程路线图</a>，先知道这页位于整体学习链路里的什么位置。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">下一步</div>
+      <div class="intro-body"><a href="02_代码讲解_V1V2.html#v1">去看 V1 代码讲解</a> · <a href="ai-knowledge-hub.html">回快速回查</a></div>
+    </article>
+  </div>
+</section>
+<section class="page-summary">
+  <div class="summary-kicker">Page Summary</div>
+  <div class="summary-grid">
+    <article class="summary-card">
+      <div class="summary-card-title">这页解决什么</div>
+      <div class="summary-card-body">解释“文本为什么能变成向量”，并把余弦相似度和语义检索连接成一条完整因果链。</div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-card-title">必须记住的结论</div>
+      <div class="summary-card-body">向量不是标签而是语义空间中的方向；余弦更适合比较主题一致而长度不同的文本。</div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-card-title">读完后的动作</div>
+      <div class="summary-card-body">去看 V1 代码讲解，然后运行最小 RAG 循环，观察 query 和文档的相似度排序。</div>
+    </article>
+  </div>
+</section>
+
+<section class="info-rail">
+  <div>
+    <div class="info-label">适合阶段</div>
+    <div class="info-body">开始跑第一份代码前；需要补齐 embedding / 向量 / 余弦的底层直觉时。</div>
+  </div>
+  <div>
+    <div class="info-label">相关代码</div>
+    <div class="info-body">对应 `demo/code/01_v1_最小RAG循环.py` 的 embedding 和 cosine 检索部分。</div>
+  </div>
+  <div>
+    <div class="info-label">前置 / 下一步</div>
+    <div class="info-body"><a href="00_课程路线图.html">返回课程路线图</a> · <a href="02_代码讲解_V1V2.html#v1">去看 V1 代码讲解</a> · <a href="ai-knowledge-hub.html">查阅索引</a></div>
+  </div>
+</section>
+
+<section class="knowledge-strip">
+  <div class="strip-kicker">Knowledge Units</div>
+  <div class="strip-grid">
+    <article class="strip-card">
+      <div class="strip-card-title">Embedding</div>
+      <div class="strip-card-body">把语义转成向量，使“语义相近”可以变成“方向接近”。这是一切语义检索成立的起点。</div>
+    </article>
+    <article class="strip-card">
+      <div class="strip-card-title">余弦相似度</div>
+      <div class="strip-card-body">它比较的是方向而不是长度，所以更适合比较长短不同但主题接近的文本。</div>
+    </article>
+    <article class="strip-card">
+      <div class="strip-card-title">实践边界</div>
+      <div class="strip-card-body">如果还没理解“为什么用余弦”，先不要急着看模型榜单或向量库选型。</div>
+    </article>
+  </div>
+</section>
+
+<!-- 01 计算机与数字 -->
+<div id="problem" class="concept">
+  <div class="c-header">
+    <span class="c-num">01</span>
+    <span class="c-title">计算机为什么"只能做数学"</span>
+    <span class="c-sub">从手机联系人开始</span>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n step-ny">第一步</span>
+    <div class="step-content">
+      <div class="step-title">你手机里的"张三"，手机认识他吗</div>
+      <div class="step-body">
+        你手机里存了 500 个联系人。手机认识"张三"这个人吗？<br><br>
+        <strong>不认识。</strong> 它只是记住了一串数字：<code>13812345678</code>。<br><br>
+        你在屏幕上看到的"张三"，只是手机把那串数字"翻译"给你看的显示效果。
+        手机从来不理解"张三是谁"——它只存数字，只处理数字。<br><br>
+        这不只是手机的限制，而是<strong>所有计算机的本质</strong>。
+      </div>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n step-ny">第二步</span>
+    <div class="step-content">
+      <div class="step-title">你现在看的这段文字，也是数字</div>
+      <div class="step-body">
+        计算机的底层只有 0 和 1。所有东西，最终都是数字：<br><br>
+        你看的视频 → 每一帧都是像素颜色值（一堆数字）<br>
+        你听的音乐 → 声波振幅的采样值（一堆数字）<br>
+        你发的消息 → 每个汉字都有编号，"你"是 <code>20320</code>，"好"是 <code>22909</code><br><br>
+        <strong>计算机处理的一切，最终都是数字的加减乘除。</strong><br>
+        它从来不"看"，不"听"，不"理解"——只是算。
+      </div>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n step-ny">第三步</span>
+    <div class="step-content">
+      <div class="step-title">那"意思"呢？</div>
+      <div class="step-body">
+        "猫很可爱"和"小猫咪特别萌"，<strong>你知道这两句话意思一样</strong>。<br><br>
+        但在计算机眼里，这是两串完全不同的汉字编号，没有任何联系。
+        让计算机比较这两句话"有多像"，它只会傻掉——
+        没有规则告诉它"可爱"和"萌"是同一个意思。<br><br>
+        <strong>核心矛盾：我们需要计算机理解语义，但计算机只会处理数字。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout cy">
+    解决思路自然浮现：<strong>把"意思"也变成数字。</strong><br>
+    而且不是随便变——要让数字之间的关系，能反映语义之间的关系。<br>
+    意思相近的文字 → 变成的数字要"方向相近"。这就是向量要做的事。
+  </div>
+
+  <div class="step-row" style="margin-top:20px">
+    <span class="step-n step-ny">为什么</span>
+    <div class="step-content">
+      <div class="step-title">随便编号为什么不行</div>
+      <div class="step-body">
+        把"猫"编号为 <code>1</code>，"狗"编号为 <code>2</code>，"量子力学"编号为 <code>3</code>——<br><br>
+        计算机会认为猫和狗的差距（1）等于狗和量子力学的差距（1）。
+        但现实是猫和狗非常相关，猫和量子力学几乎没关系。<br><br>
+        <strong>普通编号只是给事物贴标签，不能表达它们之间的关系。</strong>
+        需要一种更好的数字表示：相关的事物在数字层面也"挨在一起"。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 02 什么是向量 -->
+<div id="vector" class="concept">
+  <div class="c-header">
+    <span class="c-num">02</span>
+    <span class="c-title">什么是向量</span>
+    <span class="c-sub">食物坐标系 → 语义空间</span>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n">直觉</span>
+    <div class="step-content">
+      <div class="step-title">用两个维度描述食物</div>
+      <div class="step-body">
+        用"甜度"和"辣度"两个维度，可以在坐标图上定位任何食物：<br><br>
+        番茄：甜度中等，辣度几乎为零 → <code>[5, 0]</code><br>
+        糖醋排骨：甜度高，辣度低 → <code>[8, 1]</code><br>
+        辣椒：甜度低，辣度极高 → <code>[1, 9]</code><br><br>
+        画在坐标图上，<strong>每种食物都是图上的一个点（更精确说是从原点出发的一个方向）</strong>。
+        番茄和糖醋排骨挨得很近，因为都偏甜。辣椒在另一个角落。
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-frame">
+    <div class="diagram-label">图示：方向相近 = 语义相近（夹角决定相似度）</div>
+    <div class="diagram-body">
+      <svg viewBox="0 0 560 290" width="560" height="290" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ah0" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#32323f"/></marker>
+          <marker id="ah-y" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#e8ff7c"/></marker>
+          <marker id="ah-g" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#7cffb2"/></marker>
+          <marker id="ah-r" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ff8a7c"/></marker>
+        </defs>
+        <line x1="50" y1="240" x2="310" y2="240" stroke="#32323f" stroke-width="1.5" marker-end="url(#ah0)"/>
+        <line x1="50" y1="240" x2="50" y2="30" stroke="#32323f" stroke-width="1.5" marker-end="url(#ah0)"/>
+        <text x="315" y="244" fill="#505070" font-family="JetBrains Mono" font-size="11">甜度 →</text>
+        <text x="8" y="26" fill="#505070" font-family="JetBrains Mono" font-size="11">辣度</text>
+        <text x="44" y="255" fill="#505070" font-family="JetBrains Mono" font-size="10">0</text>
+        <!-- grid dots -->
+        <g fill="#1d1d26"><circle cx="110" cy="200" r="2"/><circle cx="170" cy="200" r="2"/><circle cx="230" cy="200" r="2"/><circle cx="290" cy="200" r="2"/><circle cx="110" cy="160" r="2"/><circle cx="170" cy="160" r="2"/><circle cx="230" cy="160" r="2"/><circle cx="290" cy="160" r="2"/><circle cx="110" cy="120" r="2"/><circle cx="170" cy="120" r="2"/><circle cx="230" cy="120" r="2"/><circle cx="290" cy="120" r="2"/><circle cx="110" cy="80" r="2"/><circle cx="170" cy="80" r="2"/><circle cx="230" cy="80" r="2"/><circle cx="290" cy="80" r="2"/></g>
+        <!-- 番茄 -->
+        <line x1="50" y1="240" x2="270" y2="222" stroke="#e8ff7c" stroke-width="2.5" marker-end="url(#ah-y)"/>
+        <text x="274" y="220" fill="#e8ff7c" font-family="JetBrains Mono" font-size="12">番茄</text>
+        <!-- 糖醋排骨 -->
+        <line x1="50" y1="240" x2="230" y2="200" stroke="#7cffb2" stroke-width="2.5" marker-end="url(#ah-g)"/>
+        <text x="234" y="198" fill="#7cffb2" font-family="JetBrains Mono" font-size="12">糖醋排骨</text>
+        <!-- 辣椒 -->
+        <line x1="50" y1="240" x2="86" y2="58" stroke="#ff8a7c" stroke-width="2.5" marker-end="url(#ah-r)"/>
+        <text x="46" y="54" fill="#ff8a7c" font-family="JetBrains Mono" font-size="12">辣椒</text>
+        <!-- angle arc 番茄 vs 糖醋排骨 small -->
+        <path d="M 94,237 A 46,46 0 0,1 99,228" fill="none" stroke="#686880" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="103" y="222" fill="#686880" font-family="JetBrains Mono" font-size="10">θ小</text>
+        <!-- angle arc 番茄 vs 辣椒 large -->
+        <path d="M 67,236 A 30,30 0 0,1 62,220" fill="none" stroke="#686880" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="22" y="212" fill="#686880" font-family="JetBrains Mono" font-size="10">θ大</text>
+        <!-- annotation box -->
+        <rect x="350" y="50" width="192" height="130" rx="4" fill="#17171e" stroke="#222230"/>
+        <text x="360" y="74" fill="#686880" font-family="JetBrains Mono" font-size="10">关键：看方向（夹角），不看距离</text>
+        <text x="360" y="100" fill="#e8ff7c" font-family="JetBrains Mono" font-size="11">θ小 → 语义相近</text>
+        <text x="360" y="116" fill="#686880" font-family="JetBrains Mono" font-size="10">番茄 ↔ 糖醋排骨 ≈ 0.97</text>
+        <text x="360" y="142" fill="#ff8a7c" font-family="JetBrains Mono" font-size="11">θ大 → 语义无关</text>
+        <text x="360" y="158" fill="#686880" font-family="JetBrains Mono" font-size="10">番茄 ↔ 辣椒 ≈ 0.11</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="callout cb">
+    向量就是：<strong>从原点出发的一条有方向的线，用一组数字表示坐标。</strong><br>
+    两条线的夹角越小，方向越相近——语义越相近。<br>
+    余弦相似度量的正是这个夹角有多小（cos 0° = 1，cos 90° = 0）。
+  </div>
+
+  <p class="prose">
+    真实 Embedding 不是 2 维，而是 <strong>1024 维</strong>（BGE-M3）或 <strong>1536 维</strong>（text-embedding-3-small）。
+    道理完全一样，只是维度更多，能捕捉更复杂的语义关系。
+    下一节专门解释"1024 个维度，每个是什么意思"——这里有一个常见误解需要纠正。
+  </p>
+</div>
+
+<!-- 03 维度的真正含义 -->
+<div id="dim" class="concept">
+  <div class="c-header">
+    <span class="c-num">03</span>
+    <span class="c-title">1024 个维度，每个代表什么意思</span>
+    <span class="c-sub">最容易被误解的地方——用 RGB 颜色来理解</span>
+  </div>
+
+  <div class="callout cr">
+    先纠正一个几乎所有人第一次都会犯的误解：<br>
+    <strong>不是每个维度单独代表"动物相关性""甜度""是否有生命"这类可命名的特征。</strong><br>
+    单个维度对人类来说完全不可读，没有名字，没有独立意义。
+  </div>
+
+  <div class="step-row">
+    <span class="step-n">类比</span>
+    <div class="step-content">
+      <div class="step-title">彩色照片是怎么存的——RGB 三个数字</div>
+      <div class="step-body">
+        每个像素存三个数字：红 R、绿 G、蓝 B。<br>
+        <strong>没有任何一个数字单独"是"某种颜色。是三个数字的组合决定了颜色。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-demo">
+    <div class="px-row">
+      <div class="px-swatch" style="background:rgb(255,0,0)"></div>
+      <span class="px-nums">R=255, G=0,   B=0  </span>
+      <span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px">→</span>
+      <span class="px-label">红色&nbsp;&nbsp;&nbsp;（只有 R 有值）</span>
+    </div>
+    <div class="px-row">
+      <div class="px-swatch" style="background:rgb(255,255,0)"></div>
+      <span class="px-nums">R=255, G=255, B=0  </span>
+      <span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px">→</span>
+      <span class="px-label">黄色&nbsp;&nbsp;&nbsp;（R 和 G 都有值，两者合力）</span>
+    </div>
+    <div class="px-row">
+      <div class="px-swatch" style="background:rgb(70,130,180)"></div>
+      <span class="px-nums">R=70,  G=130, B=180</span>
+      <span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px">→</span>
+      <span class="px-label">钢蓝色（三个数字合力，任何单个数字单独没意义）</span>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n">扩展</span>
+    <div class="step-content">
+      <div class="step-title">Embedding 向量做的是同一件事，从 3 维扩到 1024 维</div>
+      <div class="step-body">
+        "猫" 的向量：<code>[0.023, -0.018, 0.045, 0.012, ... (共1024个数字)]</code><br><br>
+        没有哪个数字单独"是"动物相关性。<br>
+        没有哪个数字单独"是"可爱程度。<br>
+        没有任何一个维度有名字。<br><br>
+        <strong>是 1024 个数字作为整体，在高维空间里的方向，决定了语义。</strong><br><br>
+        研究者偶尔发现某几个维度大致对应"性别"或"时态"这类概念，
+        但这是偶然观察到的，不是设计出来的。神经网络自己找到这种表示方式，
+        这些维度对人类不可读，是黑盒。
+      </div>
+    </div>
+  </div>
+
+  <div class="callout cg">
+    <strong>更准确的说法：1024 个数字合在一起，是这段文字语义的"数字指纹"。</strong><br>
+    就像一张照片里每个像素的 RGB 组合在一起才是那张照片，<br>
+    向量的 1024 个数字组合在一起才是那段文字的语义。<br>
+    任何单个数字单独拿出来，都毫无意义。
+  </div>
+</div>
+
+<!-- 04 文本是怎么变成向量的 -->
+<div id="embed" class="concept">
+  <div class="c-header">
+    <span class="c-num">04</span>
+    <span class="c-title">"变成向量"具体是怎么发生的</span>
+    <span class="c-sub">从语言学假设到神经网络训练</span>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n">根源</span>
+    <div class="step-content">
+      <div class="step-title">一个关键假设：意思由上下文决定</div>
+      <div class="step-body">
+        1954 年，语言学家 Zellig Harris 提出了一个假设，后来成为所有词向量技术的根基：<br><br>
+        <strong>"一个词的意思，可以从它经常出现的上下文来理解。"</strong><br><br>
+        "猫"经常和"养猫""猫粮""猫爪""可爱"一起出现。<br>
+        "狗"经常和"养狗""狗粮""狗爪""可爱"一起出现。<br>
+        两者上下文高度重叠 → 意思相近。<br>
+        "量子力学"的上下文是"波函数""叠加态""薛定谔"——和"猫"几乎不重叠。
+      </div>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n">训练</span>
+    <div class="step-content">
+      <div class="step-title">神经网络从数十亿条文字里学这个关系</div>
+      <div class="step-body">
+        Embedding 模型是一个神经网络，在<strong>数十亿条文本</strong>上训练。<br><br>
+        训练任务的本质是："给你一段话，预测哪些段话和它相关。"<br><br>
+        通过反复调整参数，让相关文本的向量越来越近，不相关的越来越远。
+        训练完成后固定下来——你喂给它一段文字，它输出 1024 维的语义指纹。
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-frame">
+    <div class="diagram-label">图示：文本输入 → Embedding 模型 → 语义向量输出</div>
+    <div class="diagram-body">
+      <svg viewBox="0 0 620 130" width="620" height="130" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="ah3" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#32323f"/></marker></defs>
+        <rect x="10" y="35" width="128" height="60" rx="5" fill="#17171e" stroke="#32323f" stroke-width="1.5"/>
+        <text x="74" y="61" text-anchor="middle" fill="#e8e8f0" font-family="JetBrains Mono" font-size="12">"猫很可爱"</text>
+        <text x="74" y="80" text-anchor="middle" fill="#686880" font-family="JetBrains Mono" font-size="10">任意文字输入</text>
+        <line x1="140" y1="65" x2="166" y2="65" stroke="#32323f" stroke-width="1.5" marker-end="url(#ah3)"/>
+        <rect x="168" y="18" width="158" height="94" rx="6" fill="#1d1d26" stroke="#32323f" stroke-width="1.5"/>
+        <text x="247" y="52" text-anchor="middle" fill="#7cf4ff" font-family="JetBrains Mono" font-size="11">Embedding Model</text>
+        <text x="247" y="70" text-anchor="middle" fill="#505070" font-family="JetBrains Mono" font-size="10">BGE-M3 / text-emb-3</text>
+        <text x="247" y="88" text-anchor="middle" fill="#505070" font-family="JetBrains Mono" font-size="10">数十亿文本训练而成</text>
+        <text x="247" y="103" text-anchor="middle" fill="#686880" font-family="JetBrains Mono" font-size="9">1024维 / 1536维</text>
+        <line x1="328" y1="65" x2="354" y2="65" stroke="#32323f" stroke-width="1.5" marker-end="url(#ah3)"/>
+        <text x="341" y="56" text-anchor="middle" fill="#686880" font-family="JetBrains Mono" font-size="9">压缩</text>
+        <rect x="356" y="18" width="254" height="94" rx="5" fill="#17171e" stroke="#32323f" stroke-width="1.5"/>
+        <text x="483" y="42" text-anchor="middle" fill="#7cffb2" font-family="JetBrains Mono" font-size="11">输出向量 (1024维)</text>
+        <text x="483" y="60" text-anchor="middle" fill="#505070" font-family="JetBrains Mono" font-size="10">[ 0.023, -0.018, 0.045, 0.012,</text>
+        <text x="483" y="76" text-anchor="middle" fill="#505070" font-family="JetBrains Mono" font-size="10">  0.031, -0.009, ... 共1024个 ]</text>
+        <text x="483" y="96" text-anchor="middle" fill="#686880" font-family="JetBrains Mono" font-size="10">固定长度的语义指纹</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- 05 谁发明的 -->
+<div id="history" class="concept">
+  <div class="c-header">
+    <span class="c-num">05</span>
+    <span class="c-title">这是谁发明的，怎么想到的</span>
+    <span class="c-sub">170 年的接力：数学 → 语言学 → AI</span>
+  </div>
+
+  <p class="prose">向量表示语义，不是一个人想到的，是三个时代接力的结果。</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-year">1843</div>
+      <div class="tl-dot"></div>
+      <div class="tl-body">
+        <div class="tl-person" style="color:var(--o)">哈密顿（Hamilton）· 爱尔兰数学家</div>
+        <div class="tl-desc">
+          研究怎么用数字描述三维空间中的旋转，发展出"向量"的数学概念。
+          之后格拉斯曼系统化，吉布斯和亥维赛变成了今天物理课本里的样子。<br><br>
+          <strong>这时候向量只是"描述空间方向和长度的工具"，跟语言没有任何关系。</strong>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">1954</div>
+      <div class="tl-dot"></div>
+      <div class="tl-body">
+        <div class="tl-person" style="color:var(--o)">Zellig Harris · 美国语言学家</div>
+        <div class="tl-desc">
+          提出"分布式语义假设"：<strong>"一个词的意思，由它经常出现的上下文决定。"</strong><br><br>
+          这是纯语言学假设，不是技术。但它埋下了几十年后所有词向量技术的种子。
+          没有这个假设，就没有后面的一切。
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">2013 ★</div>
+      <div class="tl-dot" style="border-color:var(--y);background:var(--bg)"></div>
+      <div class="tl-body">
+        <div class="tl-person" style="color:var(--y)">Tomas Mikolov · 谷歌研究员 · 真正的转折点</div>
+        <div class="tl-desc">
+          发表论文，提出 <strong>Word2Vec</strong>。<br><br>
+          他用神经网络训练一个任务："给你一个词，预测它周围会出现什么词"。
+          训练完之后，他没有关注输出，而是提取网络内部学到的参数——
+          发现这些参数本身就是高质量的语义向量。<br><br>
+          他展示了一个震惊所有人的例子：
+        </div>
+        <div class="word2vec-demo">
+          国王 <span class="w2v-op">−</span> 男人 <span class="w2v-op">+</span> 女人 <span class="w2v-eq">=</span> <span class="w2v-res">皇后</span>
+          <span class="w2v-note">向量做加减法，结果在语义上完全正确。<br>这说明向量真的学到了语义关系，不是随机数字。整个 AI 学界都傻了。</span>
+        </div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">2018+</div>
+      <div class="tl-dot"></div>
+      <div class="tl-body">
+        <div class="tl-person" style="color:var(--o)">BERT / GPT 时代 → 句子级 Embedding</div>
+        <div class="tl-desc">
+          Word2Vec 只能给单个词生成向量。BERT 等模型开始生成整句话、整段文章的向量，
+          同一个词在不同语境里有不同的向量（"苹果手机"里的"苹果"和"苹果树"里的不一样）。<br><br>
+          <strong>RAG 用的 BGE-M3、text-embedding-3，就是这条路走到今天的结果。</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout cp">
+    <strong>一句话总结：</strong><br>
+    数学家发明了向量来描述空间（1843）<br>
+    → 语言学家发现意思可以由上下文定义（1954）<br>
+    → Mikolov 用神经网络把两件事合在一起，"国王−男人+女人=皇后"（2013）<br>
+    → 今天的 Embedding 模型继承了这一切
+  </div>
+</div>
+
+<!-- 06 维度多大合适 -->
+<div id="dimsize" class="concept">
+  <div class="c-header">
+    <span class="c-num">06</span>
+    <span class="c-title">1024 维能装多少词，维度能无限大吗</span>
+    <span class="c-sub">容量不是问题，三堵墙才是</span>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n step-ng">容量</span>
+    <div class="step-content">
+      <div class="step-title">1024 维的空间，远比你想象的大</div>
+      <div class="step-body">
+        这个问题其实问反了——不是"能装多少词"，而是"空间够不够用"。<br><br>
+        类比：地球表面用经度和纬度<strong>两个维度</strong>就能定位任意一个点。
+        全球 80 亿人每人一个独立地址，两维就装得下，绰绰有余。
+        不是因为地球只有 80 亿个格子，而是坐标是连续的，理论上有无限个位置。<br><br>
+        1024 维浮点数空间，能放下的不同位置数量，比宇宙里所有原子数量还大几百个数量级。<br><br>
+        <strong>装下人类所有语言的所有词和句子，绰绰有余。</strong><br>
+        真正决定质量的不是维度够不够大，而是训练数据够不够多——
+        语义相近的内容有没有被放到真正相近的位置上。
+      </div>
+    </div>
+  </div>
+
+  <div class="callout cy">
+    BGE-M3 用 1024 维，在中文场景里经常比 text-embedding-3-large（3072维）还好。<br>
+    <strong>维度多不代表理解力强。瓶颈永远是训练质量，不是空间大小。</strong>
+  </div>
+
+  <p class="prose" style="margin-top:28px;margin-bottom:12px">那维度能无限加吗？不能。有三堵墙：</p>
+
+  <div class="walls">
+    <div class="wall-card">
+      <div class="wall-num">第一堵墙</div>
+      <div class="wall-name">维度诅咒</div>
+      <div class="wall-body">
+        数学上已经证明的现象：<strong>维度越高，"近"和"远"的区别越模糊。</strong><br><br>
+        在二维平面，邻居和远邻差别明显。但维度极高时，所有点之间的距离趋向相等——
+        没什么东西明显更近或更远，"最相似"和"完全无关"越来越难区分。<br><br>
+        就像站在超大房间的任意角落，到其他所有角落距离都差不多，"邻居"这个概念失去意义。
+      </div>
+    </div>
+    <div class="wall-card">
+      <div class="wall-num">第二堵墙</div>
+      <div class="wall-name">数据不够填满</div>
+      <div class="wall-body">
+        维度越高，需要的训练样本越多才能有效覆盖整个空间。<br><br>
+        1 亿条训练语料，能有效填满的语义空间大概只需要几百到几千维。
+        再加维度，大量空间没有样本覆盖，模型不知道那些方向该放什么——
+        <strong>等于浪费，反而引入噪声。</strong>
+      </div>
+    </div>
+    <div class="wall-card">
+      <div class="wall-num">第三堵墙</div>
+      <div class="wall-name">成本线性增长</div>
+      <div class="wall-body">
+        每次检索都要算余弦相似度。1024 维算一次，3072 维要贵 3 倍。<br><br>
+        如果有 1000 万个文档，每次查询和它们全部算一遍——
+        维度翻 3 倍，系统慢 3 倍，存储费用翻 3 倍。<br><br>
+        <strong>成本是工程现实，不能无视。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="summary-box">
+    <div class="summary-title">维度三问 · 总结</div>
+    <div class="summary-chain"><span class="sc-p">问：每个维度代表什么特征？</span>
+  答：没有名字，不可读。1024个数字整体才有意义。
+      如同 RGB 三个数字整体决定颜色，单个数字单独没意义。
+
+<span class="sc-p">问：1024维能装多少词？</span>
+  答：问反了。空间容量远超需求。<span class="sc-g">瓶颈是训练质量，不是空间大小。</span>
+
+<span class="sc-p">问：维度可以无限大吗？</span>
+  答：不行。三堵墙：<span class="sc-y">维度诅咒</span>（太高近远难分）、
+      <span class="sc-y">数据不够填满</span>（浪费引入噪声）、<span class="sc-y">成本线性增长</span>。</div>
+  </div>
+</div>
+
+<!-- 07 为什么余弦 -->
+<div id="cosine" class="concept">
+  <div class="c-header">
+    <span class="c-num">07</span>
+    <span class="c-title">为什么用余弦相似度，不用欧氏距离</span>
+    <span class="c-sub">文本长度 ≠ 语义差异</span>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n">两种方式</span>
+    <div class="step-content">
+      <div class="step-title">各自在量什么</div>
+      <div class="step-body">
+        <strong>欧氏距离</strong>：两点之间的直线距离。量的是"你们离得多远"。<br><br>
+        <strong>余弦相似度</strong>：两向量夹角的余弦值。<em>完全不看距离</em>，只看角度——"你们指的方向有多接近"。<br>
+        夹角 0° → cos=1（完全相同方向）；夹角 90° → cos=0（垂直，无关）。
+      </div>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-n">问题</span>
+    <div class="step-content">
+      <div class="step-title">文本长度会影响向量模长，但不影响语义</div>
+      <div class="step-body">
+        "猫很可爱"（4个字）和"猫咪非常可爱，毛茸茸，爱睡觉，还会捉老鼠"（20个字），
+        语义几乎一样——都在说猫很可爱。<br><br>
+        但后者文字多，模型处理了更多 token，输出向量的<strong>模长（长度）更大</strong>。<br><br>
+        如果用欧氏距离，这两句话"距离"会很大，尽管语义几乎相同。
+        两篇主题完全不同但都很短的文章，欧氏距离反而可能更小——这不是我们要的。
+      </div>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-card cc-bad">
+      <div class="compare-title">❌ 欧氏距离</div>
+      <div class="compare-body">
+        公式：√Σ(aᵢ − bᵢ)²<br>
+        量的是：两点间的直线距离<br><br>
+        问题：文本越长 → 向量模长越大
+        → 欧氏距离越大<br>
+        即使语义完全相同也一样。<br><br>
+        一篇长文和一句短话说同一件事，
+        欧氏距离会"误判"为差距很大。
+      </div>
+    </div>
+    <div class="compare-card cc-good">
+      <div class="compare-title">✅ 余弦相似度</div>
+      <div class="compare-body">
+        公式：(A·B) / (|A| × |B|)<br>
+        量的是：两向量方向的夹角<br><br>
+        关键：分母 |A|×|B| 消除了模长影响。
+        不管文本长短，只要主题相同，
+        余弦相似度就会接近 1。<br><br>
+        直觉：两人指向同一方向，
+        不管走了多远，夹角为零。
+      </div>
+    </div>
+  </div>
+
+  <div class="summary-box">
+    <div class="summary-title">完整逻辑链 · 从零到余弦</div>
+    <div class="summary-chain"><span class="sc-y">01  计算机只处理数字，无法直接比较文字意思（手机只记号码，不认识张三）</span>
+    ↓ 需要把"意思"转化成数字
+<span class="sc-y">02  向量是"带方向的数字"，方向相近 = 语义相近（食物坐标系）</span>
+    ↓ 普通编号不能反映语义关系
+<span class="sc-y">03  1024维向量没有每个维度的名字，是整体决定语义（类比 RGB 颜色）</span>
+    ↓ 神经网络训练学会这种表示
+<span class="sc-y">04  分布式假设(1954) + Word2Vec(2013) = 现代 Embedding 技术的根基</span>
+    ↓ 维度太高会遇到维度诅咒 + 数据 + 成本三堵墙
+<span class="sc-y">05  "比较语义" = "比较向量方向"，但欧氏距离被文本长度干扰</span>
+    ↓ 余弦相似度的分母消除了模长影响，只看方向
+<span class="sc-g">✓  余弦相似度是 RAG 语义检索的正确工具</span></div>
+  </div>
+</div>
+
+<!-- 08 国内模型 -->
+<div id="provider" class="concept">
+  <div class="c-header">
+    <span class="c-num">08</span>
+    <span class="c-title">国内模型选型与快速接入</span>
+    <span class="c-sub">不依赖 OpenAI 的完整方案</span>
+  </div>
+
+  <div class="callout cb">
+    推荐方案（最省事）：<strong>硅基流动（SiliconFlow）</strong><br>
+    一个 key 同时提供 BGE-M3 embedding + Qwen chat，OpenAI 协议兼容，只改 base_url。有免费额度。
+  </div>
+
+  <table class="ptable">
+    <thead>
+      <tr><th>提供商</th><th>Embedding 模型</th><th>Chat 模型</th><th>协议</th><th>费用</th><th>适用</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="pt-r">硅基流动 ★</td><td class="pt-n">BAAI/bge-m3 (1024维)</td><td class="pt-n">Qwen2.5-7B</td><td class="pt-m">OpenAI兼容</td><td class="pt-f">有免费额度</td><td class="pt-m">课程首选</td></tr>
+      <tr><td class="pt-n">智谱 AI</td><td class="pt-n">embedding-3 (2048维)</td><td class="pt-n">GLM-4-Flash</td><td class="pt-m">原生SDK</td><td class="pt-f">Flash免费</td><td class="pt-m">中文强</td></tr>
+      <tr><td class="pt-n">通义千问</td><td class="pt-n">text-embedding-v3</td><td class="pt-n">Qwen-Plus</td><td class="pt-m">OpenAI兼容</td><td style="color:var(--o);font-family:'JetBrains Mono',monospace;font-size:11px">按量计费</td><td class="pt-m">企业稳定</td></tr>
+      <tr><td class="pt-n">DeepSeek</td><td style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px">❌ 无embedding</td><td class="pt-n">DeepSeek-Chat</td><td class="pt-m">OpenAI兼容</td><td class="pt-f">极低价格</td><td class="pt-m">配合硅基流动</td></tr>
+    </tbody>
+  </table>
+
+  <div class="provider-quick">
+    <div class="provider-kicker">快速接入（硅基流动 · 5 分钟跑通）</div>
+    <div class="provider-code">
+      <span class="dim"># 1. 安装</span><br>
+      pip install openai numpy<br><br>
+      <span class="dim"># 2. 注册并获取 key：https://siliconflow.cn</span><br>
+      export SILICONFLOW_API_KEY="sf-xxx"<br><br>
+      <span class="dim"># 3. 修改 demo/code/00_配置提供商_先改这个.py</span><br>
+      <span class="hi">PROVIDER = "siliconflow"</span><br><br>
+      <span class="dim"># 4. 验证连通性</span><br>
+      python demo/code/00_配置提供商_先改这个.py<br><br>
+      <span class="dim"># 5. 运行课程代码（无需其他改动）</span><br>
+      python demo/code/01_v1_最小RAG循环.py
+    </div>
+  </div>
+</div>
+
+</div>
+<div class="container compact-bottom">
+  <section class="page-actions">
+    <div class="actions-kicker">读完这一页后</div>
+    <div class="actions-grid">
+      <article class="action-card">
+        <div class="action-card-title">你现在应该会</div>
+        <div class="action-card-body">解释为什么语义检索需要 embedding，为什么相似度通常用余弦而不是欧氏距离。</div>
+      </article>
+      <article class="action-card">
+        <div class="action-card-title">马上做的实验</div>
+        <div class="action-card-body">运行 `demo/code/01_v1_最小RAG循环.py`，观察 query 和文档的相似度排序。</div>
+      </article>
+      <article class="action-card">
+        <div class="action-card-title">继续阅读</div>
+        <div class="action-card-body"><a href="02_代码讲解_V1V2.html#v1">代码讲解 V1</a> · <a href="rag-knowledge-map.html">知识地图</a> · <a href="ai-knowledge-hub.html">文档索引</a></div>
+      </article>
+    </div>
+  </section>
+</div>
+</body>
+</html>

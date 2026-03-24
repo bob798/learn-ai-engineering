@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知识快速习得方法论 · 5D框架</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+    background: #f5f4f0; color: #1a1a18;
+    min-height: 100vh; padding: 28px 16px 60px;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .header { margin-bottom: 28px; border-bottom: 0.5px solid #c8c7be; padding-bottom: 20px; }
+  .header h1 { font-size: 24px; font-weight: 500; letter-spacing: -.3px; margin-bottom: 6px; }
+  .header .tagline { font-size: 13px; color: #5f5e5a; line-height: 1.6; max-width: 560px; }
+  .header .tagline strong { color: #F26419; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; }
+  .tab {
+    padding: 6px 13px; font-size: 11px; border-radius: 6px; cursor: pointer;
+    color: #5f5e5a; border: 0.5px solid #c8c7be; background: #fff;
+    transition: all .15s; white-space: nowrap; font-weight: 400;
+  }
+  .tab.active { color: #fff; background: #F26419; border-color: #F26419; font-weight: 500; }
+  .tab:hover:not(.active) { background: #ece9e2; }
+
+  /* ── Panels ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Section label ── */
+  .sl {
+    font-size: 10px; font-weight: 500; letter-spacing: .08em;
+    text-transform: uppercase; color: #888780; margin: 16px 0 9px;
+  }
+  .sl:first-child { margin-top: 0; }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid #F26419; padding: 10px 14px;
+    background: #fff; border-radius: 0 8px 8px 0;
+    margin: 10px 0; font-size: 13px; color: #444441; line-height: 1.7;
+    border: 0.5px solid #e8e3da; border-left: 3px solid #F26419;
+  }
+  .callout strong { color: #1a1a18; }
+  .callout-blue {
+    border-left: 3px solid #3b8bd4; background: #e6f1fb;
+    border: 0.5px solid #b5d4f4; border-left: 3px solid #3b8bd4;
+    color: #042c53; padding: 10px 14px; border-radius: 0 8px 8px 0;
+    margin: 10px 0; font-size: 13px; line-height: 1.7;
+  }
+  .callout-blue strong { color: #0c447c; }
+
+  /* ── Card ── */
+  .card {
+    background: #fff; border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 10px; border: 0.5px solid #dedad4;
+  }
+  .card-t { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+  .card-b { font-size: 12px; color: #5f5e5a; line-height: 1.75; }
+
+  /* ── Code ── */
+  pre {
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 11px; background: #f1efe8;
+    border-radius: 7px; padding: 12px 14px;
+    border: 0.5px solid #c8c7be;
+    margin: 8px 0; line-height: 1.9;
+    overflow-x: auto; white-space: pre; color: #2c2c2a;
+  }
+  code { font-family: "SF Mono", monospace; font-size: 11px; background: #e8e6df; padding: 1px 5px; border-radius: 3px; color: #2c2c2a; }
+
+  /* ── Grid ── */
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 10px 0; }
+  @media (max-width: 580px) { .row { grid-template-columns: 1fr; } .row3 { grid-template-columns: 1fr; } }
+
+  /* ── Verdict boxes ── */
+  .gbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #97c459; background: #eaf3de; color: #173404; }
+  .rbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #f09595; background: #fcebeb; color: #501313; }
+  .obox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #EF9F27; background: #faeeda; color: #412402; }
+
+  /* ── Tag ── */
+  .tag {
+    display: inline-block; font-size: 10px; padding: 2px 7px;
+    border-radius: 4px; font-weight: 500;
+  }
+  .tag-o { background: #fef0e7; color: #B8440A; }
+  .tag-g { background: #eaf3de; color: #3b6d11; }
+  .tag-b { background: #e6f1fb; color: #185fa5; }
+  .tag-gray { background: #f1efe8; color: #5f5e5a; border: 0.5px solid #c8c7be; }
+
+  /* ── Step ── */
+  .step { display: flex; gap: 10px; margin-bottom: 9px; align-items: flex-start; }
+  .sn {
+    width: 24px; height: 24px; border-radius: 50%; background: #F26419;
+    color: #fff; font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .sb { flex: 1; font-size: 13px; color: #444441; line-height: 1.65; }
+  .sb strong { color: #1a1a18; }
+
+  /* ── Separator ── */
+  .sep { border: none; border-top: 0.5px solid #dedad4; margin: 16px 0; }
+
+  /* ── Big number ── */
+  .big-d { font-size: 36px; font-weight: 500; color: #F26419; line-height: 1; margin-bottom: 4px; }
+
+  /* ── Framework overview card ── */
+  .d-card {
+    background: #fff; border-radius: 12px; padding: 16px;
+    border: 0.5px solid #dedad4; margin-bottom: 10px;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .d-icon {
+    width: 40px; height: 40px; border-radius: 8px; background: #fef0e7;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .d-body { flex: 1; }
+  .d-title { font-size: 14px; font-weight: 500; color: #1a1a18; margin-bottom: 3px; }
+  .d-sub { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+
+  /* ── Example pill ── */
+  .example { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: #f1efe8; color: #888780; margin: 2px 3px 2px 0; border: 0.5px solid #c8c7be; }
+
+  /* ── Prompt template box ── */
+  .prompt-box {
+    background: #f1efe8; border-radius: 8px; padding: 12px 14px;
+    font-size: 12px; color: #444441; line-height: 1.8;
+    border: 0.5px solid #c8c7be; margin: 8px 0;
+    font-family: -apple-system, sans-serif;
+  }
+  .prompt-var { color: #F26419; font-weight: 500; }
+
+  /* ── Timeline ── */
+  .tl { border-left: 2px solid #c8c7be; padding: 0 0 14px 16px; position: relative; margin-left: 8px; }
+  .tl:last-child { padding-bottom: 0; }
+  .tld { width: 10px; height: 10px; border-radius: 50%; background: #F26419; position: absolute; left: -6px; top: 2px; }
+  .tly { font-size: 10px; font-weight: 500; color: #F26419; margin-bottom: 2px; }
+  .tlt { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 3px; }
+  .tlb { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+
+  /* ── Highlight line ── */
+  .hl {
+    background: #fef0e7; border-left: 3px solid #F26419;
+    padding: 8px 12px; border-radius: 0 6px 6px 0;
+    font-size: 12px; color: #633806; margin: 8px 0; line-height: 1.6;
+  }
+
+  /* ── Table ── */
+  table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+  th { background: #f5f4f0; padding: 8px 10px; text-align: left; font-weight: 500; border: 0.5px solid #dedad4; color: #1a1a18; }
+  td { padding: 8px 10px; border: 0.5px solid #dedad4; color: #5f5e5a; line-height: 1.5; vertical-align: top; }
+  td strong { color: #1a1a18; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>知识快速习得方法论</h1>
+    <p class="tagline"><strong>5D 知识拆解框架</strong>——把知识从"记忆"转化为"思维工具"的完整方法论，可迁移到任意知识领域的学习与讲解。</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="show(0)">🗺 总框架</button>
+    <button class="tab" onclick="show(1)">① 分层解构</button>
+    <button class="tab" onclick="show(2)">② 对比辨析</button>
+    <button class="tab" onclick="show(3)">③ 类比迁移</button>
+    <button class="tab" onclick="show(4)">④ 错误雷达</button>
+    <button class="tab" onclick="show(5)">⑤ 实战锚定</button>
+    <button class="tab" onclick="show(6)">🖥 呈现技法</button>
+    <button class="tab" onclick="show(7)">💬 提问模板</button>
+  </div>
+
+  <!-- ════════ PANEL 0: Overview ════════ -->
+  <div class="panel active" id="p0">
+    <div class="callout">
+      这套方法论从 AI × MCP 深度学习对话中提炼。<strong>核心洞察：真正的知识掌握不是"知道答案"，而是能在新场景中重新推导出答案。</strong>5D 框架的目的就是把知识从"记忆"转化为"思维工具"。
+    </div>
+
+    <div class="sl">5D 框架全景</div>
+
+    <div class="d-card">
+      <div class="d-icon">🔩</div>
+      <div class="d-body">
+        <div class="d-title">D1 · Decompose 分层解构</div>
+        <div class="d-sub">把知识拆成 2-4 个层次，每层有自己的关注点。层与层之间关系清晰，不混淆。<br>
+        <span class="example">MCP: 协议层 / 应用层 / 生态层</span>
+        <span class="example">机器学习: 数学层 / 算法层 / 工程层</span>
+        <span class="example">产品: 用户层 / 业务层 / 技术层</span></div>
+      </div>
+    </div>
+
+    <div class="d-card">
+      <div class="d-icon">⚖️</div>
+      <div class="d-body">
+        <div class="d-title">D2 · Distinguish 对比辨析</div>
+        <div class="d-sub">每个概念必须有对立面——"有它"vs"没它"，"之前"vs"之后"，"A做法"vs"B做法"。对比激活理解，单独讲无法建立清晰边界。<br>
+        <span class="example">MCP vs 没有MCP</span>
+        <span class="example">动态注册 vs 静态注册</span>
+        <span class="example">self-describing vs semantically opaque</span></div>
+      </div>
+    </div>
+
+    <div class="d-card">
+      <div class="d-icon">🌉</div>
+      <div class="d-body">
+        <div class="d-title">D3 · Draw Analogy 类比迁移</div>
+        <div class="d-sub">把陌生知识映射到已知结构上。找跨域同构：相同的数学/逻辑结构，不同的表现形式。类比迁移才能让知识真正"拥有"。<br>
+        <span class="example">MCP = USB标准</span>
+        <span class="example">N×M→N+M = 货币发明</span>
+        <span class="example">FC:MCP = HTTP:REST</span></div>
+      </div>
+    </div>
+
+    <div class="d-card">
+      <div class="d-icon">🎯</div>
+      <div class="d-body">
+        <div class="d-title">D4 · Debug 错误雷达</div>
+        <div class="d-sub">主动发现并纠正常见误解。好的学习不只是"知道对的"，还要"知道为什么容易错"。误解地图比知识地图更有学习价值。<br>
+        <span class="example">⚠ FC输出不是给AI的</span>
+        <span class="example">⚠ Gateway不是零代码的</span>
+        <span class="example">⚠ "透明"有两种相反含义</span></div>
+      </div>
+    </div>
+
+    <div class="d-card">
+      <div class="d-icon">🔧</div>
+      <div class="d-body">
+        <div class="d-title">D5 · Deploy 实战锚定</div>
+        <div class="d-sub">每个抽象概念必须有具体应用场景——你的项目、你的工作、你的面试。没有锚定的知识是悬空的，遇到真实问题会断联。<br>
+        <span class="example">面试一句话版本</span>
+        <span class="example">Speakeasy中的应用</span>
+        <span class="example">ToB预售中如何讲</span></div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="sl">知识掌握的5个深度层次</div>
+    <div class="card">
+      <div class="card-b">
+        <table>
+          <tr>
+            <th style="width:20%">层次</th>
+            <th style="width:35%">特征</th>
+            <th style="width:45%">测试方法</th>
+          </tr>
+          <tr>
+            <td><strong>L1 记忆</strong></td>
+            <td>能复述定义</td>
+            <td>"MCP是什么？"</td>
+          </tr>
+          <tr>
+            <td><strong>L2 结构</strong></td>
+            <td>能画出层次关系</td>
+            <td>"Host/Client/Server各自的职责？"</td>
+          </tr>
+          <tr>
+            <td><strong>L3 迁移</strong></td>
+            <td>能类比到其他领域</td>
+            <td>"MCP和货币有什么共同逻辑？"</td>
+          </tr>
+          <tr>
+            <td><strong>L4 批判</strong></td>
+            <td>能指出局限和反对声音</td>
+            <td>"MCP有哪些真实的反对意见？"</td>
+          </tr>
+          <tr>
+            <td><strong>L5 创造</strong></td>
+            <td>能在新场景中设计应用</td>
+            <td>"给Speakeasy设计MCP架构"</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>使用方式：</strong>学习任何新知识时，按 D1→D5 顺序拆解，同时追问自己到达了哪个 L 层次。L3（迁移）是判断"真正理解"的分水岭——能类比才是内化，只能复述还是记忆。
+    </div>
+  </div>
+
+  <!-- ════════ PANEL 1: D1 分层解构 ════════ -->
+  <div class="panel" id="p1">
+    <div class="sl">D1 核心原则</div>
+    <div class="callout">
+      <strong>任何复杂知识都可以切成2-4层，每层解决不同层次的"为什么"。</strong>分层的本质是把"什么都要讲"变成"在这层只讲这个"，消除认知混乱。
+    </div>
+
+    <div class="sl">分层的三种切割方式</div>
+
+    <div class="card">
+      <div class="card-t">切割方式 A：抽象程度切割（最常用）</div>
+      <div class="card-b">
+        从"如何实现"到"如何运转"到"如何影响世界"，每层越来越宏观。<br><br>
+        <strong>模板：</strong>协议/实现层 → 应用/使用层 → 生态/影响层<br><br>
+        <strong>MCP例子：</strong><br>
+        · 协议层：Host/Client/Server三角, JSON-RPC, stdio vs SSE<br>
+        · 应用层：Tool调用循环, Resource按需读取, Prompt模板<br>
+        · 生态层：N+M效应, 飞轮效应, 与OpenAPI/gRPC的关系
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">切割方式 B：时间维度切割（适合技术演化）</div>
+      <div class="card-b">
+        从"过去是怎么做的"到"现在怎么做"到"未来可能怎么做"。<br><br>
+        <strong>MCP例子：</strong><br>
+        · 2022年前：Prompt硬解析（正则提取）<br>
+        · 2023年：Function Calling（结构化输出）<br>
+        · 2024年：MCP（标准化协议）<br>
+        · 未来：Streamable HTTP（无状态版本）
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">切割方式 C：视角维度切割（适合多角色场景）</div>
+      <div class="card-b">
+        同一个系统从不同角色视角看到不同的关注点。<br><br>
+        <strong>MCP例子：</strong><br>
+        · 开发者视角：怎么写MCP Server, 用什么SDK<br>
+        · 架构师视角：Gateway设计, 安全模型, 传输层选型<br>
+        · 产品/商业视角：N+M效应, 生态飞轮, ToB预售价值主张
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="sl">操作步骤</div>
+    <div class="step"><div class="sn">1</div><div class="sb"><strong>识别核心概念</strong>：这个知识最难理解的地方在哪里？通常是"混在一起讲"导致的</div></div>
+    <div class="step"><div class="sn">2</div><div class="sb"><strong>选择切割维度</strong>：用A（抽象度）、B（时间）、C（视角）中最能解释混乱的那个</div></div>
+    <div class="step"><div class="sn">3</div><div class="sb"><strong>给每层命名</strong>：好的层名本身就是说明——"协议层"比"底层"好，"生态层"比"宏观"好</div></div>
+    <div class="step"><div class="sn">4</div><div class="sb"><strong>定义层间接口</strong>：每层对上层提供什么，对下层依赖什么——这比层内的内容更重要</div></div>
+
+    <div class="hl">
+      <strong>迁移练习：</strong>用"抽象程度"切割"Kubernetes"：运行时层（容器执行）→ 编排层（Pod调度）→ 平台层（云服务商集成）→ 生态层（Helm/Operator生态）
+    </div>
+  </div>
+
+  <!-- ════════ PANEL 2: D2 对比辨析 ════════ -->
+  <div class="panel" id="p2">
+    <div class="sl">D2 核心原则</div>
+    <div class="callout">
+      <strong>概念的边界只能在对比中才能清晰。</strong>单独定义一个东西，读者脑子里没有锚点。有了对比，"不是什么"和"是什么"同等重要。
+    </div>
+
+    <div class="sl">4种对比结构模板</div>
+
+    <div class="card">
+      <div class="card-t">对比类型 1：有 vs 没有（引入前后）</div>
+      <div class="card-b">
+        最强的对比——让读者感受到"缺少它"时的痛苦，再感受到"有了它"的价值。<br><br>
+        <strong>适用场景：</strong>解释一项新技术/方法/工具的价值<br>
+        <strong>MCP例子：</strong>N×M vs N+M，"没有MCP每家写对接代码" vs "有MCP一次写全局复用"
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">对比类型 2：A方案 vs B方案（选型对比）</div>
+      <div class="card-b">
+        两种方式各有什么优劣，什么场景用哪个。不是"哪个更好"而是"什么情况下哪个更合适"。<br><br>
+        <strong>适用场景：</strong>架构选型、技术路线决策<br>
+        <strong>MCP例子：</strong>静态Tool注册 vs 动态注册，本地stdio vs 远程SSE
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">对比类型 3：人理解 vs AI理解（受众对比）</div>
+      <div class="card-b">
+        同一样东西，不同受众看到的信息不同。揭示"为什么需要专门设计"。<br><br>
+        <strong>适用场景：</strong>解释为什么要为特定受众重新设计<br>
+        <strong>MCP例子：</strong>REST endpoint对人透明（human-readable）vs 对AI语义不透明（semantically opaque）
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">对比类型 4：表象 vs 本质（认知深化）</div>
+      <div class="card-b">
+        读者以为是A，实际上是B。用于纠正直觉性误解，产生"原来如此"的顿悟感。<br><br>
+        <strong>适用场景：</strong>纠正普遍性误解<br>
+        <strong>MCP例子：</strong>AI"表演"发邮件 vs 真正执行发邮件（揭示AI不直接执行的本质）
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="sl">视觉呈现原则</div>
+    <div class="row">
+      <div class="gbox">
+        <strong>绿色框 = 推荐/正确/有了它</strong><br><br>
+        颜色传达价值判断，读者不需要读完就能感知立场。绿色触发"这个是好的"的直觉。
+      </div>
+      <div class="rbox">
+        <strong>红色框 = 问题/错误/没有它</strong><br><br>
+        红色触发"这里有问题"的警觉。用于展示痛点、旧方式的缺陷、常见错误。
+      </div>
+    </div>
+    <div class="obox" style="margin-top:10px">
+      <strong>橙色/黄色框 = 权衡/中性/需要注意</strong><br><br>
+      既不完全好也不完全坏的情况。适用于"有弊端但也有价值"的动态注册这类场景。
+    </div>
+  </div>
+
+  <!-- ════════ PANEL 3: D3 类比迁移 ════════ -->
+  <div class="panel" id="p3">
+    <div class="sl">D3 核心原则</div>
+    <div class="callout">
+      <strong>类比迁移是知识内化的核心机制。</strong>当你能把新知识映射到已有的认知结构上时，学习才真正发生。类比不是"比喻"，而是发现两个领域的<strong>同构关系</strong>——相同的数学/逻辑结构。
+    </div>
+
+    <div class="sl">发现类比的3步法</div>
+    <div class="step"><div class="sn">1</div><div class="sb"><strong>提炼核心结构：</strong>这个知识的本质逻辑是什么？用最简洁的数学/逻辑语言描述（如：N×M → N+M, "引入中间层消除笛卡尔积"）</div></div>
+    <div class="step"><div class="sn">2</div><div class="sb"><strong>跨域搜索同构：</strong>在自然界、经济学、历史、工程学中，哪里有相同的结构？货币（交换中间层）、USB（接口中间层）、HTTP（通信中间层）</div></div>
+    <div class="step"><div class="sn">3</div><div class="sb"><strong>验证映射完整性：</strong>类比的哪些部分成立？哪些不成立？明确指出类比的边界，避免过度泛化</div></div>
+
+    <div class="sep"></div>
+
+    <div class="sl">MCP对话中用到的类比地图</div>
+    <div class="card">
+      <div class="card-b">
+        <table>
+          <tr>
+            <th>MCP概念</th>
+            <th>类比对象</th>
+            <th>同构的核心结构</th>
+            <th>类比的边界</th>
+          </tr>
+          <tr>
+            <td><strong>MCP协议</strong></td>
+            <td>USB标准</td>
+            <td>统一接口，设备即插即用</td>
+            <td>USB是硬件，MCP是软件协议</td>
+          </tr>
+          <tr>
+            <td><strong>N×M → N+M</strong></td>
+            <td>货币发明</td>
+            <td>引入中间层消除笛卡尔积复杂度</td>
+            <td>货币还有价值存储功能，MCP没有</td>
+          </tr>
+          <tr>
+            <td><strong>FC : MCP</strong></td>
+            <td>HTTP : REST</td>
+            <td>原子能力 vs 在其上的工程规范</td>
+            <td>HTTP/REST是数据协议，FC/MCP含AI推理</td>
+          </tr>
+          <tr>
+            <td><strong>MCP Gateway</strong></td>
+            <td>API网关</td>
+            <td>统一入口，内部路由，权限控制</td>
+            <td>API网关面向开发者，MCP Gateway面向AI</td>
+          </tr>
+          <tr>
+            <td><strong>MCP Adapter</strong></td>
+            <td>电源适配器</td>
+            <td>标准接口包装非标准接口</td>
+            <td>电源转换电压/电流，Adapter转换协议格式</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="sl">类比迁移的威力：N+M思想的普世性</div>
+    <div class="callout-blue">
+      <strong>当你理解了"引入标准中间层消除笛卡尔积复杂度"这个结构，你就同时理解了：</strong><br><br>
+      货币 / 国际通用语（英语）/ 集装箱标准 / USB / HTTP / SQL / MCP<br><br>
+      这些领域表面上毫无关系，但解决的是同一个数学问题。这就是为什么学会类比迁移后，学新知识会越来越快——你不是在学新东西，你是在认出熟悉的结构。
+    </div>
+
+    <div class="hl">
+      <strong>练习模板：</strong>学到新知识时问自己——"这个本质上在解决什么数学问题？哪里还有相同的问题被其他方式解决过？" 能回答这两个问题，说明达到了L3（迁移）层次。
+    </div>
+  </div>
+
+  <!-- ════════ PANEL 4: D4 错误雷达 ════════ -->
+  <div class="panel" id="p4">
+    <div class="sl">D4 核心原则</div>
+    <div class="callout">
+      <strong>误解地图比知识地图更有学习价值。</strong>知道"什么是对的"是L1层次；知道"为什么容易理解错"是L3层次。主动维护一份误解地图，是加速学习的捷径。
+    </div>
+
+    <div class="sl">3种典型误解模式</div>
+
+    <div class="card">
+      <div class="card-t">误解模式 A：类似词汇导致混淆</div>
+      <div class="card-b">
+        两个词看起来相关，实际指不同层次的事物。初学者把它们当成近义词使用。<br><br>
+        <strong>MCP例子：</strong>"AI调用Tool" vs "AI输出Tool调用意图，代码执行Tool"<br>
+        ——"调用"这个词把AI的意图表达和代码的真实执行混在一起了<br><br>
+        <strong>检测方式：</strong>让学习者描述"谁做了什么"，看主语是否清晰
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">误解模式 B：局部理解正确但整体逻辑错误</div>
+      <div class="card-b">
+        每个词都理解，但组合起来的逻辑有问题。<br><br>
+        <strong>MCP例子：</strong>"N个App对接M个系统，有MCP后从200次变成30次连接"<br>
+        ——连接数没有减少，减少的是开发工作量。把"连接数"和"开发工作量"混淆了<br><br>
+        <strong>检测方式：</strong>让学习者"推导"结论，而不是背诵结论
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">误解模式 C：从日常语义推断专业含义</div>
+      <div class="card-b">
+        用日常语言直觉去理解技术术语，导致方向性错误。<br><br>
+        <strong>MCP例子：</strong>"对用户透明"在工程中指"用户感知不到"，和日常的"透明=可见"相反<br>
+        "self-describing"不是"自我介绍"，是"接口本身携带足够语义不需要外部文档"<br><br>
+        <strong>检测方式：</strong>让学习者用这个词造句，看语义是否正确
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="sl">建立误解雷达的操作方法</div>
+    <div class="step"><div class="sn">1</div><div class="sb"><strong>学习前预测：</strong>在深入学习前，把你"猜测"答案的直觉写下来——这些猜测后来有多少是错的？</div></div>
+    <div class="step"><div class="sn">2</div><div class="sb"><strong>学习中追踪：</strong>每当感到"原来如此"（表示之前理解有偏差），立刻记下"我原来以为什么 → 正确的是什么"</div></div>
+    <div class="step"><div class="sn">3</div><div class="sb"><strong>学习后归类：</strong>把收集的误解按上面3种模式分类，找出你个人的"误解倾向"</div></div>
+    <div class="step"><div class="sn">4</div><div class="sb"><strong>教别人时使用：</strong>误解地图是最好的教学素材——先问对方你猜X是什么，然后揭示答案，比直接讲答案记忆更深刻</div></div>
+
+    <div class="hl">
+      <strong>面试价值：</strong>说出"这个问题常见的误解是……，正确的理解是……"，比只说正确答案显得认知更成熟。误解意识是专家和初学者的重要区别之一。
+    </div>
+  </div>
+
+  <!-- ════════ PANEL 5: D5 实战锚定 ════════ -->
+  <div class="panel" id="p5">
+    <div class="sl">D5 核心原则</div>
+    <div class="callout">
+      <strong>没有锚定的知识是悬空的。</strong>抽象概念只有连接到具体场景，才能在真实问题出现时被"想起来"并"用出去"。实战锚定的目标是：<em>当你在真实项目里遇到相关问题，这个知识会自动浮现</em>。
+    </div>
+
+    <div class="sl">4种锚定方式</div>
+
+    <div class="card">
+      <div class="card-t">锚定方式 1：个人项目锚定（最强）</div>
+      <div class="card-b">
+        把抽象知识直接应用到你正在做的项目里，设计具体的实现方案。<br><br>
+        <strong>操作：</strong>每学一个新概念，问自己"如果要在 <em>[你的项目]</em> 里用这个，我会怎么设计？"<br><br>
+        <strong>Speakeasy例子：</strong>学完MCP Resource后 → "Speakeasy里词典数据应该用Resource而不是Tool返回，因为词典条目是按需读取的大数据，而不是执行动作"
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">锚定方式 2：场景角色锚定</div>
+      <div class="card-b">
+        从你的职业角色出发，把知识转化为这个角色在真实场景中的语言。<br><br>
+        <strong>操作：</strong>问自己"作为 <em>[你的角色]</em>，这个知识在什么真实情境下有用？我怎么用它？"<br><br>
+        <strong>ToB预售例子：</strong>学完N+M效应后 → "客户问'我们系统能和AI打通吗'，我可以说：传统方式每个AI项目都要重新对接你们的系统，用MCP标准后只需对接一次，后续所有AI项目免费复用。集成成本从N×M降到N+M"
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">锚定方式 3：面试问答锚定</div>
+      <div class="card-b">
+        为每个重要概念准备一个"一句话面试版本"——精炼、准确、有深度。<br><br>
+        <strong>操作：</strong>问自己"如果面试官问这个，我用30秒怎么回答？"<br><br>
+        <strong>模板：</strong>[概念]解决了[什么问题]，它的核心机制是[一句话]，和[类似概念]的区别是[关键差异]
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">锚定方式 4：代码/流程锚定</div>
+      <div class="card-b">
+        写出（或画出）最小可运行的代码或流程图，哪怕是伪代码。执行细节迫使你理解概念的边界。<br><br>
+        <strong>操作：</strong>每学完一个机制，尝试写出10-20行伪代码描述这个机制如何工作<br><br>
+        <strong>FC例子：</strong>写出FC循环的伪代码——代码调AI → AI返回tool_use → 代码执行工具 → 结果传回AI → AI生成回答——这个过程中你会发现"谁主控"这个关键细节
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ PANEL 6: 呈现技法 ════════ -->
+  <div class="panel" id="p6">
+    <div class="sl">可视化 + 可交互的知识呈现系统</div>
+    <div class="callout">
+      好的知识呈现不是"把文字变成图表"，而是<strong>让信息结构本身变成学习路径</strong>。每个设计决策都应该服务于"让读者更容易理解和记忆"这个目标。
+    </div>
+
+    <div class="sl">导航设计</div>
+    <div class="card">
+      <div class="card-t">Tab 切换 = 多维度并行视角</div>
+      <div class="card-b">
+        不同 Tab 代表同一知识体系的不同切面，读者可以按需探索，不强迫线性阅读。<br><br>
+        <strong>设计原则：</strong><br>
+        · Tab数量：3-8个，过多导致选择困难<br>
+        · Tab命名：用动词或问句，不用名词（"如何注册" 比 "注册流程" 更有行动感）<br>
+        · 第一个Tab：必须是总览/框架，让读者先建立地图再深入细节<br>
+        · 特殊Tab用颜色区分：⚠️错误纠正用红色，重要警示用醒目标记
+      </div>
+    </div>
+
+    <div class="sl">颜色语义系统</div>
+    <div class="row3">
+      <div class="card" style="margin:0;border-left:3px solid #F26419">
+        <div class="card-t">🟠 橙色</div>
+        <div class="card-b" style="font-size:11px">核心概念、关键结论、最重要的信息。标题用橙色，callout用橙色左边框。</div>
+      </div>
+      <div class="card" style="margin:0;border-left:3px solid #639922">
+        <div class="card-t">🟢 绿色</div>
+        <div class="card-b" style="font-size:11px">推荐做法、正确答案、"有了它"的好处。触发"这个是好的"直觉。</div>
+      </div>
+      <div class="card" style="margin:0;border-left:3px solid #E24B4A">
+        <div class="card-t">🔴 红色</div>
+        <div class="card-b" style="font-size:11px">错误做法、警告、"没有它"的痛点。触发"这里有问题"的警觉。</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="card" style="margin:0;border-left:3px solid #3b8bd4">
+        <div class="card-t">🔵 蓝色</div>
+        <div class="card-b" style="font-size:11px">补充信息、说明、中性的背景知识。不是核心，但有用。</div>
+      </div>
+      <div class="card" style="margin:0;border-left:3px solid #888780">
+        <div class="card-t">⚪ 灰色/白色</div>
+        <div class="card-b" style="font-size:11px">背景、容器、结构本身。让有颜色的元素更突出。</div>
+      </div>
+    </div>
+
+    <div class="sl" style="margin-top:14px">代码块的设计原则</div>
+    <div class="card">
+      <div class="card-b">
+        代码不只是"技术细节"，它是最精确的知识载体。好的代码注释比文字解释更清晰。<br><br>
+        <strong>关键原则：</strong><br>
+        · 每段代码都有"这段代码在说明什么"的上文<br>
+        · 注释用中文，代码用英文——中文注释是给读者的，代码是示例<br>
+        · 关键行用注释标出 <code>← 这里是重点</code><br>
+        · 错误案例和正确案例放在相邻代码块里，形成视觉对比
+      </div>
+    </div>
+
+    <div class="sl">流程图的设计原则</div>
+    <div class="card">
+      <div class="card-b">
+        · <strong>带编号的圆形步骤按钮</strong>：比"1. 2. 3."更有视觉重量，表达"这是一个需要按顺序执行的流程"<br>
+        · <strong>时间线</strong>：用于"事物如何随时间演化"的叙述，比列表更有方向感<br>
+        · <strong>ASCII流程图</strong>：放在代码块里，表达系统间的数据流——比真正的图形工具更快，在HTML里更好控制
+      </div>
+    </div>
+
+    <div class="sl">表格的正确使用场景</div>
+    <div class="card">
+      <div class="card-b">
+        表格只用于<strong>多维度比较</strong>——同时有2个以上维度需要对比时才用。单维度列表直接用卡片或步骤。<br><br>
+        <strong>好的表格：</strong>REST vs gRPC vs MCP，对比维度：设计对象/能力发现/意图描述/调用方式/跨模型复用<br>
+        <strong>差的表格：</strong>把可以用步骤列出来的内容强行塞进表格
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ PANEL 7: 提问模板 ════════ -->
+  <div class="panel" id="p7">
+    <div class="sl">向AI提问的关键：激发5D模式的提问框架</div>
+    <div class="callout">
+      同样的知识，提问方式不同，得到的输出质量相差10倍。这套提问模板是对话记录中有效问题的归纳——<strong>每个问题都设计为激发特定的认知深度。</strong>
+    </div>
+
+    <div class="sl">D1 分层解构 — 提问模板</div>
+    <div class="prompt-box">
+      "请从 <span class="prompt-var">[协议层/应用层/生态层]</span> 三个维度拆解 <span class="prompt-var">[知识点]</span>，每层的核心关注点是什么，层间的接口是什么"<br><br>
+      "帮我理解 <span class="prompt-var">[概念A]</span> 和 <span class="prompt-var">[概念B]</span> 分别在哪个层次，它们的边界在哪里"<br><br>
+      "<span class="prompt-var">[知识点]</span> 从 <span class="prompt-var">[角色A（开发者）]</span> 视角和 <span class="prompt-var">[角色B（架构师）]</span> 视角分别关注什么"
+    </div>
+
+    <div class="sl">D2 对比辨析 — 提问模板</div>
+    <div class="prompt-box">
+      "没有 <span class="prompt-var">[概念]</span> 时是什么状态，有了之后具体变化了什么——用具体数字/例子说明"<br><br>
+      "<span class="prompt-var">[方案A]</span> 和 <span class="prompt-var">[方案B]</span> 的本质区别是什么，各自适合什么场景"<br><br>
+      "从 <span class="prompt-var">[受众A]</span> 视角和 <span class="prompt-var">[受众B]</span> 视角，<span class="prompt-var">[同一事物]</span> 分别是什么样的"
+    </div>
+
+    <div class="sl">D3 类比迁移 — 提问模板</div>
+    <div class="prompt-box">
+      "<span class="prompt-var">[概念]</span> 的本质逻辑是什么？在日常生活/历史/其他工程领域有没有相似的结构"<br><br>
+      "把 <span class="prompt-var">[概念]</span> 的N×M→N+M逻辑上升到更普世的数学/思想层面，可以迁移到哪些其他场景"<br><br>
+      "<span class="prompt-var">[概念A]</span>:<span class="prompt-var">[概念B]</span> = <span class="prompt-var">[类比A]</span>:<span class="prompt-var">[类比B]</span>，这个类比在哪里成立，在哪里不成立"
+    </div>
+
+    <div class="sl">D4 错误雷达 — 提问模板</div>
+    <div class="prompt-box">
+      "学习 <span class="prompt-var">[概念]</span> 时最常见的误解是什么，为什么容易出现这个误解"<br><br>
+      "我的理解是：<span class="prompt-var">[你的理解]</span>——这个理解有没有问题，哪里不准确"<br><br>
+      "有哪些反对 <span class="prompt-var">[概念/方案]</span> 的真实声音，这些批评有没有道理"
+    </div>
+
+    <div class="sl">D5 实战锚定 — 提问模板</div>
+    <div class="prompt-box">
+      "如果在 <span class="prompt-var">[我的具体项目]</span> 里应用 <span class="prompt-var">[概念]</span>，架构应该怎么设计"<br><br>
+      "作为 <span class="prompt-var">[ToB预售工程师]</span>，如何向客户用一句话解释 <span class="prompt-var">[概念]</span> 的业务价值"<br><br>
+      "面试时被问到 <span class="prompt-var">[概念]</span>，30秒内怎么回答能显示出工程深度而不只是背书"
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="sl">输出格式要求模板（指定HTML输出）</div>
+    <div class="prompt-box">
+      "把以上内容整理成HTML文件，要求：<br>
+      · Tab导航，每个维度一个Tab<br>
+      · 使用绿框/红框对比重要决策<br>
+      · 代码示例用 &lt;pre&gt; 标签<br>
+      · 重要结论用橙色左边框callout<br>
+      · 可以直接用浏览器打开，不需要渲染"
+    </div>
+
+    <div class="hl">
+      <strong>元提问技巧：</strong>在一轮深度对话结束后，问"把这次对话中的知识拆解、讲解模式抽象出来，形成可迁移的方法论"——就是这个文档的来源。<strong>对AI的输出本身提问，是元学习的关键操作。</strong>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  var panels = document.querySelectorAll('.panel');
+  var tabs = document.querySelectorAll('.tab');
+  function show(i) {
+    for (var j = 0; j < panels.length; j++) {
+      panels[j].classList.toggle('active', i === j);
+      tabs[j].classList.toggle('active', i === j);
+    }
+  }
+</script>
+</body>
+</html>

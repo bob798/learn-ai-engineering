@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 文档索引与术语速查</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --panel: #ffffff;
+    --panel-2: #f1efe8;
+    --border: #dedad4;
+    --text: #1a1a18;
+    --muted: #5f5e5a;
+    --accent: #F26419;
+    --accent-2: #185FA5;
+    --accent-3: #3B6D11;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(circle at top right, rgba(242,100,25,.12), transparent 28%),
+      radial-gradient(circle at left 30%, rgba(24,95,165,.08), transparent 24%),
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+    line-height: 1.8;
+    padding: 0 20px 56px;
+  }
+  .site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 120;
+    background: rgba(245,244,240,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-nav-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    min-height: 54px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .site-nav-brand, .site-nav-link, .site-nav-home, .sub-nav-label, .sub-nav-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-decoration: none;
+  }
+  .site-nav-brand { color: #888780; letter-spacing: 1.5px; text-transform: uppercase; }
+  .site-nav-links, .sub-nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+  .site-nav-link {
+    color: var(--muted);
+    padding: 7px 10px;
+    border-radius: 999px;
+  }
+  .site-nav-link.current {
+    color: var(--accent-2);
+    background: #e6f1fb;
+    border: 1px solid rgba(24,95,165,.16);
+  }
+  .site-nav-home {
+    margin-left: auto;
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .sub-nav {
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.6);
+  }
+  .sub-nav-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    min-height: 44px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .sub-nav-label { color: #888780; text-transform: uppercase; letter-spacing: 1.2px; }
+  .sub-nav-link { color: var(--text); padding: 4px 0; }
+  .page { max-width: 1120px; margin: 0 auto; }
+  .page-header {
+    padding: 28px 28px 24px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(241,239,232,.92));
+  }
+  .page-header-main { display: grid; gap: 12px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-2);
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px;
+  }
+  h1 {
+    font-family: inherit; font-size: clamp(34px, 6vw, 64px);
+    line-height: 1; letter-spacing: -2px; margin-bottom: 14px; font-weight: 800;
+  }
+  .lead { max-width: 680px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+  .header-badges {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .header-badges span {
+    padding: 5px 10px; border: 1px solid var(--border);
+    background: rgba(241,239,232,.85); border-radius: 999px; color: var(--muted);
+  }
+  .page-intro {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 14px;
+  }
+  .page-role {
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .page-role strong { color: var(--text); }
+  .page-role a,
+  .intro-body a {
+    color: var(--accent-2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+  }
+  .intro-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .intro-meta-card {
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 14px;
+  }
+  .intro-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    margin-bottom: 8px;
+  }
+  .intro-body { font-size: 13px; color: var(--muted); line-height: 1.8; }
+  .section { margin-top: 26px; }
+  .section-title {
+    font-family: inherit; font-size: 22px; margin-bottom: 14px; font-weight: 800;
+    letter-spacing: -.5px;
+  }
+  .section-kicker {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent-2);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 18px 16px;
+  }
+  .card .tag {
+    display: inline-block; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase;
+  }
+  .card h3 {
+    font-family: inherit; font-size: 18px; margin-bottom: 6px; font-weight: 800;
+  }
+  .card p { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .card a {
+    color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .card li { color: var(--muted); font-size: 12.5px; }
+  .dual { display: grid; grid-template-columns: 1.15fr .85fr; gap: 14px; }
+  .list { display: grid; gap: 10px; }
+  .list-item {
+    display: flex; justify-content: space-between; gap: 16px; align-items: flex-start;
+    border: 1px solid var(--border); background: var(--panel); border-radius: 12px; padding: 14px 16px;
+  }
+  .list-item strong { display: block; margin-bottom: 4px; }
+  .list-item p { color: var(--muted); font-size: 13px; }
+  .list-item a {
+    white-space: nowrap; color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .knowledge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .knowledge-card {
+    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(241,239,232,.92));
+    border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+  }
+  .knowledge-card h3 {
+    font-family: inherit; font-size: 18px; margin-bottom: 10px; font-weight: 800;
+  }
+  .knowledge-card p { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .knowledge-card ul { list-style: none; display: grid; gap: 6px; margin-bottom: 12px; }
+  .knowledge-card li { font-size: 12.5px; color: var(--muted); }
+  .knowledge-card strong { color: var(--text); }
+  .knowledge-card a {
+    color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .object-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .object-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+  }
+  .object-meta {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .object-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .object-def { font-size: 13px; color: var(--text); line-height: 1.8; margin-bottom: 10px; }
+  .object-card ul { list-style: none; display: grid; gap: 6px; margin-bottom: 12px; }
+  .object-card li { font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+  .object-card strong { color: var(--text); }
+  .object-links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .object-links a {
+    color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .maint-card {
+    margin-top: 26px; padding: 18px; border: 1px solid var(--border);
+    background: var(--panel); border-radius: 14px;
+  }
+  .maint-card p { font-size: 13px; color: var(--muted); line-height: 1.85; margin-bottom: 10px; }
+  .maint-card a {
+    color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .stage-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stage-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+  }
+  .stage-card h3 { font-family: inherit; font-size: 18px; margin-bottom: 6px; font-weight: 800; }
+  .stage-card p { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .stage-link {
+    color: var(--text); text-decoration: none; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  table {
+    width: 100%; border-collapse: collapse; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  }
+  th, td { padding: 11px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  th {
+    background: var(--panel-2); font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  }
+  td { font-size: 12.5px; color: var(--muted); vertical-align: top; }
+  td strong { color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  .toc-list { display: grid; gap: 8px; }
+  .toc-list a {
+    display: block; padding: 11px 12px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-size: 13px;
+  }
+  .footnote {
+    margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 12px;
+  }
+  @media (max-width: 820px) {
+    .page-intro, .intro-meta-grid, .dual, .stage-band { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-page-type="knowledge-hub" data-primary-task="lookup" data-last-updated="2026-03-21">
+<div class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">RAG Docs</a>
+    <div class="site-nav-links">
+      <a href="index.html" class="site-nav-link">首页</a>
+      <a href="00_课程路线图.html" class="site-nav-link">系统学习</a>
+      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="ai-knowledge-hub.html" class="site-nav-link current">快速回查</a>
+      <a href="rag-5d.html" class="site-nav-link">讲解 / 面试</a>
+      <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
+    </div>
+    <a href="index.html" class="site-nav-home">返回首页</a>
+  </div>
+</div>
+<div class="sub-nav">
+  <div class="sub-nav-inner">
+    <div class="sub-nav-label">当前页 · 查阅入口</div>
+    <div class="sub-nav-links">
+      <a href="#glossary" class="sub-nav-link">术语表</a>
+      <a href="01_概念手册_向量与检索.html" class="sub-nav-link">概念手册</a>
+      <a href="02_代码讲解_V1V2.html" class="sub-nav-link">代码讲解</a>
+      <a href="03_工程方法论手册.html" class="sub-nav-link">工程手册</a>
+      <a href="knowledge-updates.html" class="sub-nav-link">更新日志</a>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <section class="page-header">
+    <div class="page-header-main">
+      <div class="eyebrow">Index / Glossary / Cheatsheet</div>
+      <h1>RAG 快速回查</h1>
+      <p class="lead">这个页面只负责“快速查到”。它不承担首页分流，也不负责顺序教学；它只服务于术语回查、参数确认、问题定位和从概念反查代码。</p>
+      <div class="header-badges">
+        <span>术语回查</span>
+        <span>参数速查</span>
+        <span>问题定位</span>
+        <span>代码反查</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-intro">
+    <div class="page-role">
+      <strong>这页负责快速回查，不负责第一次顺序学习。</strong> 如果你是第一次系统学习，请回到 <a href="index.html">总站首页</a> 后进入 <a href="00_课程路线图.html">课程路线图</a>。
+    </div>
+    <div class="intro-meta-grid">
+      <article class="intro-meta-card">
+        <div class="intro-label">适合任务</div>
+        <div class="intro-body">复习时回查术语、做项目时确认参数、从问题反查对应页面和代码。</div>
+      </article>
+      <article class="intro-meta-card">
+        <div class="intro-label">前置阅读</div>
+        <div class="intro-body"><a href="00_课程路线图.html">课程路线图</a>，或者先从 <a href="index.html">总站首页</a> 判断自己当前任务。</div>
+      </article>
+      <article class="intro-meta-card">
+        <div class="intro-label">下一步</div>
+        <div class="intro-body"><a href="01_概念手册_向量与检索.html">查概念</a> · <a href="03_工程方法论手册.html">看工程手册</a> · <a href="rag-knowledge-map.html">回到知识地图</a></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section dual">
+    <div>
+      <div class="section-title">按主题查</div>
+      <div class="list">
+        <div class="list-item">
+          <div><strong>Embedding / 向量 / 余弦相似度</strong><p>概念原理、维度含义、为什么余弦更适合语义检索。</p></div>
+          <a href="01_概念手册_向量与检索.html#embed">打开</a>
+        </div>
+        <div class="list-item">
+          <div><strong>Chunking / overlap / 分块边界</strong><p>为什么分块决定上限，以及 V2 代码里三种分块策略的行为差异。</p></div>
+          <a href="02_代码讲解_V1V2.html#v2">打开</a>
+        </div>
+        <div class="list-item">
+          <div><strong>Recall@K / MRR / 黄金数据集</strong><p>做优化前先定义尺子，避免“凭感觉优化”。</p></div>
+          <a href="03_工程方法论手册.html#experiment">打开</a>
+        </div>
+        <div class="list-item">
+          <div><strong>混合检索 / Reranking / GraphRAG</strong><p>生产级增强策略、适用边界和扩展方向。</p></div>
+          <a href="rag-5d.html">打开</a>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">按问题查</div>
+      <div class="toc-list">
+        <a href="01_概念手册_向量与检索.html#cosine">为什么用余弦相似度而不是欧氏距离</a>
+        <a href="02_代码讲解_V1V2.html#v2">chunk 多大合适，overlap 取多少</a>
+        <a href="03_工程方法论手册.html#failure">为什么 Demo 能跑但系统不好用</a>
+        <a href="03_工程方法论手册.html#boundary">什么时候该用 RAG，什么时候不该用</a>
+        <a href="rag-knowledge-map.html">RAG 全链路有哪些模块</a>
+        <a href="rag-5d.html">RAG 和微调到底怎么分工</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-kicker">Knowledge Objects</div>
+    <div class="section-title">标准知识对象</div>
+    <div class="object-grid">
+      <article class="object-card" id="obj-embedding" data-type="concept" data-keywords="embedding,vector,向量,语义表示">
+        <div class="object-meta">Concept Object · 最后更新 2026-03-21</div>
+        <h3>Embedding</h3>
+        <div class="object-def">一句话定义：把文本映射成向量表示，让“语义接近”可以被检索系统计算。</div>
+        <ul>
+          <li><strong>适用任务：</strong>理解语义检索、解释向量召回、选 embedding 模型。</li>
+          <li><strong>常见误区：</strong>误以为每一维都有可解释的人类含义。</li>
+          <li><strong>实践建议：</strong>先理解余弦相似度，再看模型排行榜。</li>
+          <li><strong>相关代码：</strong>`01_v1_最小RAG循环.py` 的 embedding 与相似度计算。</li>
+        </ul>
+        <div class="object-links">
+          <a href="01_概念手册_向量与检索.html#embed">深入原理 →</a>
+          <a href="02_代码讲解_V1V2.html#v1">对应代码 →</a>
+        </div>
+      </article>
+      <article class="object-card" id="obj-chunk" data-type="concept" data-keywords="chunk,overlap,分块,chunking">
+        <div class="object-meta">Concept Object · 最后更新 2026-03-21</div>
+        <h3>Chunk / Overlap</h3>
+        <div class="object-def">一句话定义：把文档切成可检索的信息单元，并用 overlap 降低边界切断带来的语义损失。</div>
+        <ul>
+          <li><strong>适用任务：</strong>调召回、解释分块策略、比较 chunking 方案。</li>
+          <li><strong>常见误区：</strong>一味追求块越小越准，忽略语义完整性。</li>
+          <li><strong>实践建议：</strong>先用 200-500 字符、10%-20% overlap 作为基线。</li>
+          <li><strong>相关代码：</strong>`02_v2_文档分块策略.py`。</li>
+        </ul>
+        <div class="object-links">
+          <a href="02_代码讲解_V1V2.html#v2">看代码策略 →</a>
+          <a href="03_工程方法论手册.html#failure">看失败模式 →</a>
+        </div>
+      </article>
+      <article class="object-card" id="obj-recall" data-type="metric" data-keywords="recall,mrr,评估,黄金数据集">
+        <div class="object-meta">Metric Object · 最后更新 2026-03-21</div>
+        <h3>Recall / MRR</h3>
+        <div class="object-def">一句话定义：用来判断检索有没有把正确内容找回来，以及把正确结果排在了多靠前的位置。</div>
+        <ul>
+          <li><strong>适用任务：</strong>建立 Golden Dataset、验证召回优化是否有效。</li>
+          <li><strong>常见误区：</strong>只看最终答案，不看检索层指标。</li>
+          <li><strong>实践建议：</strong>先定义标准问答集，再比较策略差异。</li>
+          <li><strong>相关代码：</strong>`03_v3.5_黄金数据集.py`。</li>
+        </ul>
+        <div class="object-links">
+          <a href="03_工程方法论手册.html#experiment">看评估方法 →</a>
+          <a href="03_工程方法论手册.html#checklist">看项目检查点 →</a>
+        </div>
+      </article>
+      <article class="object-card" id="obj-reranking" data-type="method" data-keywords="reranking,重排,排序,精排">
+        <div class="object-meta">Method Object · 最后更新 2026-03-21</div>
+        <h3>Reranking</h3>
+        <div class="object-def">一句话定义：在粗召回后的候选结果上做精排序，用更高的相关性换取额外延迟。</div>
+        <ul>
+          <li><strong>适用任务：</strong>候选里已有“差不多相关”的片段，但排序不够准。</li>
+          <li><strong>常见误区：</strong>把 reranker 当成解决所有检索问题的万能补丁。</li>
+          <li><strong>实践建议：</strong>先确认召回已包含正确候选，再加 reranker。</li>
+          <li><strong>相关页面：</strong>5D 辨析页、知识地图、工程边界页。</li>
+        </ul>
+        <div class="object-links">
+          <a href="rag-5d.html">看适用边界 →</a>
+          <a href="rag-knowledge-map.html">看系统位置 →</a>
+        </div>
+      </article>
+    </div>
+    <div class="maint-card">
+      <p><strong>维护规则：</strong>这里是高频概念的标准入口。其他页面出现这些概念时，只保留当前语境下的解释，不再重复写完整定义。</p>
+      <a href="knowledge-updates.html">查看知识库更新日志 →</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">按场景查</div>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">学习首轮</div>
+        <h3>从零理解</h3>
+        <ul>
+          <li>先看课程路线图建立顺序感</li>
+          <li>再读概念手册理解 embedding / 检索</li>
+          <li>接着跑 V1 / V2 代码</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">项目调优</div>
+        <h3>发现效果不好</h3>
+        <ul>
+          <li>先看失败模式，判断问题出在召回还是生成</li>
+          <li>再回查 chunk / rerank / 评估指标</li>
+          <li>最后设计 Golden Dataset 做验证</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">方案说明</div>
+        <h3>售前 / 面试 / 讲解</h3>
+        <ul>
+          <li>用 5D 页解释原理、边界和典型架构</li>
+          <li>用知识地图展示流程</li>
+          <li>用工程手册说明落地方法</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="glossary">
+    <div class="section-title">术语表与参数速查</div>
+    <table>
+      <thead>
+        <tr><th>词条</th><th>一句话定义</th><th>建议回看</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Embedding</strong></td><td>把文本转成高维向量，使语义相近的内容在向量空间里更接近。</td><td><a href="01_概念手册_向量与检索.html#embed">概念手册</a></td></tr>
+        <tr><td><strong>Chunk</strong></td><td>文档切分后的最小检索单元，太碎会丢语义，太大则噪声多。</td><td><a href="02_代码讲解_V1V2.html#v2">代码讲解 V2</a></td></tr>
+        <tr><td><strong>Reranking</strong></td><td>在粗召回候选集上做精排序，用精度换取额外延迟。</td><td><a href="rag-5d.html">5D 完全理解</a></td></tr>
+        <tr><td><strong>Recall@K</strong></td><td>相关内容有没有被找回来，衡量“找全不找全”。</td><td><a href="03_工程方法论手册.html#experiment">工程手册</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <div class="section-title">参数速查表</div>
+    <table>
+      <thead>
+        <tr><th>参数 / 决策</th><th>建议基线</th><th>备注</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>chunk size</strong></td><td>200-500 字符</td><td>技术文档优先保证句子或段落完整。</td></tr>
+        <tr><td><strong>overlap</strong></td><td>10%-20%</td><td>用于保住块边界的信息。</td></tr>
+        <tr><td><strong>Top-K</strong></td><td>5-10</td><td>过低会漏召回，过高会给 LLM 带来噪声。</td></tr>
+        <tr><td><strong>何时加 Reranker</strong></td><td>召回对了但排序不准时</td><td>典型生产增强项。</td></tr>
+        <tr><td><strong>何时做混合检索</strong></td><td>关键词、编号、自然语言同时重要时</td><td>如条款号、产品代码、FAQ 混合场景。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="footnote">建议把本页作为浏览器固定书签；学习走路线图，回查走这里。</div>
+</div>
+</body>
+</html>

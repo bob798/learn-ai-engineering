@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP 追问 · 5问</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+    background: #f5f4f0;
+    color: #1a1a18;
+    min-height: 100vh;
+    padding: 28px 16px 48px;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+
+  /* Header */
+  .header { margin-bottom: 28px; }
+  .header h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .header .sub { font-size: 12px; color: #888780; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 22px; }
+  .tab {
+    padding: 6px 12px; font-size: 11px; border-radius: 6px; cursor: pointer;
+    color: #5f5e5a; border: 0.5px solid #c8c7be; background: #fff;
+    transition: all .15s; white-space: nowrap;
+  }
+  .tab.active { color: #fff; background: #F26419; border-color: #F26419; font-weight: 500; }
+  .tab:hover:not(.active) { background: #ece9e2; }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Q label */
+  .q-label {
+    font-size: 11px; font-weight: 500; letter-spacing: .07em;
+    text-transform: uppercase; color: #888780; margin-bottom: 10px;
+  }
+
+  /* Callout */
+  .callout {
+    border-left: 3px solid #F26419; padding: 10px 14px;
+    background: #fff; border-radius: 0 8px 8px 0;
+    margin: 10px 0; font-size: 13px; color: #444441; line-height: 1.7;
+  }
+  .callout strong { color: #1a1a18; }
+
+  /* Alert */
+  .alert {
+    border-left: 3px solid #3b8bd4; padding: 10px 14px;
+    background: #e6f1fb; border-radius: 0 8px 8px 0;
+    margin: 10px 0; font-size: 13px; color: #042c53; line-height: 1.7;
+  }
+  .alert strong { color: #0c447c; }
+
+  /* Card */
+  .card {
+    background: #fff; border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 10px; border: 0.5px solid #dedad4;
+  }
+  .card-t { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 5px; }
+  .card-b { font-size: 12px; color: #5f5e5a; line-height: 1.7; }
+
+  /* Code block */
+  pre {
+    font-family: "SF Mono", "Fira Code", "Fira Mono", monospace;
+    font-size: 11px; background: #f1efe8;
+    border-radius: 7px; padding: 12px 14px;
+    border: 0.5px solid #c8c7be;
+    margin: 8px 0; line-height: 1.9;
+    overflow-x: auto; white-space: pre;
+    color: #2c2c2a;
+  }
+  code { font-family: "SF Mono", "Fira Code", monospace; font-size: 11px; background: #e8e6df; padding: 1px 5px; border-radius: 3px; }
+
+  /* Grid */
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+
+  /* Verdict boxes */
+  .gbox {
+    border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7;
+    border: 0.5px solid #97c459; background: #eaf3de; color: #173404;
+  }
+  .rbox {
+    border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7;
+    border: 0.5px solid #f09595; background: #fcebeb; color: #501313;
+  }
+
+  /* Flow step */
+  .step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+  .sn {
+    width: 22px; height: 22px; border-radius: 50%; background: #F26419;
+    color: #fff; font-size: 10px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .sb { flex: 1; font-size: 13px; color: #444441; line-height: 1.6; }
+  .sb strong { color: #1a1a18; }
+
+  /* Separator */
+  .sep { border: none; border-top: 0.5px solid #dedad4; margin: 14px 0; }
+
+  /* Tag */
+  .tag {
+    display: inline-block; font-size: 10px; padding: 2px 7px;
+    border-radius: 4px; font-weight: 500; margin-right: 4px; vertical-align: middle;
+  }
+  .tag-g { background: #eaf3de; color: #3b6d11; }
+  .tag-r { background: #fcebeb; color: #a32d2d; }
+  .tag-b { background: #e6f1fb; color: #185fa5; }
+
+  /* Highlight line */
+  .hl {
+    background: #fef0e7; border-left: 3px solid #F26419;
+    padding: 8px 12px; border-radius: 0 6px 6px 0;
+    font-size: 12px; color: #633806; margin: 8px 0; line-height: 1.6;
+  }
+
+  /* Schema anatomy */
+  .schema-line { display: flex; gap: 12px; margin-bottom: 6px; align-items: flex-start; }
+  .schema-code { font-family: "SF Mono", monospace; font-size: 11px; color: #F26419; font-weight: 500; min-width: 110px; flex-shrink: 0; }
+  .schema-desc { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>MCP 追问 · 5问</h1>
+    <div class="sub">FC循环机制 · Prompt模板 · 动态注册弊端 · FC再理解 · Schema含义</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="show(0)">① AI停止后谁触发代码</button>
+    <button class="tab" onclick="show(1)">② Prompt模板 ≈ 斜杠命令</button>
+    <button class="tab" onclick="show(2)">③ 动态注册弊端</button>
+    <button class="tab" onclick="show(3)">④ FC再理解</button>
+    <button class="tab" onclick="show(4)">⑤ Schema是什么</button>
+  </div>
+
+  <!-- ① AI停止后谁触发 -->
+  <div class="panel active" id="p0">
+    <div class="q-label">问题 ① — FC 输出后，谁触发代码去读取 JSON 执行请求</div>
+
+    <div class="callout">
+      <strong>是你的代码自己在控制整个循环，不是 AI 主动通知。</strong><br>
+      AI 就是一个普通的 HTTP 接口——你调用它，它返回结果，你的代码判断返回类型决定下一步。AI 停止后什么都不做，就等着你的代码下一次调用它。
+    </div>
+
+    <div class="q-label" style="margin-top:16px">完整的控制流（你的代码主导）</div>
+    <pre>// 1. 你的代码发起调用
+const response = await anthropic.messages.create({
+  model: "claude-sonnet-4-5",
+  messages: conversation,
+  tools: availableTools       // 告诉 AI 有哪些 Tool 可用
+});
+
+// 2. AI 返回响应（同步等待，就像普通 HTTP 请求）
+// response.stop_reason 有两种值：
+//   "end_turn"   → AI 直接回答了，展示给用户
+//   "tool_use"   → AI 要调 Tool，你需要执行
+
+// 3. 你的代码检查 stop_reason，自己决定下一步
+if (response.stop_reason === "tool_use") {
+
+  // 4. 从返回值里提取 Tool 调用信息
+  const toolCall = response.content.find(b => b.type === "tool_use");
+  const { name, input } = toolCall;
+  // name = "get_weather", input = { city: "上海" }
+
+  // 5. 你的代码执行对应函数（AI 完全不参与这一步）
+  const result = await executeToolCall(name, input);
+  // 比如：调天气 API，真的发了 HTTP 请求，拿到了数据
+
+  // 6. 你的代码把结果拼回对话，再次调用 AI
+  conversation.push({ role: "user", content: [{
+    type: "tool_result",
+    tool_use_id: toolCall.id,
+    content: JSON.stringify(result)
+  }]});
+
+  // 7. 再次调用 AI，AI 用结果生成最终回答
+  const finalResponse = await anthropic.messages.create({ ... });
+
+} else {
+  // AI 直接回答，展示给用户
+  showToUser(response.content[0].text);
+}</pre>
+
+    <div class="sep"></div>
+
+    <div class="q-label">两个关键认知</div>
+    <div class="row">
+      <div class="card">
+        <div class="card-t">AI 是被动的 HTTP 服务</div>
+        <div class="card-b">
+          每次"对话"对 AI 来说都是一次独立的 API 调用。AI 不持有连接，不主动推送，不知道上一次调用发生了什么——你的代码每次都要把完整的对话历史重新传给它。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t">你的代码是主控方</div>
+        <div class="card-b">
+          决定"要不要继续循环""执行哪个函数""结果怎么处理"的，全是你的代码。AI 只是在每次被调用时输出它的判断，从不主动触发任何事情。
+        </div>
+      </div>
+    </div>
+
+    <div class="hl">
+      <strong>面试一句话版：</strong>"Function Calling 不是 AI 主动调用工具，而是 AI 输出结构化的调用意图，由宿主代码（Host）拦截并执行，再把结果传回 AI。AI 是无状态的 HTTP 服务，主控逻辑始终在你的代码里。"
+    </div>
+  </div>
+
+  <!-- ② Prompt模板 ≈ 斜杠命令 -->
+  <div class="panel" id="p1">
+    <div class="q-label">问题 ② — Prompt 模板 是不是就像 Claude Code 里的斜杠命令</div>
+
+    <div class="callout">
+      <strong>完全正确，就是同一个机制。</strong><br>
+      Claude Code 里的 <code>/add-dir</code>、<code>/review</code>、<code>/clear</code> 这些斜杠命令，就是 MCP Prompt 模板的具体体现。用户选命令，有些直接执行，有些需要填参数。
+    </div>
+
+    <div class="q-label" style="margin-top:16px">三者对应关系</div>
+    <div class="card">
+      <div class="card-b">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr style="background:#f5f4f0">
+            <th style="padding:8px 10px;text-align:left;border:0.5px solid #dedad4;font-weight:500">概念</th>
+            <th style="padding:8px 10px;text-align:left;border:0.5px solid #dedad4;font-weight:500">Claude Code 里的例子</th>
+            <th style="padding:8px 10px;text-align:left;border:0.5px solid #dedad4;font-weight:500">你的 App 里可以做的</th>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">MCP Host</td>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">Claude Code 本身</td>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">你开发的 App</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">MCP Prompt 模板</td>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">/review, /add-dir</td>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">/词汇深度学习, /写作润色</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">参数填写</td>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">/add-dir [路径]</td>
+            <td style="padding:8px 10px;border:0.5px solid #dedad4;color:#444441">/词汇学习 [单词] [难度]</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="q-label" style="margin-top:14px">区别只是宿主不同</div>
+    <div class="card">
+      <div class="card-b">
+        Claude Code 是 Anthropic 开发的 Host，它展示的是自己内置的命令列表。<br><br>
+        你开发的 App 作为 Host，可以连接你自己的 MCP Server，展示你在 Server 里定义的 Prompt 模板。<br><br>
+        用户体验完全一致：输入 <code>/</code>，弹出列表，选命令，有参数就填参数，确认后展开执行。<strong>机制完全相同，只是换了一个 Host 和一套模板内容。</strong>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Speakeasy 实战：</strong>你可以在 Speakeasy 的 MCP Server 里定义一个 <code>/深度学习</code> 模板，参数是单词和难度级别，模板展开后自动生成：词源 + 例句 + 记忆口诀 + 相关词族——用户每次只需填一个单词，得到的是标准化的专家级学习内容。
+    </div>
+  </div>
+
+  <!-- ③ 动态注册弊端 -->
+  <div class="panel" id="p2">
+    <div class="q-label">问题 ③ — 动态 Tool 注册有哪些弊端</div>
+
+    <div class="callout">
+      动态注册解决了"Tool 太多"的问题，但引入了新的复杂度。<strong>四个真实弊端，每一个都是工程上的实际痛点。</strong>
+    </div>
+
+    <div class="card">
+      <div class="card-t">弊端 1：意图分类本身可能出错 <span class="tag tag-r">高频</span></div>
+      <div class="card-b">
+        用户说"查一下上个月的销售报表"，意图分类触发了"客户查询"分组而不是"报表分析"，正确的 <code>generate_report</code> Tool 根本没被暴露出来——任务失败，而且用户看不到任何错误提示，AI 只是告诉他"我没有这个能力"。
+        <br><br>意图分类错了，比静态注册（至少 AI 能找到 Tool）还要糟糕。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">弊端 2：跨场景任务无法处理 <span class="tag tag-r">架构级</span></div>
+      <div class="card-b">
+        用户说"帮我找到客户张三，查他所有订单，再生成一份报表发给他"——这个任务横跨"客户查询"、"订单管理"、"报表分析"三个 Tool 分组。
+        <br><br>
+        动态注册的两个选择都不好：<br>
+        · 一次性暴露全部分组 → 退化成静态注册，优势消失<br>
+        · 多轮切换分组 → 需要额外的状态管理，复杂度翻倍
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">弊端 3：引入额外延迟和成本 <span class="tag tag-b">工程</span></div>
+      <div class="card-b">
+        意图分类通常本身也是一次 LLM 调用（或者至少是一次向量检索），在真正回答用户问题之前多了一个网络请求。
+        <br><br>
+        用户感受到的延迟增加，API 成本增加。如果意图分类本身也不稳定，等于在不稳定的基础上又加了一层不稳定。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">弊端 4：维护成本高 <span class="tag tag-b">工程</span></div>
+      <div class="card-b">
+        Tool 分组逻辑需要随业务变化持续更新。新增一个 Tool，要决定它属于哪个分组，边界模糊时很容易被遗漏。<br><br>
+        分组之间的边界本身也是模糊的（"创建订单"是"订单管理"还是"销售流程"？），每次有争议都需要人工决策，增加了团队沟通成本。
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="q-label">什么时候值得用动态注册</div>
+    <div class="row">
+      <div class="gbox">
+        <strong>✓ 适合用</strong><br><br>
+        Tool 数量超过 20 个<br>
+        业务场景边界清晰（客服 vs 财务 vs 技术支持）<br>
+        用户角色固定（销售只用销售 Tool）<br>
+        任务通常不跨场景
+      </div>
+      <div class="rbox">
+        <strong>✗ 不适合用</strong><br><br>
+        Tool 数量少于 15 个（直接静态即可）<br>
+        用户任务复杂、跨业务域<br>
+        对延迟敏感的场景<br>
+        团队没有人维护分组逻辑
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ FC再理解 -->
+  <div class="panel" id="p3">
+    <div class="q-label">问题 ④ — 对 Function Calling 的理解是否正确</div>
+
+    <div class="alert">
+      <strong>✓ 你的理解现在完全正确</strong>，可以直接用于面试。
+    </div>
+
+    <div class="callout">
+      你说的：<strong>"FC 是对 AI 输出结果的结构化，AI 做了意图识别，输出对工具使用的决策，然后代码执行决策"</strong>——这个表述准确且清晰。
+    </div>
+
+    <div class="q-label" style="margin-top:16px">补充一个细节让表述更完整</div>
+    <div class="card">
+      <div class="card-b">
+        AI 做的不只是"要不要调"，还包括<strong>"填什么参数"</strong>——这也是 AI 推理的一部分，不是代码自动填的。<br><br>
+        完整的说法：
+      </div>
+      <div class="hl">
+        AI 做意图识别 + 参数推断，输出结构化的调用决策（工具名 + 参数值）；代码拦截这个决策并执行真实操作，再把结果传回 AI 继续推理。
+      </div>
+    </div>
+
+    <div class="q-label" style="margin-top:14px">FC 在整个知识体系里的位置</div>
+    <pre>Function Calling（LLM 原生能力）
+  │  ← AI 输出结构化意图，代码执行
+  ├── MCP Tools（对 FC 的标准化封装）
+  │     ← 统一协议、服务发现、跨模型复用
+  ├── ReAct 模式（使用 FC 的推理范式）
+  │     ← Reasoning（思考）+ Acting（调用 Tool）循环
+  └── Agent Loop（多轮 FC 调用的完整循环）
+        └── Multi-Agent（多个 Agent 互相调用）</pre>
+
+    <div class="callout">
+      <strong>从 FC 到 MCP 的升级逻辑：</strong>FC 解决了"AI 能调工具"的问题，但每个模型格式不同，每个应用都要自己定义工具——生态碎片化。MCP 在 FC 之上加了标准协议，让一个工具 Server 写一次，所有支持 MCP 的模型和应用都能用。就像 HTTP 解决了"计算机能通信"，REST 进一步规范了"如何通信"。
+    </div>
+  </div>
+
+  <!-- ⑤ Schema -->
+  <div class="panel" id="p4">
+    <div class="q-label">问题 ⑤ — Schema 是什么，在 MCP 语境里指什么</div>
+
+    <div class="callout">
+      <strong>Schema = 数据结构的描述规范。</strong><br>
+      它本身不是数据，是数据的"说明书"——告诉你这份数据有哪些字段、每个字段是什么类型、哪些必填、取值范围是什么。
+    </div>
+
+    <div class="q-label" style="margin-top:16px">类比理解</div>
+    <div class="card">
+      <div class="card-b">
+        Schema 就像一张表格的表头设计图——<br><br>
+        不是表格里的数据，而是定义了：<br>
+        · 这张表有哪几列（字段名）<br>
+        · 每列填数字还是文字（类型）<br>
+        · 哪列不能为空（required）<br>
+        · 数字的合法范围是多少（minimum / maximum）<br><br>
+        表头设计图 = Schema；表格里的数据 = 实际的 JSON 数据。
+      </div>
+    </div>
+
+    <div class="q-label" style="margin-top:14px">在 MCP 里，JSON Schema 用来描述 Tool 的参数结构</div>
+    <pre>{
+  "name": "get_weather",
+  "description": "查询指定城市的天气预报",
+
+  "parameters": {               ← 这整块就是 JSON Schema
+    "type": "object",
+    "properties": {
+      "city": {
+        "type": "string",       ← city 是字符串
+        "description": "城市名，如：上海、北京"
+      },
+      "days": {
+        "type": "integer",      ← days 是整数
+        "description": "预报天数",
+        "minimum": 1,           ← 最少1天
+        "maximum": 7,           ← 最多7天
+        "default": 1
+      },
+      "unit": {
+        "type": "string",
+        "enum": ["celsius", "fahrenheit"],  ← 只能是这两个值
+        "description": "温度单位"
+      }
+    },
+    "required": ["city"]        ← city 必填，days 和 unit 选填
+  }
+}</pre>
+
+    <div class="q-label" style="margin-top:14px">Schema 里每个关键字的含义</div>
+    <div class="card">
+      <div class="card-b">
+        <div class="schema-line">
+          <div class="schema-code">"type"</div>
+          <div class="schema-desc">字段的数据类型。常用：<code>string</code>（文字）、<code>integer</code>（整数）、<code>number</code>（小数）、<code>boolean</code>（是/否）、<code>array</code>（列表）、<code>object</code>（嵌套对象）</div>
+        </div>
+        <div class="schema-line">
+          <div class="schema-code">"description"</div>
+          <div class="schema-desc">用自然语言解释这个字段的含义和用法——这是 AI 理解参数语义的关键，写得越清楚 AI 填参越准确</div>
+        </div>
+        <div class="schema-line">
+          <div class="schema-code">"required"</div>
+          <div class="schema-desc">数组形式，列出必须提供的字段名。AI 生成调用时会确保这些字段一定有值，其余字段可以省略</div>
+        </div>
+        <div class="schema-line">
+          <div class="schema-code">"enum"</div>
+          <div class="schema-desc">枚举值，限定这个字段只能填固定的几个值之一。AI 不会乱填，会从列表中选择</div>
+        </div>
+        <div class="schema-line">
+          <div class="schema-code">"minimum" / "maximum"</div>
+          <div class="schema-desc">数字字段的取值范围。AI 生成参数时会遵守这个范围，不会填超出范围的值</div>
+        </div>
+        <div class="schema-line">
+          <div class="schema-code">"default"</div>
+          <div class="schema-desc">用户没有提供该字段时使用的默认值。AI 在没有明确信息时会使用默认值</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="q-label">为什么 Schema 对 MCP 如此重要</div>
+    <div class="row">
+      <div class="gbox">
+        <strong>有 Schema 时</strong><br><br>
+        AI 知道 days 是整数，范围 1-7<br>
+        → AI 填 3，合法，直接执行<br><br>
+        AI 知道 unit 只能是 celsius / fahrenheit<br>
+        → AI 不会填 "摄氏度" 或 "C"
+      </div>
+      <div class="rbox">
+        <strong>没有 Schema 时</strong><br><br>
+        AI 可能把 days 填成 "三天"（字符串）<br>
+        → 代码解析出错，Tool 调用失败<br><br>
+        AI 可能把 unit 填成 "摄氏" 或 "°C"<br>
+        → API 不认识这个值，返回错误
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>一句话总结：</strong>Schema 是 MCP Tool 的"参数合同"——AI 读 description 知道"要不要调这个 Tool"，读 Schema 知道"调的时候参数怎么填"。两者缺一不可，description 解决意图理解，Schema 解决参数格式。
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var panels = document.querySelectorAll('.panel');
+  var tabs = document.querySelectorAll('.tab');
+  function show(i) {
+    for (var j = 0; j < panels.length; j++) {
+      panels[j].classList.toggle('active', i === j);
+      tabs[j].classList.toggle('active', i === j);
+    }
+  }
+</script>
+</body>
+</html>

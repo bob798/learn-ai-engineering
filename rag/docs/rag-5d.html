@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 完全理解 · 5D框架</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  background: #f5f4f0; color: #1a1a18;
+  min-height: 100vh;
+}
+
+.site-nav{position:sticky;top:0;z-index:120;background:rgba(245,244,240,.92);backdrop-filter:blur(12px);border-bottom:.5px solid #dedad4}
+.site-nav-inner{max-width:1160px;margin:0 auto;min-height:54px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.site-nav-brand,.site-nav-link,.site-nav-home,.sub-nav-label,.sub-nav-link{font-family:"SF Mono",monospace;font-size:11px;text-decoration:none}
+.site-nav-brand{color:#888780;letter-spacing:1.5px;text-transform:uppercase}
+.site-nav-links,.sub-nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.site-nav-link{color:#5f5e5a;padding:7px 10px;border-radius:999px}
+.site-nav-link.current{color:#a32d2d;background:#fcebeb;border:1px solid rgba(163,45,45,.16)}
+.site-nav-home{margin-left:auto;color:#1a1a18;padding:7px 10px;border-radius:999px;border:.5px solid #dedad4;background:#fff}
+.sub-nav{border-bottom:.5px solid #dedad4;background:rgba(255,255,255,.65)}
+.sub-nav-inner{max-width:1160px;margin:0 auto;min-height:44px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.sub-nav-label{color:#888780;letter-spacing:1.2px;text-transform:uppercase}
+.sub-nav-link{color:#1a1a18;padding:4px 0}
+.page-header,.page-intro{max-width:820px;margin-left:auto;margin-right:auto}
+.page-header{margin-bottom:18px;padding:28px 28px 24px;border:1px solid #dedad4;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(241,239,232,.92))}
+.page-header-main{display:grid;gap:12px}
+.eyebrow,.intro-label{font-family:"SF Mono",monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.eyebrow{color:#F26419;margin-bottom:14px}
+.page-header h1{font-size:clamp(30px,4vw,48px);font-weight:800;line-height:1.05;letter-spacing:-1.5px}
+.lead{max-width:680px;color:#5f5e5a;font-size:14px;line-height:1.8}
+.header-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.header-badges span{padding:5px 10px;border-radius:999px;border:1px solid #dedad4;background:rgba(255,255,255,.75);color:#5f5e5a;font-family:"SF Mono",monospace;font-size:11px}
+.page-intro{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-bottom:20px}
+.page-role{padding:16px 18px;border:1px solid #dedad4;background:#fff;border-radius:14px;font-size:13px;color:#5f5e5a;line-height:1.8}
+.page-role strong{color:#1a1a18}
+.page-role a,.intro-body a{color:#185fa5;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.intro-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.intro-meta-card{padding:16px 18px;border:1px solid #dedad4;background:#fff;border-radius:14px}
+.intro-label{color:#F26419;margin-bottom:8px}
+.intro-body{font-size:13px;color:#5f5e5a;line-height:1.8}
+
+/* ── Layout ── */
+.layout { display: flex; min-height: 100vh; }
+.main { flex: 1; padding: 28px 16px 60px; min-width: 0; transition: margin-right .3s; }
+.container { max-width: 820px; margin: 0 auto; }
+
+/* ── Concept Side Panel ── */
+.concept-panel {
+  width: 0; overflow: hidden; background: #fff;
+  border-left: 0.5px solid #dedad4; position: fixed; right: 0; top: 0; bottom: 0;
+  z-index: 100; transition: width .3s; display: flex; flex-direction: column;
+  box-shadow: -4px 0 20px rgba(0,0,0,.06);
+}
+.concept-panel.open { width: 360px; }
+.cp-header {
+  padding: 18px 18px 14px; border-bottom: 0.5px solid #dedad4;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-shrink: 0;
+}
+.cp-title { font-size: 15px; font-weight: 500; color: #1a1a18; }
+.cp-close { cursor: pointer; color: #888780; font-size: 18px; padding: 2px; line-height: 1; }
+.cp-close:hover { color: #1a1a18; }
+.cp-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+.cp-section { margin-bottom: 16px; }
+.cp-section-label { font-size: 10px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: #888780; margin-bottom: 6px; }
+.cp-section-body { font-size: 12px; color: #444441; line-height: 1.75; }
+.cp-section-body strong { color: #1a1a18; }
+.cp-tag { display: inline-block; font-size: 9px; padding: 2px 7px; border-radius: 4px; font-weight: 500; margin: 2px 2px 2px 0; background: #fef0e7; color: #B8440A; }
+.cp-code { font-family: "SF Mono", monospace; font-size: 11px; background: #f1efe8; border-radius: 6px; padding: 8px 10px; margin: 6px 0; line-height: 1.8; color: #1a1a18; }
+.cp-analogy { background: #fef0e7; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #633806; line-height: 1.7; margin: 6px 0; }
+.cp-warn { background: #fcebeb; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #501313; line-height: 1.7; margin: 6px 0; }
+.cp-good { background: #eaf3de; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #173404; line-height: 1.7; margin: 6px 0; }
+.cp-methodology { background: #f5f4f0; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #2c2c2a; line-height: 1.7; margin: 6px 0; border-left: 3px solid #1a1a18; }
+
+/* ── Clickable Concepts ── */
+.concept {
+  cursor: pointer; border-bottom: 1.5px dashed #F26419; color: inherit;
+  transition: background .15s; border-radius: 2px; padding: 0 1px;
+}
+.concept:hover { background: #fef0e7; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 20px; }
+.tab {
+  padding: 6px 12px; font-size: 11px; border-radius: 6px; cursor: pointer;
+  color: #5f5e5a; border: 0.5px solid #c8c7be; background: #fff;
+  transition: all .15s; white-space: nowrap;
+}
+.tab.active { color: #fff; background: #F26419; border-color: #F26419; font-weight: 500; }
+.tab:hover:not(.active) { background: #f1efe8; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Typography ── */
+.sl { font-size: 10px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: #888780; margin: 16px 0 8px; }
+
+/* ── Callouts ── */
+.callout { border-left: 3px solid #F26419; padding: 10px 14px; background: #fff3ec; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #444441; line-height: 1.7; }
+.callout strong { color: #1a1a18; }
+.callout-blue { border-left: 3px solid #3b8bd4; padding: 10px 14px; background: #e6f1fb; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #042c53; line-height: 1.7; }
+.callout-blue strong { color: #0c447c; }
+.callout-green { border-left: 3px solid #639922; padding: 10px 14px; background: #eaf3de; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #173404; line-height: 1.7; }
+.callout-green strong { color: #3b6d11; }
+.callout-dark { border-left: 3px solid #1a1a18; padding: 10px 14px; background: #f1efe8; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #2c2c2a; line-height: 1.7; }
+.callout-dark strong { color: #1a1a18; font-weight: 500; }
+
+/* ── Cards ── */
+.card { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; border: 0.5px solid #dedad4; }
+.card-t { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 5px; }
+.card-b { font-size: 12px; color: #5f5e5a; line-height: 1.75; }
+
+pre { font-family: "SF Mono", "Fira Code", monospace; font-size: 11px; background: #f1efe8; border-radius: 7px; padding: 11px 13px; border: 0.5px solid #c8c7be; margin: 8px 0; line-height: 1.9; overflow-x: auto; white-space: pre; color: #1a1a18; }
+code { font-family: "SF Mono", monospace; font-size: 11px; background: #e8e6df; padding: 1px 5px; border-radius: 3px; }
+
+/* ── Grids ── */
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 10px 0; }
+@media(max-width:600px){ .row,.row3 { grid-template-columns: 1fr; } }
+
+.gbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #97c459; background: #eaf3de; color: #173404; }
+.rbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #f09595; background: #fcebeb; color: #501313; }
+.obox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #EF9F27; background: #faeeda; color: #412402; }
+.bbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #85b7eb; background: #e6f1fb; color: #042c53; }
+
+table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+th { background: #f5f4f0; padding: 8px 10px; text-align: left; font-weight: 500; border: 0.5px solid #dedad4; color: #1a1a18; }
+td { padding: 8px 10px; border: 0.5px solid #dedad4; color: #5f5e5a; line-height: 1.5; vertical-align: top; }
+td strong { color: #1a1a18; }
+
+.sep { border: none; border-top: 0.5px solid #dedad4; margin: 14px 0; }
+
+.step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+.sn { width: 22px; height: 22px; border-radius: 50%; background: #F26419; color: #fff; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.sb { flex: 1; font-size: 13px; color: #444441; line-height: 1.6; }
+.sb strong { color: #1a1a18; }
+
+.hl { background: #fff3ec; border-left: 3px solid #F26419; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; color: #633806; margin: 8px 0; line-height: 1.6; }
+
+.tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; margin-right: 4px; }
+.tag-o { background: #fef0e7; color: #B8440A; }
+.tag-b { background: #e6f1fb; color: #185fa5; }
+.tag-g { background: #eaf3de; color: #3b6d11; }
+.tag-r { background: #fcebeb; color: #a32d2d; }
+
+/* ── Flow ── */
+.flow { display: flex; align-items: stretch; gap: 0; margin: 12px 0; overflow-x: auto; }
+.flow-node { background: #fff; border: 0.5px solid #dedad4; border-radius: 8px; padding: 10px 12px; font-size: 11px; text-align: center; min-width: 90px; flex-shrink: 0; }
+.flow-node .fn-title { font-weight: 500; color: #1a1a18; font-size: 12px; margin-bottom: 3px; }
+.flow-node .fn-sub { color: #888780; font-size: 10px; line-height: 1.4; }
+.flow-arrow { display: flex; align-items: center; padding: 0 6px; color: #c8c7be; font-size: 18px; flex-shrink: 0; }
+.flow-node.active-node { background: #fef0e7; border-color: #EF9F27; }
+.flow-node.active-node .fn-title { color: #B8440A; }
+
+/* ── Layers ── */
+.layer { border-radius: 10px; padding: 13px 15px; margin-bottom: 8px; border: 0.5px solid; }
+.layer-title { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+.layer-body { font-size: 11px; line-height: 1.7; }
+.l-data { background: #f1efe8; border-color: #c8c7be; }
+.l-data .layer-title { color: #2c2c2a; }
+.l-data .layer-body { color: #5f5e5a; }
+.l-index { background: #e6f1fb; border-color: #85b7eb; }
+.l-index .layer-title { color: #185fa5; }
+.l-index .layer-body { color: #042c53; }
+.l-retrieve { background: #fef0e7; border-color: #EF9F27; }
+.l-retrieve .layer-title { color: #B8440A; }
+.l-retrieve .layer-body { color: #633806; }
+.l-generate { background: #eaf3de; border-color: #97c459; }
+.l-generate .layer-title { color: #3b6d11; }
+.l-generate .layer-body { color: #173404; }
+
+/* ── Misconception Cards (redesigned) ── */
+.mc-card { border-radius: 10px; margin-bottom: 14px; background: #fff; border: 0.5px solid #dedad4; overflow: hidden; }
+.mc-card-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fafaf8; border-bottom: 0.5px solid #dedad4; }
+.mc-num { font-size: 9px; font-weight: 700; letter-spacing: .06em; background: #1a1a18; color: #f5f4f0; border-radius: 3px; padding: 2px 7px; flex-shrink: 0; }
+.mc-statement { font-size: 13px; font-weight: 500; color: #1a1a18; }
+.mc-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.mc-row { display: flex; gap: 8px; align-items: flex-start; }
+.mc-badge { font-size: 9px; font-weight: 700; border-radius: 3px; padding: 2px 7px; flex-shrink: 0; margin-top: 2px; letter-spacing: .04em; }
+.mc-badge.wrong { background: #fcebeb; color: #a32d2d; }
+.mc-badge.right { background: #eaf3de; color: #3b6d11; }
+.mc-badge.why { background: #f1efe8; color: #2c2c2a; }
+.mc-badge.fix { background: #e6f1fb; color: #185fa5; }
+.mc-row-text { font-size: 12px; color: #444441; line-height: 1.7; flex: 1; }
+.mc-row-text strong { color: #1a1a18; }
+.mc-row-text code { font-family: "SF Mono", monospace; font-size: 10px; background: #f1efe8; padding: 1px 5px; border-radius: 3px; }
+/* keep old for any remaining references */
+.misconception { border: 0.5px solid #f09595; border-radius: 10px; padding: 13px 15px; margin-bottom: 10px; background: #fff; }
+.mc-wrong { font-size: 12px; color: #a32d2d; margin-bottom: 6px; }
+.mc-right { font-size: 12px; color: #3b6d11; margin-bottom: 4px; }
+.mc-why { font-size: 11px; color: #5f5e5a; line-height: 1.6; }
+
+/* ── Quiz ── */
+.quiz-card { background: #fff; border: 0.5px solid #dedad4; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+.quiz-q { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 10px; line-height: 1.5; }
+.quiz-q-num { display: inline-block; background: #F26419; color: #fff; font-size: 9px; font-weight: 600; border-radius: 3px; padding: 2px 7px; margin-right: 6px; vertical-align: middle; }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.quiz-opt { border: 0.5px solid #dedad4; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #444441; cursor: pointer; transition: all .15s; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+.quiz-opt:hover { background: #f5f4f0; border-color: #c8c7be; }
+.quiz-opt.correct { background: #eaf3de; border-color: #97c459; color: #173404; }
+.quiz-opt.wrong { background: #fcebeb; border-color: #f09595; color: #501313; }
+.quiz-opt.revealed { pointer-events: none; }
+.quiz-opt-label { font-size: 10px; font-weight: 700; color: #888780; flex-shrink: 0; margin-top: 1px; }
+.quiz-opt.correct .quiz-opt-label { color: #3b6d11; }
+.quiz-opt.wrong .quiz-opt-label { color: #a32d2d; }
+.quiz-explain { margin-top: 10px; font-size: 11px; color: #5f5e5a; background: #f5f4f0; border-radius: 6px; padding: 8px 10px; line-height: 1.7; display: none; }
+.quiz-explain.show { display: block; }
+.quiz-score { text-align: center; padding: 16px; font-size: 14px; font-weight: 500; color: #1a1a18; display: none; }
+.quiz-score span { font-size: 28px; color: #F26419; display: block; margin-bottom: 4px; }
+
+/* ── Attention Deep Dive ── */
+.attn-level { border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; border: 0.5px solid; }
+.attn-l1 { background: #fef0e7; border-color: #EF9F27; }
+.attn-l2 { background: #e6f1fb; border-color: #85b7eb; }
+.attn-l3 { background: #eaf3de; border-color: #97c459; }
+.attn-l4 { background: #f1efe8; border-color: #c8c7be; }
+.attn-l5 { background: #fcebeb; border-color: #f09595; }
+.attn-level-label { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 6px; }
+.attn-l1 .attn-level-label { color: #B8440A; }
+.attn-l2 .attn-level-label { color: #185fa5; }
+.attn-l3 .attn-level-label { color: #3b6d11; }
+.attn-l4 .attn-level-label { color: #5f5e5a; }
+.attn-l5 .attn-level-label { color: #a32d2d; }
+.attn-level-title { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 6px; }
+.attn-level-body { font-size: 12px; line-height: 1.75; color: #444441; }
+.attn-level-body strong { color: #1a1a18; }
+.attn-level-body code { font-family: "SF Mono", monospace; font-size: 11px; background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 3px; }
+.attn-qkv { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+@media(max-width:500px){ .attn-qkv { grid-template-columns: 1fr; } }
+.attn-qkv-item { border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.65; }
+.attn-q-item { background: #fef0e7; border: 0.5px solid #EF9F27; }
+.attn-k-item { background: #e6f1fb; border: 0.5px solid #85b7eb; }
+.attn-v-item { background: #eaf3de; border: 0.5px solid #97c459; }
+.attn-qkv-item strong { font-size: 18px; display: block; margin-bottom: 3px; }
+.must-read-badge { display: inline-block; background: #E24B4A; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 3px; letter-spacing: .05em; margin-right: 6px; vertical-align: middle; }
+
+/* ── Q&A ── */
+.qa { border-left: 3px solid #F26419; padding: 10px 14px; margin-bottom: 12px; background: #fff; border-radius: 0 8px 8px 0; border: 0.5px solid #dedad4; border-left: 3px solid #F26419; }
+.qa-level { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.qa-q { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 6px; }
+.qa-a { font-size: 12px; color: #5f5e5a; line-height: 1.7; }
+.qa-hl { background: #f1efe8; border-radius: 6px; padding: 7px 10px; margin-top: 7px; font-size: 11px; color: #444441; font-style: italic; }
+
+/* ── Universal Methodology Box ── */
+.methodology-box {
+  border: 1px solid #1a1a18; border-radius: 10px; padding: 14px 16px; margin: 12px 0;
+  background: #fff; position: relative;
+}
+.methodology-label {
+  position: absolute; top: -9px; left: 12px; background: #1a1a18; color: #f5f4f0;
+  font-size: 9px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 3px;
+}
+.methodology-title { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 6px; }
+.methodology-body { font-size: 12px; color: #444441; line-height: 1.7; }
+
+/* ── Scenario Cards ── */
+.scenario { border: 0.5px solid #dedad4; border-radius: 10px; margin-bottom: 16px; overflow: hidden; background: #fff; }
+.scenario-header { padding: 11px 16px; background: #1a1a18; color: #f5f4f0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.scenario-title { font-size: 13px; font-weight: 500; flex: 1; }
+.scenario-tags { display: flex; gap: 5px; flex-shrink: 0; }
+.scenario-tag { font-size: 9px; padding: 2px 7px; border-radius: 3px; background: rgba(255,255,255,.15); color: #f5f4f0; white-space: nowrap; }
+.scenario-body { padding: 14px 16px; }
+.scenario-pain { font-size: 12px; color: #a32d2d; margin-bottom: 12px; line-height: 1.65; display: flex; gap: 7px; align-items: flex-start; }
+.scenario-pain-label { font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: #a32d2d; border-radius: 3px; padding: 2px 6px; flex-shrink: 0; margin-top: 2px; }
+.scenario-insight { font-size: 12px; color: #173404; margin-top: 12px; line-height: 1.65; display: flex; gap: 7px; align-items: flex-start; }
+.scenario-insight-label { font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: #3b6d11; border-radius: 3px; padding: 2px 6px; flex-shrink: 0; margin-top: 2px; }
+.scenario-layers { display: flex; flex-direction: column; gap: 5px; margin: 4px 0; }
+.scenario-layer { display: flex; border-radius: 6px; overflow: hidden; border: 0.5px solid #dedad4; }
+.sl-label { font-size: 10px; font-weight: 600; color: #fff; padding: 9px 8px; width: 46px; min-width: 46px; display: flex; align-items: flex-start; justify-content: center; text-align: center; letter-spacing: .02em; line-height: 1.3; }
+.sl-content { font-size: 11.5px; color: #2c2c2a; line-height: 1.72; padding: 8px 12px; background: #fafaf8; flex: 1; }
+.sl-content strong { color: #1a1a18; font-weight: 500; }
+.sl-content code { font-family: "SF Mono", monospace; font-size: 10px; background: #ede9e0; padding: 1px 5px; border-radius: 3px; color: #1a1a18; }
+.sl-data .sl-label { background: #5f5e5a; }
+.sl-index .sl-label { background: #185fa5; }
+.sl-retrieve .sl-label { background: #B8440A; }
+.sl-generate .sl-label { background: #3b6d11; }
+
+/* ── Q20 items ── */
+.q20 { background: #fff; border: 0.5px solid #dedad4; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+.q20-q { font-size: 12px; font-weight: 500; color: #1a1a18; margin-bottom: 6px; display: flex; gap: 8px; align-items: flex-start; }
+.q20-num { background: #F26419; color: #fff; font-size: 9px; font-weight: 500; border-radius: 3px; padding: 2px 6px; flex-shrink: 0; margin-top: 1px; }
+.q20-a { font-size: 12px; color: #5f5e5a; line-height: 1.7; }
+.q20-a strong { color: #1a1a18; }
+.q20-a code { font-family: "SF Mono", monospace; font-size: 10px; background: #f1efe8; padding: 1px 5px; border-radius: 3px; }
+@media(max-width:820px){.page-intro,.intro-meta-grid{grid-template-columns:1fr}}
+
+/* ── Comparison ── */
+.vs-table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+.vs-table th { background: #f5f4f0; padding: 8px 10px; text-align: left; font-weight: 500; border: 0.5px solid #dedad4; color: #1a1a18; }
+.vs-table td { padding: 8px 10px; border: 0.5px solid #dedad4; color: #5f5e5a; line-height: 1.5; vertical-align: top; }
+.vs-win { color: #3b6d11 !important; font-weight: 500; }
+.vs-lose { color: #a32d2d !important; }
+</style>
+</head>
+<body>
+
+<div class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">RAG Docs</a>
+    <div class="site-nav-links">
+      <a href="index.html" class="site-nav-link">首页</a>
+      <a href="00_课程路线图.html" class="site-nav-link">系统学习</a>
+      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="ai-knowledge-hub.html" class="site-nav-link">快速回查</a>
+      <a href="rag-5d.html" class="site-nav-link current">讲解 / 面试</a>
+      <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
+    </div>
+    <a href="index.html" class="site-nav-home">返回首页</a>
+  </div>
+</div>
+<div class="sub-nav">
+  <div class="sub-nav-inner">
+    <div class="sub-nav-label">当前页 · 辨析与讲解</div>
+    <div class="sub-nav-links">
+      <a href="ai-knowledge-hub.html#glossary" class="sub-nav-link">共享词汇表</a>
+      <a href="03_工程方法论手册.html#boundary" class="sub-nav-link">方案边界</a>
+      <a href="rag-knowledge-map.html" class="sub-nav-link">知识地图</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Concept Side Panel ── -->
+<div class="concept-panel" id="conceptPanel">
+  <div class="cp-header">
+    <div>
+      <div class="cp-title" id="cpTitle">概念名称</div>
+    </div>
+    <div class="cp-close" onclick="closePanel()">✕</div>
+  </div>
+  <div class="cp-body" id="cpBody"></div>
+</div>
+
+<section class="page-header">
+  <div class="page-header-main">
+    <div class="eyebrow">Explain / Compare / Interview</div>
+    <h1>RAG 完全理解</h1>
+    <p class="lead">这页用 5D 框架做横向辨析、讲解表达和面试复习。你可以把它当成“概念边界和方案判断”的训练场，而不是第一次学习 RAG 的入口。</p>
+    <div class="header-badges">
+      <span>5D 框架</span>
+      <span>横向辨析</span>
+      <span>场景判断</span>
+      <span>讲解表达</span>
+    </div>
+  </div>
+</section>
+
+<section class="page-intro">
+  <div class="page-role">
+    <strong>这页负责横向辨析、讲解和面试，不负责第一次系统入门。</strong> 如果你还没建立顺序感，请回到 <a href="index.html">总站首页</a> 后先进入 <a href="00_课程路线图.html">课程路线图</a>。
+  </div>
+  <div class="intro-meta-grid">
+    <article class="intro-meta-card">
+      <div class="intro-label">适合任务</div>
+      <div class="intro-body">面试复习、方案说明、概念边界判断，以及把 RAG 讲清楚给别人听。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">前置阅读</div>
+      <div class="intro-body"><a href="00_课程路线图.html">课程路线图</a> · <a href="rag-knowledge-map.html">知识地图</a></div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">下一步</div>
+      <div class="intro-body"><a href="ai-knowledge-hub.html">回索引页</a> · <a href="03_工程方法论手册.html#boundary">看方案边界</a> · 点击橙色虚线词看深度解析</div>
+    </article>
+  </div>
+</section>
+
+<div class="tabs">
+  <button class="tab active" onclick="show(0)">🗺 总览</button>
+  <button class="tab" onclick="show(1)">① 分层解构</button>
+  <button class="tab" onclick="show(2)">② 对比辨析</button>
+  <button class="tab" onclick="show(3)">③ 类比迁移</button>
+  <button class="tab" onclick="show(4)">④ 错误雷达</button>
+  <button class="tab" onclick="show(5)">⑤ 实战场景</button>
+  <button class="tab" onclick="show(6)">⑥ 进阶决策</button>
+  <button class="tab" onclick="show(7)">⑦ 问题解答</button>
+  <button class="tab" onclick="show(8)">⑧ 面试题库</button>
+  <button class="tab" onclick="window.location.href='rag-knowledge-map.html'" style="border-color:#9f7aea;color:#9f7aea">🔬 知识地图 ↗</button>
+  <button class="tab" onclick="show(10)">✅ 理解验证</button>
+</div>
+
+<!-- ══ Panel 0: 总览 ══ -->
+<div class="panel active" id="p0">
+  <div class="callout">
+    <strong>一句话版本：</strong>RAG 让 AI 在回答前先去查资料，而不是只靠训练时记住的知识。它解决的核心问题是"LLM 知识过时 + 不知道你的私有数据"。
+  </div>
+
+  <div class="methodology-box">
+    <div class="methodology-label">普世方法论</div>
+    <div class="methodology-title">从"记忆"到"检索"的范式转移</div>
+    <div class="methodology-body">
+      RAG 背后的核心思想在软件工程里普遍存在：<strong>不要把所有东西都存在最快但最贵的地方</strong>。CPU 缓存极快但极小；内存快但有限；硬盘慢但无限。LLM 的训练记忆就像 CPU 缓存——精炼但有限；向量数据库就像内存——可按需查询；原始文档就像硬盘——完整但需要检索。RAG 实现了这三层的协同，让"智能"来自动态检索，而不是静态记忆。
+    </div>
+  </div>
+
+  <div class="sl">RAG 的完整流程（一眼看懂）</div>
+  <div class="flow">
+    <div class="flow-node">
+      <div class="fn-title">原始文档</div>
+      <div class="fn-sub">PDF、网页、笔记、代码库</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="fn-title"><span class="concept" onclick="openConcept('chunking')">切块</span></div>
+      <div class="fn-sub">Chunking<br>按段落/语义切</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="fn-title"><span class="concept" onclick="openConcept('embedding')">向量化</span></div>
+      <div class="fn-sub">Embedding<br>文字→数字向量</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="fn-title">向量库</div>
+      <div class="fn-sub">Vector DB<br>存储+检索</div>
+    </div>
+    <div class="flow-arrow">↓ 用户提问时</div>
+  </div>
+  <div class="flow" style="margin-top:0">
+    <div class="flow-node active-node">
+      <div class="fn-title">用户提问</div>
+      <div class="fn-sub">"我们的退款政策是什么？"</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node active-node">
+      <div class="fn-title"><span class="concept" onclick="openConcept('retrieval')">检索</span></div>
+      <div class="fn-sub">Retrieval<br>找最相关的块</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node active-node">
+      <div class="fn-title">注入 Context</div>
+      <div class="fn-sub">把检索到的内容<br>塞进 prompt</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node active-node">
+      <div class="fn-title">LLM 生成</div>
+      <div class="fn-sub">基于真实内容<br>生成回答</div>
+    </div>
+  </div>
+
+  <div class="sl">RAG 解决了什么问题</div>
+  <div class="row">
+    <div class="rbox">
+      <strong>纯 LLM 的两个致命缺陷</strong><br><br>
+      ① 知识截止日期——不知道最新信息<br>
+      ② 不知道你的私有数据——公司文档、产品手册、内部知识库对它是透明的<br><br>
+      结果：<span class="concept" onclick="openConcept('hallucination')">幻觉（Hallucination）</span>——没有依据时会自信地编造答案
+    </div>
+    <div class="gbox">
+      <strong>RAG 的解法</strong><br><br>
+      每次回答前先"查资料"——从你的知识库里检索相关内容，附在 prompt 里给 LLM 参考。<br><br>
+      LLM 不再靠记忆，而是基于检索到的真实内容生成答案，幻觉大幅降低。
+    </div>
+  </div>
+
+  <div class="sl">5D 拆解地图</div>
+  <table>
+    <tr><th>维度</th><th>RAG 的关键问题</th></tr>
+    <tr><td><strong>D1 分层解构</strong></td><td>数据层 / 索引层 / 检索层 / 生成层——每层独立优化</td></tr>
+    <tr><td><strong>D2 对比辨析</strong></td><td>有RAG vs 没有RAG；RAG vs 微调；稀疏检索 vs 稠密检索</td></tr>
+    <tr><td><strong>D3 类比迁移</strong></td><td>开卷考试 / 图书馆馆员 / Google 搜索 + 摘要生成</td></tr>
+    <tr><td><strong>D4 错误雷达</strong></td><td>Chunk 越小越好？向量相似 = 语义相关？RAG = 微调的替代？</td></tr>
+    <tr><td><strong>D5 实战锚定</strong></td><td>客服知识库 / 法律文书 / 预售场景 / ToB 话术</td></tr>
+  </table>
+</div>
+
+<!-- ══ Panel 1: 分层解构 ══ -->
+<div class="panel" id="p1">
+  <div class="callout">RAG 包含两个独立阶段、四个子层。<strong>建设期（离线）</strong>和<strong>查询期（在线）</strong>完全分离，优化方向不同。</div>
+
+  <div class="methodology-box">
+    <div class="methodology-label">普世方法论</div>
+    <div class="methodology-title">分层架构：每层单一职责，故障隔离</div>
+    <div class="methodology-body">
+      计算机网络 OSI 7层模型、MVC 架构、微服务架构——都在用同一个思想：<strong>把复杂系统切分成职责单一的层，每层只需优化自己的问题</strong>。RAG 的四层架构同理。好处是：出问题时能精准定位到哪一层，不会牵一发动全身。这是系统设计的核心原则之一。
+    </div>
+  </div>
+
+  <div class="sl">建设期（离线，一次性或定期更新）</div>
+
+  <div class="layer l-data">
+    <div class="layer-title">📂 数据层 Data Layer</div>
+    <div class="layer-body">
+      关注：原始数据的质量和格式<br>
+      核心工作：数据清洗（去除噪声、格式统一）、文档解析（PDF表格/图片处理）、数据去重<br>
+      核心原则：<span class="concept" onclick="openConcept('gigo')"><strong>Garbage In, Garbage Out</strong></span> ——数据质量决定 RAG 天花板，优化检索算法无法弥补烂数据
+    </div>
+  </div>
+
+  <div class="layer l-index">
+    <div class="layer-title">🔢 索引层 Index Layer</div>
+    <div class="layer-body">
+      关注：如何把文档变成可检索的形式<br>
+      核心工作：<span class="concept" onclick="openConcept('chunking')">Chunking（切块策略）</span>+ <span class="concept" onclick="openConcept('embedding')">Embedding（向量化）</span>+ 存入 Vector DB<br>
+      关键决策：块的大小（太大=噪声多，太小=上下文丢失）、块的 <span class="concept" onclick="openConcept('overlap')">overlap（重叠）</span>防止语义被切断、Embedding 模型选择
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">查询期（在线，每次用户提问时触发）</div>
+
+  <div class="layer l-retrieve">
+    <div class="layer-title">🔍 检索层 Retrieval Layer</div>
+    <div class="layer-body">
+      关注：如何找到最相关的内容<br>
+      核心工作：把用户问题向量化，在 Vector DB 里找最近邻，返回 Top-K 个块<br>
+      关键决策：检索方式（<span class="concept" onclick="openConcept('sparse')">稠密/稀疏</span>/<span class="concept" onclick="openConcept('hybrid')">混合</span>）、Top-K 数量、<span class="concept" onclick="openConcept('reranking')">Reranking（重排序）</span>
+    </div>
+  </div>
+
+  <div class="layer l-generate">
+    <div class="layer-title">✨ 生成层 Generation Layer</div>
+    <div class="layer-body">
+      关注：如何把检索结果转化为高质量回答<br>
+      核心工作：把检索到的块注入 prompt，引导 LLM 基于这些内容回答<br>
+      关键决策：Prompt 模板设计、上下文排列顺序（<span class="concept" onclick="openConcept('lostinmiddle')">Lost in the Middle 问题</span>）、引用来源标注
+    </div>
+  </div>
+
+  <div class="sl">四层的优化方向完全不同</div>
+  <table>
+    <tr><th>层</th><th>出问题的症状</th><th>优化方向</th></tr>
+    <tr><td><strong>数据层</strong></td><td>回答基于错误信息</td><td>数据清洗、去重、格式修复</td></tr>
+    <tr><td><strong>索引层</strong></td><td>找到的块上下文残缺</td><td>调整 Chunk 大小和 overlap</td></tr>
+    <tr><td><strong>检索层</strong></td><td>找到的块和问题不相关</td><td>换检索策略、加 Reranking</td></tr>
+    <tr><td><strong>生成层</strong></td><td>有正确信息但回答还是差</td><td>优化 Prompt 模板</td></tr>
+  </table>
+
+  <div class="callout"><strong>调试 RAG 时的第一步：</strong>先判断问题出在哪一层，不要上来就调整所有参数。分层诊断才能精准优化。</div>
+</div>
+
+<!-- ══ Panel 2: 对比辨析 ══ -->
+<div class="panel" id="p2">
+  <div class="sl">对比 1：有 RAG vs 没有 RAG</div>
+  <div class="row">
+    <div class="rbox">
+      <strong>纯 LLM（没有 RAG）</strong><br><br>
+      用户问："我们 Q3 的退款政策是什么？"<br><br>
+      LLM：凭训练时的记忆回答，可能一本正经地编造一个听起来合理的政策<br><br>
+      → 幻觉风险高<br>
+      → 不知道你的私有数据<br>
+      → 知识有截止日期
+    </div>
+    <div class="gbox">
+      <strong>LLM + RAG</strong><br><br>
+      用户问同样的问题<br><br>
+      系统先从知识库检索到《退款政策v3.2.pdf》的相关段落，附在 prompt 里<br><br>
+      LLM 基于真实文件回答，还能标注"来源：第2页第3段"<br><br>
+      → 可溯源，可验证<br>
+      → 知识库更新即生效
+    </div>
+  </div>
+
+  <div class="sl">对比 2：RAG vs <span class="concept" onclick="openConcept('finetune')">微调（Fine-tuning）</span></div>
+  <table class="vs-table">
+    <tr><th>维度</th><th>RAG</th><th>Fine-tuning</th></tr>
+    <tr><td><strong>解决的问题</strong></td><td class="vs-win">知道什么（知识注入）</td><td class="vs-win">怎么说（行为改变）</td></tr>
+    <tr><td><strong>适合场景</strong></td><td>知识频繁更新、需要可溯源</td><td>固定风格/格式、任务专一化</td></tr>
+    <tr><td><strong>知识更新</strong></td><td class="vs-win">更新知识库即生效，几乎实时</td><td class="vs-lose">需要重新训练，耗时耗费</td></tr>
+    <tr><td><strong>可解释性</strong></td><td class="vs-win">可以展示"参考了哪些文档"</td><td class="vs-lose">黑盒，无法解释知识来源</td></tr>
+    <tr><td><strong>幻觉控制</strong></td><td class="vs-win">强——有真实内容可参考</td><td class="vs-lose">弱——仍可能编造</td></tr>
+    <tr><td><strong>成本</strong></td><td class="vs-win">低——主要是 Embedding + DB 成本</td><td class="vs-lose">高——GPU 训练成本</td></tr>
+    <tr><td><strong>不适合</strong></td><td>需要改变模型行为/推理方式</td><td>知识量大且频繁更新</td></tr>
+  </table>
+  <div class="hl"><strong>不是二选一：</strong>最佳实践通常是两者结合——先微调让模型掌握领域风格，再用 RAG 注入最新知识。</div>
+
+  <div class="methodology-box">
+    <div class="methodology-label">普世方法论</div>
+    <div class="methodology-title">工具选择原则：按问题类型匹配工具，而不是用同一把锤子打所有钉子</div>
+    <div class="methodology-body">
+      RAG 解决"知识层面"的问题（知道什么），微调解决"行为层面"的问题（怎么做）。这个"分清问题域再选工具"的思路，在工程里处处适用：数据库选型（OLAP vs OLTP）、缓存策略（Redis vs Memcached）、消息队列（Kafka vs RabbitMQ）——都是先问"这是什么性质的问题"再选方案。
+    </div>
+  </div>
+
+  <div class="sl">对比 3：稀疏检索 vs 稠密检索 vs <span class="concept" onclick="openConcept('hybrid')">混合检索</span></div>
+  <div class="row3">
+    <div class="card" style="margin:0;border-top:3px solid #888780">
+      <div class="card-t"><span class="concept" onclick="openConcept('sparse')">稀疏检索</span><br><span style="font-size:10px;color:#888780">BM25 / TF-IDF</span></div>
+      <div class="card-b" style="font-size:11px">基于词频匹配。速度快，可解释，专业术语/代码/型号精确匹配好。<br><br>缺陷：不理解语义，"汽车"≠"车辆"</div>
+    </div>
+    <div class="card" style="margin:0;border-top:3px solid #F26419">
+      <div class="card-t"><span class="concept" onclick="openConcept('sparse')">稠密检索</span><br><span style="font-size:10px;color:#888780">向量相似度</span></div>
+      <div class="card-b" style="font-size:11px">基于语义相似度。理解同义词、上下文关系，模糊查询好。<br><br>缺陷：精确词匹配弱，Embedding 模型有偏差</div>
+    </div>
+    <div class="card" style="margin:0;border-top:3px solid #639922">
+      <div class="card-t"><span class="concept" onclick="openConcept('hybrid')">混合检索</span><br><span style="font-size:10px;color:#888780">Hybrid Search</span></div>
+      <div class="card-b" style="font-size:11px">两者结合，用 <span class="concept" onclick="openConcept('rrf')">RRF（互惠排名融合）</span>合并结果。<br><br>生产环境推荐——兼顾精确匹配和语义理解</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Panel 3: 类比迁移 ══ -->
+<div class="panel" id="p3">
+  <div class="callout"><strong>类比迁移的目标：</strong>把 RAG 的核心机制映射到已有的认知结构上。能用类比解释，说明真正理解了。</div>
+
+  <div class="sl">类比 1：开卷考试（最直觉的类比）</div>
+  <div class="card">
+    <div class="card-b">
+      <strong>闭卷考试 = 纯 LLM</strong>：只能用脑子里记住的内容作答。知识过时了、记错了，答案就错了。<br><br>
+      <strong>开卷考试 = RAG</strong>：考试时允许翻参考资料。不依赖记忆，依赖实时查找。<br><br>
+      <strong><span class="concept" onclick="openConcept('isomorphism')">同构</span>的核心结构：</strong>从"依赖记忆"到"依赖实时检索"——不是记得更多，而是查得更准。<br><br>
+      <strong>类比的边界：</strong>开卷考试里学生自己判断翻哪页；RAG 里这个判断由向量相似度算法完成，不一定总是正确的。
+    </div>
+  </div>
+
+  <div class="sl">类比 2：图书馆馆员（理解 RAG 分工）</div>
+  <div class="card">
+    <div class="card-b">
+      <strong>先明确馆员的角色定义：</strong>馆员不是「直接回答你的问题」的人，而是「帮你找到答案在哪本书的哪一页」的人。这个分工是整个类比的核心。<br><br>
+      <strong>RAG 的分工映射：</strong>
+      <pre>你（用户）         → 提出问题
+馆员 = RAG系统      → 把问题转成向量，去书架（Vector DB）找相关书籍
+书架 = Vector DB    → 返回最相关的几段内容（Top-K Chunks）
+馆员 + 段落 + LLM   → 基于找到的段落内容，综合生成回答</pre>
+      <strong>这个类比准确的部分：</strong>强调了「检索」和「回答」是两步分开的——馆员（RAG）先找到内容，LLM 再基于内容生成答案，不是 LLM 直接从记忆回答。<br><br>
+      <strong>书架的正确理解：</strong>书架就是 Vector DB，里面存的不是原始书籍，而是书籍内容的「向量索引」——类似图书馆的检索系统（杜威十进制分类法），按语义相似度排布，方便快速找到相关内容。<br><br>
+      <strong>类比的边界（也是RAG的真实局限）：</strong>真人馆员能理解隐含意图（你说「找本能帮我睡着的书」，他能联想到睡眠障碍/冥想/心理疏导）；RAG 的向量检索只理解表面语义相似度，理解不了隐含逻辑——这就是为什么要加 <span class="concept" onclick="openConcept('queryrewrite')">Query 改写</span>来弥补：用 LLM 先理解真实意图，再去检索。
+    </div>
+  </div>
+
+  <div class="sl">类比 3：Google 搜索 + 摘要（理解范式转变）</div>
+  <div class="card">
+    <div class="card-b">
+      <strong>Google 时代</strong>：你输入关键词 → 系统返回10条链接 → <strong>你自己点进去读每篇文章</strong> → 你自己综合得出结论<br><br>
+      <strong>RAG 时代</strong>：你提出问题 → 系统检索相关文档块 → <strong>LLM 替你读并综合</strong> → 直接输出结论<br><br>
+      核心差别只有一步：<strong>「谁来阅读和总结」</strong>——Google 让你自己读，RAG 让 LLM 替你读。<br><br>
+      <strong>这是一次范式转变：</strong>从「检索→展示→用户自己理解」变成了「检索→理解→直接给出结论」。用户不再需要阅读能力和信息筛选能力，而是把这部分工作外包给了 LLM。<br><br>
+      <strong>RAG vs Google 的技术差别：</strong>
+      <table style="margin:8px 0;font-size:11px">
+        <tr><th></th><th>Google</th><th>RAG</th></tr>
+        <tr><td>排名方式</td><td>PageRank（链接图谱）</td><td>向量相似度（语义）</td></tr>
+        <tr><td>数据范围</td><td>公开网页</td><td>私有知识库</td></tr>
+        <tr><td>输出形式</td><td>链接列表，展示原文</td><td>LLM 重新生成的答案</td></tr>
+        <tr><td>最终工作</td><td>用户自己阅读综合</td><td>LLM 替用户阅读综合</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="sl">RAG 协调了哪三层？</div>
+  <div class="callout-blue">
+    <strong>你的理解是正确的：RAG 协调了 LLM + 向量数据库 + 原始文档三层。</strong><br><br>
+    更精确地说：<br>
+    • <strong>原始文档</strong>（数据源）= 知识的「原材料」，PDF/网页/笔记<br>
+    • <strong>向量数据库</strong>（索引层）= 原始文档的「检索索引」，把文档变成可快速语义检索的形式<br>
+    • <strong>LLM</strong>（生成层）= 「理解和表达」引擎，基于检索到的内容生成人类可读的答案<br><br>
+    RAG 是让这三层协同工作的 Pipeline：原始文档 → 向量化存入 DB → 检索时找出相关块 → 给 LLM 参考生成答案。每层可以独立升级（换更好的 Embedding 模型、换更大的 LLM），互不影响。
+  </div>
+
+  <div class="sl">RAG 和 MCP 的关系</div>
+  <div class="callout-blue">
+    <strong>RAG 和 MCP 是互补的，不是竞争的。</strong><br><br>
+    MCP Resource = <strong>精确地址查找</strong>——你知道要找「3楼302室」，直接去拿<br>
+    RAG = <strong>语义搜索</strong>——你只知道「好像有个关于退款的东西」，需要系统帮你找<br><br>
+    同一个知识库：知道要什么用 MCP，不知道要什么用 RAG。两种访问方式各有适用场景。
+  </div>
+</div>
+
+<!-- ══ Panel 4: 错误雷达 ══ -->
+<div class="panel" id="p4">
+  <div class="callout">RAG 是一个细节决定成败的系统。以下5个误解是<strong>实际项目中最高频的失败原因</strong>，每一个都有人踩过真实的坑。</div>
+
+  <!-- MC 1 -->
+  <div class="mc-card">
+    <div class="mc-card-header">
+      <span class="mc-num">误解 01</span>
+      <span class="mc-statement">Chunk 越小，检索越精准</span>
+    </div>
+    <div class="mc-card-body">
+      <div class="mc-row">
+        <span class="mc-badge wrong">✕ 直觉</span>
+        <span class="mc-row-text">切得越细，每块越"纯粹"，检索噪声越少</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge right">✓ 事实</span>
+        <span class="mc-row-text">Chunk 太小会丢失上下文，检索到的片段无法独立理解</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge why">例子</span>
+        <span class="mc-row-text">退款政策被切成50字小块：第1块「申请退款需要在购买后」，第2块「30天内提交申请，并附上」，第3块「订单截图方可受理」——每块单独看都残缺不全，LLM 无法理解完整条件。</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge fix">解法</span>
+        <span class="mc-row-text">起点 <code>256–512 token</code>（约128–340汉字），加 <span class="concept" onclick="openConcept('overlap')">20–30% overlap</span>；或用 Parent-Child Chunking：小块检索，大块注入。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MC 2 -->
+  <div class="mc-card">
+    <div class="mc-card-header">
+      <span class="mc-num">误解 02</span>
+      <span class="mc-statement">向量相似度高 = 回答了用户的问题</span>
+    </div>
+    <div class="mc-card-body">
+      <div class="mc-row">
+        <span class="mc-badge wrong">✕ 直觉</span>
+        <span class="mc-row-text">向量距离近代表语义相关，语义相关就能回答问题</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge right">✓ 事实</span>
+        <span class="mc-row-text">语义相似 ≠ 回答了问题。「取消原因」和「取消步骤」语义相近，但一个问 Why，一个问 How</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge why">例子</span>
+        <span class="mc-row-text">用户问「如何取消订单」，Top-1 检索结果是「取消订单的常见原因（买错了/不需要了）」——语义确实很近，但根本没有回答操作步骤。这是 <strong>RAG 失败最常见的原因</strong>。</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge fix">解法</span>
+        <span class="mc-row-text"><span class="concept" onclick="openConcept('reranking')">Reranking（重排序）</span>：用交叉编码器把 query+document 拼在一起联合判断「这块内容是否真的回答了这个问题」，而不是只比较表面相似度。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MC 3 -->
+  <div class="mc-card">
+    <div class="mc-card-header">
+      <span class="mc-num">误解 03</span>
+      <span class="mc-statement">RAG 是微调的替代品，能解决所有 LLM 问题</span>
+    </div>
+    <div class="mc-card-body">
+      <div class="mc-row">
+        <span class="mc-badge wrong">✕ 直觉</span>
+        <span class="mc-row-text">有了 RAG，就不需要微调了；RAG 能解决 LLM 的一切局限</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge right">✓ 事实</span>
+        <span class="mc-row-text">RAG 解决「知道什么」（知识注入），微调解决「怎么做」（<span class="concept" onclick="openConcept('llmbehavior')">行为改变</span>），两者解决的是完全不同的问题</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge why">例子</span>
+        <span class="mc-row-text">想让 LLM 输出格式<strong>永远是 JSON</strong>、始终以客服语气回答——这是行为稳定性问题，RAG 注入「请输出 JSON」的文档效果非常不稳定。简单场景用 <span class="concept" onclick="openConcept('fewshot')">system prompt + few-shot</span> 就够；复杂场景才需要微调。</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge fix">解法</span>
+        <span class="mc-row-text">先判断是「知识问题」还是「行为问题」：知识→RAG；行为→先试 prompt，不稳定再微调；两者都要→先微调再加 RAG。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MC 4 -->
+  <div class="mc-card">
+    <div class="mc-card-header">
+      <span class="mc-num">误解 04</span>
+      <span class="mc-statement">检索到了相关内容，答案就一定准确</span>
+    </div>
+    <div class="mc-card-body">
+      <div class="mc-row">
+        <span class="mc-badge wrong">✕ 直觉</span>
+        <span class="mc-row-text">把正确的文档给了 LLM，它就会给出正确的答案</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge right">✓ 事实</span>
+        <span class="mc-row-text">检索正确只是前提。Prompt 没有约束「只用提供的内容回答」时，LLM 会混合检索内容和训练记忆，产生更难识别的<strong>混合性幻觉</strong></span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge why">例子</span>
+        <span class="mc-row-text">检索到了正确的退款政策段落，但 LLM 把它和训练数据里「电商行业常见的7天退款」混合，输出了一个半真半假的回答——既有真实条款又有编造内容，比纯幻觉更难察觉。</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge fix">解法</span>
+        <span class="mc-row-text">Prompt 必须明确：<code>「仅基于以下内容回答，如果内容中没有相关信息，请明确说明无法找到答案，不要依据其他知识推测。」</code></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MC 5 -->
+  <div class="mc-card">
+    <div class="mc-card-header">
+      <span class="mc-num">误解 05</span>
+      <span class="mc-statement">RAG = 把文档全部塞进 Context Window</span>
+    </div>
+    <div class="mc-card-body">
+      <div class="mc-row">
+        <span class="mc-badge wrong">✕ 直觉</span>
+        <span class="mc-row-text">Context Window 越来越大了，直接把所有文档塞进去更简单可靠</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge right">✓ 事实</span>
+        <span class="mc-row-text">RAG 的核心价值是「精确检索少量最相关内容」，不是「全部塞入」</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge why">例子</span>
+        <span class="mc-row-text">10万字文档全部塞入：① Token 成本 ≈ $0.5–1/次（GPT-4o），高频查询费用爆炸；② <span class="concept" onclick="openConcept('lostinmiddle')">Lost in the Middle</span>——LLM 对中间部分注意力弱，关键信息放错位置就被忽略；③ 仍然可能超过 context window 上限。</span>
+      </div>
+      <div class="mc-row">
+        <span class="mc-badge fix">解法</span>
+        <span class="mc-row-text">文档 &lt;10页 → 可以直接放 system prompt；10–50页 → 看查询频率决定；&gt;50页 → 必须 RAG。精确检索 5–10 个块，比粗暴塞入更准更省。</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl">RAG 失败的诊断清单</div>
+  <table>
+    <tr><th>症状</th><th>可能原因</th><th>排查方向</th></tr>
+    <tr><td>回答内容是编造的</td><td>检索失败，或 Prompt 没限制 LLM 只用提供的内容</td><td>检查检索结果；加「仅基于以下内容回答」约束</td></tr>
+    <tr><td>检索到的内容不相关</td><td>Embedding 模型不适合领域；Chunk 策略问题</td><td>换 Embedding 模型；调整 Chunk 大小；加 Reranking</td></tr>
+    <tr><td>回答太笼统，缺细节</td><td>Chunk 太小，上下文丢失</td><td>增大 Chunk 大小；增加 overlap；用父子切块</td></tr>
+    <tr><td>专业术语匹配失败</td><td>纯向量检索对精确词匹配弱</td><td>改用<span class="concept" onclick="openConcept('hybrid')">混合检索</span></td></tr>
+    <tr><td>多文档综合问题回答差</td><td>Top-K 太小，相关内容没全部检索到</td><td>增大 Top-K；加 <span class="concept" onclick="openConcept('queryrewrite')">Query 扩展</span></td></tr>
+  </table>
+</div>
+
+<!-- ══ Panel 5: 实战场景 ══ -->
+<div class="panel" id="p5">
+  <div class="callout"><strong>业务场景是理解技术选型的最好工具。</strong>同样是 RAG，客服知识库和法律文书的 Chunk 策略、检索方式完全不同。</div>
+
+  <!-- Scenario 1 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-title">🎧 客服知识库 · 实时 QA 场景</div>
+      <div class="scenario-tags">
+        <span class="scenario-tag">高频查询</span>
+        <span class="scenario-tag">精确匹配</span>
+        <span class="scenario-tag">频繁更新</span>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-pain">
+        <span class="scenario-pain-label">痛点</span>
+        <span>用户咨询量大，产品手册每月更新，新员工培训周期长，回答质量参差不齐。</span>
+      </div>
+      <div class="scenario-layers">
+        <div class="scenario-layer sl-data">
+          <div class="sl-label">数据层</div>
+          <div class="sl-content">产品手册 PDF + 历史工单 &nbsp;·&nbsp; 清洗重复/矛盾条目，统一格式</div>
+        </div>
+        <div class="scenario-layer sl-index">
+          <div class="sl-label">索引层</div>
+          <div class="sl-content">按<strong>问答对</strong>切块（<code>128–256 token</code>），保留「问题」和「答案」完整配对 &nbsp;·&nbsp; Embedding: <code>text-embedding-3-small</code>（成本低，支持中英混合）</div>
+        </div>
+        <div class="scenario-layer sl-retrieve">
+          <div class="sl-label">检索层</div>
+          <div class="sl-content"><strong>混合检索</strong>：稀疏匹配产品型号 + 稠密理解用户意图 &nbsp;·&nbsp; <code>Top-K=5</code> + Reranking（确保「回答了用户的问题」而非仅语义相似）</div>
+        </div>
+        <div class="scenario-layer sl-generate">
+          <div class="sl-label">生成层</div>
+          <div class="sl-content">Prompt 约束「仅基于以下内容回答」，每条答案标注来源工单编号，支持客服主管核查</div>
+        </div>
+      </div>
+      <div class="scenario-insight">
+        <span class="scenario-insight-label">洞察</span>
+        <span>产品手册更新后只需重新 Embedding 变更部分，当天即生效。知识更新延迟从「2周新员工培训」降到「1小时文档更新」。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenario 2 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-title">⚖️ 法律合同审查 · 长文本精读场景</div>
+      <div class="scenario-tags">
+        <span class="scenario-tag">长文档</span>
+        <span class="scenario-tag">精确条款</span>
+        <span class="scenario-tag">高准确率</span>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-pain">
+        <span class="scenario-pain-label">痛点</span>
+        <span>律师审查合同需在数百页文件中定位特定条款，传统关键词搜索无法理解语义，人工阅读效率极低。</span>
+      </div>
+      <div class="scenario-layers">
+        <div class="scenario-layer sl-data">
+          <div class="sl-label">数据层</div>
+          <div class="sl-content">合同 PDF（OCR 处理扫描件）&nbsp;·&nbsp; 结构化标注：甲方/乙方/期限/违约条款 &nbsp;·&nbsp; 去除页眉页脚干扰</div>
+        </div>
+        <div class="scenario-layer sl-index">
+          <div class="sl-label">索引层</div>
+          <div class="sl-content">按<strong>完整条款</strong>切块（<code>512–1024 token</code>）&nbsp;·&nbsp; 元数据：合同类型、签约日期、甲乙方名称 &nbsp;·&nbsp; <strong>Parent-Child Chunking</strong>：小块定位 + 大块注入</div>
+        </div>
+        <div class="scenario-layer sl-retrieve">
+          <div class="sl-label">检索层</div>
+          <div class="sl-content"><strong>元数据过滤</strong>（合同类型=采购合同）缩小候选集 &nbsp;→&nbsp; 向量检索语义相关条款 &nbsp;→&nbsp; BM25 精确匹配法律术语（「不可抗力」「违约金」）</div>
+        </div>
+        <div class="scenario-layer sl-generate">
+          <div class="sl-label">生成层</div>
+          <div class="sl-content">Prompt 要求标注「依据第 X 条第 X 款」&nbsp;·&nbsp; 附置信度提示 &nbsp;·&nbsp; 禁止引用检索结果范围外的内容</div>
+        </div>
+      </div>
+      <div class="scenario-insight">
+        <span class="scenario-insight-label">洞察</span>
+        <span>法律场景核心是<strong>可溯源</strong>。Parent-Child Chunking 解决了「精确定位」与「完整上下文」的矛盾：小块命中正确条款，大块保证 LLM 理解完整语境。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenario 3 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-title">📊 预售知识库 · 多文档综合场景</div>
+      <div class="scenario-tags">
+        <span class="scenario-tag">跨文档综合</span>
+        <span class="scenario-tag">元数据过滤</span>
+        <span class="scenario-tag">竞品对比</span>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-pain">
+        <span class="scenario-pain-label">痛点</span>
+        <span>销售在客户会议前需快速准备行业案例、竞品分析、历史成功案例，内部文档分散，人工翻找耗时半天。</span>
+      </div>
+      <div class="scenario-layers">
+        <div class="scenario-layer sl-data">
+          <div class="sl-label">数据层</div>
+          <div class="sl-content">历史项目文档 + 竞品分析报告 + 客户访谈记录 &nbsp;·&nbsp; 匿名化处理敏感客户信息</div>
+        </div>
+        <div class="scenario-layer sl-index">
+          <div class="sl-label">索引层</div>
+          <div class="sl-content">按章节切块（<code>256–512 token</code>）&nbsp;·&nbsp; 元数据标注：<code>行业</code> / <code>年份</code> / <code>客户规模</code> / <code>方案类型</code></div>
+        </div>
+        <div class="scenario-layer sl-retrieve">
+          <div class="sl-label">检索层</div>
+          <div class="sl-content">查询示例：「金融行业 TOP100 的 AI 客服案例」<br>
+            <span style="color:#888780">①</span> 元数据过滤 <code>industry=金融, scale=大型</code>（10万条 → 500条）<br>
+            <span style="color:#888780">②</span> 在500条内做混合检索 + RRF 合并<br>
+            <span style="color:#888780">③</span> Reranking 取 Top-5
+          </div>
+        </div>
+        <div class="scenario-layer sl-generate">
+          <div class="sl-label">生成层</div>
+          <div class="sl-content">输出：结构化摘要 + 来源文件名 + 推荐相关案例列表 &nbsp;·&nbsp; 支持「按行业/规模/方案类型」筛选再生成</div>
+        </div>
+      </div>
+      <div class="scenario-insight">
+        <span class="scenario-insight-label">洞察</span>
+        <span>「先元数据过滤，再向量检索」是本场景关键：低成本的结构化过滤（O(1)）把搜索空间从10万缩到500，再做高成本的语义检索，精准度和速度都大幅提升。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenario 4 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-title">📖 词典知识库 · 精确查询 + 语义探索场景</div>
+      <div class="scenario-tags">
+        <span class="scenario-tag">结构化数据</span>
+        <span class="scenario-tag">MCP 协同</span>
+        <span class="scenario-tag">多语言</span>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <div class="scenario-pain">
+        <span class="scenario-pain-label">痛点</span>
+        <span>用户提问千变万化（「excuse 和 excuse me 有什么区别」），词典数据结构高度标准化，需同时支持精确词条查找和模糊语义探索。</span>
+      </div>
+      <div class="scenario-layers">
+        <div class="scenario-layer sl-data">
+          <div class="sl-label">数据层</div>
+          <div class="sl-content">权威词典（牛津/朗文）&nbsp;·&nbsp; 解析词条结构：词性 / 释义 / 例句 / 辨析 / 近义词</div>
+        </div>
+        <div class="scenario-layer sl-index">
+          <div class="sl-label">索引层</div>
+          <div class="sl-content">以<strong>词条</strong>为单位切块（一词条 = 一或几个 Chunk）&nbsp;·&nbsp; Embedding 使用多语言模型（支持英中混合查询）</div>
+        </div>
+        <div class="scenario-layer sl-retrieve">
+          <div class="sl-label">检索层</div>
+          <div class="sl-content">
+            <strong>RAG 路径</strong>（语义探索）：用户问模糊问题 → 向量检索相关词条 → 返回候选列表<br>
+            <strong>MCP 路径</strong>（精确读取）：用户点击具体词条 → MCP Resource 按 URI 直接读取完整词条
+          </div>
+        </div>
+        <div class="scenario-layer sl-generate">
+          <div class="sl-label">生成层</div>
+          <div class="sl-content">LLM 基于词典内容生成对比解释 &nbsp;·&nbsp; 标注「来源：牛津英语词典 第X版」&nbsp;·&nbsp; 附例句和使用场景说明</div>
+        </div>
+      </div>
+      <div class="scenario-insight">
+        <span class="scenario-insight-label">洞察</span>
+        <span>RAG 和 MCP 分工明确——不知道要找哪个词条时用 RAG（语义探索）；知道要找「excuse」完整词条时用 MCP（精确读取）。同一份数据，两种访问范式并存互补。</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sl">技术选型参考</div>
+  <table>
+    <tr><th>组件</th><th>轻量方案（验证期）</th><th>生产方案（规模化）</th></tr>
+    <tr><td>Vector DB</td><td>Chroma（本地）、FAISS</td><td>Qdrant、Weaviate、Pinecone</td></tr>
+    <tr><td>Embedding 模型</td><td>text-embedding-3-small</td><td>text-embedding-3-large、BGE-M3（中文强）</td></tr>
+    <tr><td>RAG 框架</td><td>LangChain、LlamaIndex</td><td>同左，加自定义 Reranking 层</td></tr>
+    <tr><td>Reranking</td><td>不加（初期）</td><td>Cohere Rerank、BGE-Reranker</td></tr>
+    <tr><td>评测</td><td>手工抽样</td><td>RAGAS（自动评测 RAG 质量）</td></tr>
+  </table>
+</div>
+
+<!-- ══ Panel 6: 进阶决策 ══ -->
+<div class="panel" id="p6">
+  <div class="callout">RAG 不是只有一种做法。根据场景选择合适的 RAG 变体，是区分初级和进阶工程师的关键。</div>
+
+  <div class="sl">Naive RAG vs Advanced RAG</div>
+  <div class="row">
+    <div class="card" style="margin:0;border-left:3px solid #888780">
+      <div class="card-t">Naive RAG（基础版）</div>
+      <div class="card-b">问题 → Embedding → 检索 Top-K → 塞入 Prompt → 生成<br><br>适合：快速验证可行性，文档量小，问题类型单一<br><br><strong>缺点：</strong>用户 query 质量不稳定时检索效果差；向量相似≠真正相关</div>
+    </div>
+    <div class="card" style="margin:0;border-left:3px solid #F26419">
+      <div class="card-t">Advanced RAG（进阶版）</div>
+      <div class="card-b">加入：Query 改写、混合检索、Reranking、上下文压缩、引用追踪<br><br>适合：生产环境，文档量大，问题类型复杂<br><br><strong>代价：</strong>延迟增加（多次模型调用），系统复杂度提升</div>
+    </div>
+  </div>
+
+  <div class="sl">关键进阶技术</div>
+
+  <div class="card">
+    <div class="card-t"><span class="concept" onclick="openConcept('queryrewrite')">Query 改写 / 扩展</span></div>
+    <div class="card-b">用户的问题表达可能不够准确或信息不足，在检索前先用 LLM 改写或扩展查询。<br><br>
+    <strong>单轮改写：</strong>"这个怎么退" → ["退款流程是什么", "退款条件有哪些", "退款需要多久"]<br>
+    <strong>多轮改写（指代消解）：</strong>用户前一句说"退款"，这句问"怎么操作" → 改写为"退款操作流程"<br>
+    <strong>效果：</strong>检索召回率从 65% 提升到 85%（典型数据）</div>
+  </div>
+
+  <div class="card">
+    <div class="card-t"><span class="concept" onclick="openConcept('reranking')">Reranking（重排序）</span></div>
+    <div class="card-b">向量检索返回 Top-20，再用交叉编码器（Cross-Encoder）对"问题+每个候选块"联合打分，取最相关的 Top-5 发给 LLM。<br><br>
+    <strong>关键理解：</strong>双编码器（向量检索）是分别编码再比较，效率高但精度有限；交叉编码器是把问题和文档拼在一起理解，精度高但速度慢。两阶段结合：粗召回（速度优先）+ 精排序（精度优先）。<br><br>
+    代价：速度变慢（多一次模型推理）；收益：准确率大幅提升。生产环境几乎必加。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-t">Parent-Child Chunking（父子切块）</div>
+    <div class="card-b">检索时用小块（保证精准匹配），但实际注入 LLM 的是小块所属的大块（保证上下文完整）。<br><br>
+    <strong>具体例子：</strong>合同第5.2条"违约金为合同总额的10%"（小块，精确检索到）→ 注入给 LLM 的是第5条完整条款（大块，LLM 理解完整语境）。<br><br>
+    解决"检索到了正确的句子，但 LLM 没有足够上下文来回答"的问题。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-t"><span class="concept" onclick="openConcept('metadata')">Metadata Filter + 混合检索</span></div>
+    <div class="card-b">向量相似度 + 元数据精确过滤 + BM25 关键词匹配三者结合，用 <span class="concept" onclick="openConcept('rrf')">RRF</span> 合并结果。<br><br>
+    <strong>执行顺序：</strong>元数据过滤（低成本，大幅缩小候选集）→ 混合检索（在候选集内精确排序）→ Reranking（最终精排）<br><br>
+    是生产级 RAG 的标准检索架构，兼顾语义理解和精确匹配。</div>
+  </div>
+
+  <div class="sl">什么时候不应该用 RAG</div>
+  <div class="rbox">
+    ① 知识量很小（&lt;50页文档）→ 直接放进 system prompt，全局理解反而更好，但每次消耗全部 token<br>
+    ② 需要改变 LLM 的推理方式或稳定输出格式 → 微调（或 system prompt + few-shot）<br>
+    ③ 所有问题都是精确查找 → 传统数据库/搜索引擎直接查更好<br>
+    ④ 实时性要求极高（秒级更新）→ RAG 的 Embedding 有延迟
+  </div>
+
+  <div class="methodology-box">
+    <div class="methodology-label">普世方法论</div>
+    <div class="methodology-title">两阶段检索：粗排 + 精排</div>
+    <div class="methodology-body">
+      Reranking 背后的思想是信息检索领域的经典范式：<strong>先用低成本方法快速缩小候选集，再用高成本方法精确排序</strong>。电商搜索（召回层 + 排序层 + 重排层）、推荐系统（粗排 + 精排）、Google 搜索（倒排索引快速召回 + 神经网络重排）——都是同样的思路。成本和精度是矛盾的，两阶段设计让你在正确的地方花正确的成本。
+    </div>
+  </div>
+</div>
+
+<!-- ══ Panel 7: 问题解答 ══ -->
+<div class="panel" id="p7">
+  <div class="callout"><strong>针对你的 19 个问题的深度解答。</strong>这些是理解 RAG 过程中最容易卡住的地方。</div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q1</span>Garbage In, Garbage Out 分别是什么意思？</div>
+    <div class="q20-a">直译"垃圾进，垃圾出"。这是计算机科学的基础原则，意思是：<strong>无论算法多好，输入数据质量差，输出结果必然差</strong>。在 RAG 里具体指：文档有错误内容 → 检索到错误内容 → LLM 基于错误内容生成错误回答。就像厨师再厉害，食材是烂的也做不出好菜。这个原则的深层含义：<strong>优化算法的投入回报，永远低于提升数据质量的投入回报</strong>。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q2</span>Reranking 是什么，为什么能解决"语义相关不代表回答问题"？</div>
+    <div class="q20-a"><strong>向量检索的局限：</strong>"取消订单原因"和"取消订单步骤"在向量空间里距离很近（都和"取消订单"相关），但一个回答"为什么"，一个回答"怎么做"——本质不同。<br><br>
+    <strong>Reranking 的原理：</strong>交叉编码器把"问题 + 文档"拼在一起输入模型，联合理解"这个文档是否真的回答了这个问题"。类比：向量检索是"看封面猜内容"，Reranking 是"翻开书逐页阅读判断相关性"。精度高但速度慢，所以只用在候选集缩小后的精排阶段。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q3</span>图书馆馆员的类比是否牵强？</div>
+    <div class="q20-a">这个类比的核心是强调<strong>分工</strong>，不是强调"问人"这件事。馆员的角色：不直接答题，而是"知道去哪里找答案"——这和 RAG 里"检索层找到相关块，再交给生成层"的分工一致。<br><br>
+    <strong>类比的牵强之处：</strong>现实馆员会理解你的隐含意图（你说"找本帮助失眠的书"，他会想到《睡眠革命》或心理疏导类书籍）；RAG 的向量检索只理解表面语义相似，不理解隐含逻辑。所以补充：Query 改写就是在弥补这个差距——让 LLM 扮演"理解你真实意图的馆员"，再去向量库检索。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q4</span>同构是什么意思？</div>
+    <div class="q20-a">来自数学的概念，指<strong>两个不同系统之间存在相同的结构关系</strong>。例：开卷考试和 RAG 表面完全不同，但"从外部资料检索→基于资料回答"这个结构是同构的。<br><br>
+    <strong>类比迁移的价值：</strong>当你找到同构结构，就可以直接迁移已有认知，不需要重新建立理解框架。学过开卷考试的人立刻就能理解 RAG 的核心逻辑。这是高效学习和解释复杂概念的核心技巧。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q1</span>RAG 协调了哪三层？</div>
+    <div class="q20-a">你的理解正确。RAG 协调了：<strong>原始文档</strong>（数据源，PDF/网页/笔记）→ <strong>向量数据库</strong>（索引层，把文档变成可快速语义检索的形式）→ <strong>LLM</strong>（生成层，基于检索结果理解并输出答案）。向量库是原始文档的「检索索引」而不是替代——检索时从向量库找到相关 Chunk 的位置，再去原始文档里拿内容给 LLM。三层各司其职，可以独立升级。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q2</span>Reranking 是什么，为什么能解决"语义相关不代表回答问题"？</div>
+    <div class="q20-a"><strong>向量检索的局限：</strong>「取消订单原因」和「取消订单步骤」在向量空间里距离很近（都和「取消订单」相关），但一个回答「为什么」，一个回答「怎么做」——本质不同。<br><br>
+    <strong>Reranking 的原理：</strong>交叉编码器把「问题 + 文档」拼在一起输入模型，联合理解「这个文档是否真的回答了这个问题」。类比：向量检索是「看书名猜内容」，Reranking 是「翻开书逐页阅读判断相关性」。精度高但速度慢，所以只用在候选集缩小后的精排阶段。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q3</span><span class="concept" onclick="openConcept('querydoc')">query 和 document 分别编码，这里的 query 和 document 是什么？</span></div>
+    <div class="q20-a"><strong>Query</strong>（查询） = 用户提的问题，是「需求方」；<strong>Document</strong>（文档块）= 知识库里的 Chunk，是「供给方」。<br><br>
+    双编码器分别把两者编码成向量再计算相似度，速度快（文档向量可以预先计算存好）。交叉编码器（Reranking 阶段使用）把 query+document 拼在一起联合评分，精度高但每次都要重新计算。点击概念词查看详细对比。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q4</span>同构是什么意思？</div>
+    <div class="q20-a">来自数学的概念，指<strong>两个不同系统之间存在相同的结构关系</strong>。例：开卷考试和 RAG 表面完全不同，但「从外部资料检索→基于资料回答」这个结构是同构的。<br><br>
+    <strong>类比迁移的价值：</strong>当你找到同构结构，就可以直接迁移已有认知，不需要重新建立理解框架。学过开卷考试的人立刻就能理解 RAG 的核心逻辑。这是高效学习和解释复杂概念的核心技巧。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q5</span>Google 搜索 + 摘要，你的理解是否正确？以及范式转变的含义？</div>
+    <div class="q20-a">你的理解正确：RAG = 向量检索 + 结果给 LLM + LLM 总结。<br><br>
+    <strong>范式转变的深层含义：</strong>Google 时代是「检索→展示→用户自己阅读理解综合」，用户需要有信息筛选和阅读能力；RAG 时代是「检索→LLM 替你阅读理解→直接给结论」，用户不再需要自己综合。这不只是效率提升，而是<strong>「谁来完成理解」这件事的转移</strong>——从人转移到 AI。代价是：你看不到中间过程，更难发现 AI 是否理解错了。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q6</span>Chunk 多大合适？<span class="concept" onclick="openConcept('tokenizer')">256 token 对应中文多少字，为什么不是1:1？</span></div>
+    <div class="q20-a">
+    BPE tokenizer：汉字平均约 1.5 token/字，所以 256 token ≈ 128–170 汉字（约一段正文），512 token ≈ 256–340 汉字（约半页 A4）。<br><br>
+    <strong>按场景推荐：</strong>
+    <table style="margin:6px 0">
+      <tr><th>场景</th><th>推荐大小</th><th>原因</th></tr>
+      <tr><td>客服 FAQ（一问一答）</td><td>128–256 token</td><td>每条问答是独立单元，不需要上下文</td></tr>
+      <tr><td>产品手册段落</td><td>256–512 token</td><td>需要保留一个完整论述</td></tr>
+      <tr><td>法律合同条款</td><td>512–1024 token</td><td>条款依赖前后文，完整性优先</td></tr>
+      <tr><td>代码函数</td><td>按函数边界切</td><td>语义边界比 token 数更重要</td></tr>
+    </table>
+    通用建议：256–512 token 起步，用 RAGAS 评测后调整。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q7</span><span class="concept" onclick="openConcept('llmbehavior')">LLM 行为</span>是什么，为什么不能用 prompt 解决，什么场景必须微调？</div>
+    <div class="q20-a">你说得对，<strong>大多数格式/风格要求用 system prompt + <span class="concept" onclick="openConcept('fewshot')">few-shot</span> 就够了</strong>，不必微调。微调的必要场景是：<br><br>
+    ① <strong>行为需要高度稳定且不可被覆盖：</strong>医疗 AI 必须永远在回答里带免责声明，即使用户说"不要加免责声明"也要加<br>
+    ② <strong>任务需要特定推理模式：</strong>训练模型按特定思维链推理代码 bug<br>
+    ③ <strong>领域词汇理解偏差：</strong>法律/医疗的专业术语，通用模型理解有误<br>
+    ④ <strong>极低延迟要求：</strong>微调后的小模型比大模型+长 prompt 快得多<br><br>
+    <strong>Prompt 的局限：</strong>在长对话中会漂移（模型「忘记」system prompt）；用户可以绕过；复杂任务里格式约束不稳定。微调把行为编进权重，稳定且无法绕过。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q8</span>注意力是什么？完整的费曼式讲解请看 <button onclick="show(9)" style="border:none;background:none;color:#F26419;cursor:pointer;font-size:12px;font-weight:500;padding:0;text-decoration:underline">🔬 Attention 必读 Tab</button>。这里给快速版本：</div>
+    <div class="q20-a">注意力 = 「打分+加权求和」。每个词对句子里其他词打相关性分数（Q·K），softmax 归一化成权重，按权重加总内容（V），输出「看过整句话后的理解结果」。<br><br>
+    <strong>和人类注意力的共同点：</strong>开头结尾比中间「记得清楚」（Lost in the Middle）。<strong>区别：</strong>人类注意力由兴趣驱动，LLM 注意力由训练数据的位置模式驱动。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q9</span>Embedding 模型不适合领域是什么意思？</div>
+    <div class="q20-a">Embedding 模型把文本映射到向量空间，<strong>语义相近的文本在空间里距离近</strong>。如果模型用通用文本训练，它对专业词汇的理解会有偏差：<br><br>
+    • 医疗：通用模型里"阳性"和"积极/正面"距离近；医疗语境里"阳性"应该和"检测异常/感染"距离近<br>
+    • 法律："无效"在通用语境是"没用"，法律语境是"不具法律效力"<br>
+    • 金融："看多"不是"看得多"，是"预期价格上涨"<br><br>
+    <strong>解决方案：</strong>用领域语料微调 Embedding 模型，或选择领域专用模型（如医疗用 BioBERT 系列）。BGE-M3 对中文专业场景支持较好。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q10</span>Overlap 是什么，20-30% overlap 表达什么意思？</div>
+    <div class="q20-a"><strong>定义：</strong>切块时相邻两块共享一部分内容，防止重要信息被切断分在两块。<br><br>
+    <strong>具体例子</strong>（Chunk=100 token，overlap=20%=20 token）：
+    <pre>第1块：第 1-100 token（"退款申请需在购买后30天内提交...必须附上"）
+第2块：第81-180 token（"必须附上订单截图和支付凭证，申请提交后..."）
+                ↑ 第81-100共20个token重叠，确保"必须附上"
+                  不会孤立地出现在两个块里各只有半句</pre>
+    <strong>代价：</strong>存储空间增加 20-30%，检索时可能出现重复内容（需去重）。<strong>收益：</strong>大幅降低"语义被切断"导致的检索质量下降。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q11</span>为什么混合检索比单一检索更有效？人类是如何检索的？</div>
+    <div class="q20-a"><strong>互补盲区：</strong>
+    • 稀疏检索（BM25）盲区：不理解同义词和语义关联——"汽车"和"车辆"会被认为完全不同的词
+    • 稠密检索（向量）盲区：精确词匹配弱——"iPhone 16 Pro Max 256GB 钛金黑"可能被模糊匹配到其他型号<br><br>
+    <strong>人类检索的过程：</strong>你在搜索框输入关键词（稀疏），系统返回结果后你用语义理解判断哪条真的相关（稠密）。大脑自动做了混合检索。<br><br>
+    <strong>混合检索的机制：</strong>两种方式分别返回排序列表，用 RRF 合并（排名靠前且在两个列表里都靠前的得分最高）。结果比任何单一方式都好，代价是计算量翻倍。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q12</span>多文档综合问题回答差，具体讲解一下？</div>
+    <div class="q20-a"><strong>场景：</strong>用户问"对比我们2023年和2024年的定价策略有什么变化"。<br><br>
+    <strong>问题：</strong>这个问题需要同时检索 2023 年文档和 2024 年文档的相关段落。如果 Top-K=3，系统可能只返回 3 条结果，而这 3 条可能全来自 2024 年文档（因为更新，向量更接近当前 query），2023 年的数据根本没有进入 context。LLM 没有足够信息做对比，只能编造或说"没有2023年数据"。<br><br>
+    <strong>解决方案：</strong>
+    ① 增大 Top-K（如 K=10）让两年数据都能进入候选集
+    ② 子问题分解：把大问题拆成["2023年定价策略是什么", "2024年定价策略是什么"]，分别检索，合并结果
+    ③ 元数据过滤：检索时强制包含 year=2023 和 year=2024 各若干条</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q13</span>Query 扩展是什么？<span class="concept" onclick="openConcept('recall')">召回率</span>是什么？</div>
+    <div class="q20-a">用户的原始 query 往往太短、信息不足，导致检索召回不全。Query 扩展就是用 LLM 把原始 query 扩展成多个相关 query，每个 query 分别检索，合并去重后统一送入 Reranking。<br><br>
+    <strong>具体例子：</strong>
+    <pre>原始 query: "这个怎么退"
+扩展后:
+  → "退款申请流程"
+  → "退款需要什么条件"  
+  → "退款到账需要几天"
+  → "退款申请在哪里提交"
+四个 query 分别检索 → 合并去重 → Reranking → Top-5 → LLM</pre>
+    效果：把召回率从 65% 提升到 85%（典型场景数据）。代价：增加 LLM 调用次数和延迟。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q14</span>Metadata Filter + 混合检索的机制是什么？有成型技术方案么？深层方法论是什么？</div>
+    <div class="q20-a"><strong>机制：</strong>在向量检索之上叠加结构化字段过滤。先用元数据（行业/年份/文档类型）缩小候选集，再在候选集内做混合检索。<br><br>
+    <strong>执行顺序：</strong>
+    <pre>全量文档（100,000条）
+  → 元数据过滤：industry=金融 AND year≥2023  → 候选集（500条）
+  → 向量检索 + BM25 在500条内分别排序
+  → RRF 合并排序结果
+  → Reranking 精排
+  → Top-5 → LLM</pre>
+    <strong>成型技术方案：</strong>Qdrant、Weaviate、Pinecone 都原生支持"向量检索 + 元数据过滤"组合查询。Qdrant 的 Filter API 尤其成熟。<br><br>
+    <strong>深层普世方法论：先过滤再排序。</strong>用低成本操作（结构化字段匹配，O(1) 查询）大幅减少高成本操作（向量距离计算，O(n)）的搜索空间。这个思路在数据库索引、推荐系统、搜索引擎里普遍存在。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q15</span>Query 改写，LLM 是基于单个句子改写，还是基于上下文改写？</div>
+    <div class="q20-a">两种模式都有，取决于场景：<br><br>
+    <strong>单轮对话：</strong>只有当前 query，LLM 基于这一句改写，扩展意图（如 Q13 的例子）。<br><br>
+    <strong>多轮对话（更重要的场景）：</strong>
+    <pre>用户第1句: "我想了解退款政策"
+用户第2句: "那如果是预售商品呢"  ← 指代不明
+改写后:   "预售商品的退款政策是什么" ← 加上上下文</pre>
+    这叫<strong>指代消解（Coreference Resolution）</strong>——把对话历史里的"那""它""这个"替换成明确的指代对象。多轮对话场景下，不做指代消解的 RAG 系统在 3 轮以后检索质量会显著下降。<br><br>
+    实现：每次检索前，把最近 N 轮对话历史 + 当前 query 一起发给 LLM，让它改写成独立完整的查询。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q16</span>RRF 是什么，怎么用，为什么这么用？</div>
+    <div class="q20-a"><strong>定义：</strong>Reciprocal Rank Fusion，互惠排名融合。合并多个排序列表的算法。<br><br>
+    <strong>公式：</strong><code>score(doc) = Σ 1/(k + rank_i)</code>，k=60（经验值），rank_i 是文档在第 i 个列表里的排名<br><br>
+    <strong>具体例子：</strong>
+    <pre>文档A: 向量检索排名第1, BM25排名第3
+  score = 1/(60+1) + 1/(60+3) = 0.0164 + 0.0159 = 0.0323
+
+文档B: 向量检索排名第2, BM25排名第1
+  score = 1/(60+2) + 1/(60+1) = 0.0161 + 0.0164 = 0.0325 ← 更高</pre>
+    <strong>为什么不直接加分数？</strong>向量相似度是 0.85，BM25 分数是 47.3——两个完全不同的尺度，直接相加没有意义。排名是可比的（第1名就是第1名），用排名融合绕开了尺度问题。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q17</span>知识量小（&lt;50页）直接放 system prompt，准确率如何？有什么问题？</div>
+    <div class="q20-a"><strong>优势：</strong>LLM 能整体理解文档的完整语境，没有检索误差，对需要跨文档推理的问题效果更好。<br><br>
+    <strong>问题和限制：</strong>
+    • <strong>成本：</strong>每次请求都消耗全部文档的 token，50页约 25,000 token，每次请求费用 ≈ $0.05-0.1（GPT-4o），高频查询成本很高
+    • <strong>Lost in the Middle：</strong>50页文档塞进 context，中间部分注意力弱，实际准确率不如想象中高
+    • <strong>Context Window 上限：</strong>超过模型限制（如 GPT-4o 的 128k token）就用不了
+    • <strong>更新麻烦：</strong>文档更新需要修改 system prompt，没有 RAG 的热更新便利<br><br>
+    <strong>实际建议：</strong>&lt;10页用 system prompt；10-50页看查询频率，高频用 RAG，低频可以放 system prompt；&gt;50页必须 RAG。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q18</span>256-512 token 对应中文是多少个字？</div>
+    <div class="q20-a">OpenAI tokenizer 对中文的处理：<strong>1个汉字 ≈ 1-2个 token</strong>（平均约 1.5 token）。<br><br>
+    • 256 token ≈ 128-170 个汉字（约一个段落，100-150字的正文）<br>
+    • 512 token ≈ 256-340 个汉字（约半页 A4 纸的正文）<br>
+    • 1024 token ≈ 512-680 个汉字（约一整页 A4 纸）<br><br>
+    <strong>注意：</strong>中文标点、数字、英文字母的 token 计算方式不同，以上是近似值。实际开发时建议用 tiktoken 库精确计算。</div>
+  </div>
+
+  <div class="q20">
+    <div class="q20-q"><span class="q20-num">Q19</span>稀疏检索就是关键词切分，稠密检索就是向量，理解对吗？</div>
+    <div class="q20-a">理解基本正确，补充更精确的定义：<br><br>
+    <strong>稀疏检索：</strong>文档表示为词频向量——每个维度对应一个词，值是该词在文档中的权重（TF-IDF/BM25）。维度数量 = 词汇表大小（通常数万维），但每个文档只有少量非零维度，所以叫"稀疏"。BM25 是稀疏检索的主流算法，改进了简单词频计数，考虑了词的稀有性和文档长度。<br><br>
+    <strong>稠密检索：</strong>文档通过神经网络（Embedding 模型）映射到固定维度的向量（通常 768-1536 维），所有维度都有值，所以叫"稠密"。检索时计算 query 向量和文档向量的余弦相似度或点积。<br><br>
+    你的理解中"模糊匹配"用来描述稠密检索是准确的——因为向量距离可以捕捉语义相似性，即使没有完全匹配的词也能找到相关内容。</div>
+  </div>
+</div>
+
+<!-- ══ Panel 8: 面试题库 ══ -->
+<div class="panel" id="p8">
+  <div class="sl">基础题</div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#3b6d11">基础</div>
+    <div class="qa-q">RAG 是什么？解决了什么问题？</div>
+    <div class="qa-a">Retrieval-Augmented Generation，检索增强生成。解决两个问题：①LLM 知识有截止日期；②LLM 不知道你的私有数据。核心机制：回答前先检索相关内容，把检索结果附在 prompt 里让 LLM 参考，而不是靠训练记忆。</div>
+    <div class="qa-hl">"RAG 让 AI 从靠记忆答题，变成靠查资料答题。"</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#3b6d11">基础</div>
+    <div class="qa-q">RAG 的完整流程是什么？</div>
+    <div class="qa-a">建设期（离线）：文档清洗 → Chunking 切块 → Embedding 向量化 → 存入 Vector DB<br>查询期（在线）：用户提问 → 问题向量化 → Vector DB 检索 Top-K → 注入 Prompt → LLM 生成回答</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#3b6d11">基础</div>
+    <div class="qa-q">RAG 和微调有什么区别，什么时候用哪个？</div>
+    <div class="qa-a">RAG：解决"知道什么"的问题，知识频繁更新、需要可溯源时用；微调：解决"怎么说"的问题，固定输出格式/风格、任务专一化时用。两者不互斥，生产中常结合使用。简单格式要求用 system prompt + few-shot 往往就够了，不必微调。</div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">进阶题</div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#F26419">进阶</div>
+    <div class="qa-q">RAG 效果差，你会从哪里开始排查？</div>
+    <div class="qa-a">分层诊断（不要上来就调所有参数）：①先打印检索到的内容，看是否相关（检索层问题）；②如果检索内容对但回答还是差，看 Prompt 是否约束了"仅基于内容回答"（生成层问题）；③如果检索内容不完整，看 Chunk 是否太小或缺 overlap（索引层问题）；④如果数据本身有错误，追溯到数据层。</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#F26419">进阶</div>
+    <div class="qa-q">稀疏检索和稠密检索的区别？生产环境用哪个？</div>
+    <div class="qa-a">稀疏（BM25）：词频匹配，精确词/专业术语/型号好，不理解语义；稠密（向量）：语义理解强，模糊查询好，精确词匹配弱。生产环境推荐混合检索（Hybrid Search），用 RRF 合并两者结果：score = Σ1/(60+rank)，因为两种分数尺度不可比，用排名融合绕开尺度问题。</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#F26419">进阶</div>
+    <div class="qa-q">Reranking 是什么，为什么要加它？</div>
+    <div class="qa-a">向量检索是"找语义相似的内容"，Reranking 是"找真正回答了问题的内容"。实现：交叉编码器把 query+document 拼在一起联合评分，精度比双编码器高。两阶段：向量检索粗召回 Top-20（速度优先）→ Reranking 精排取 Top-5（精度优先）。代价：增加一次模型推理延迟；收益：准确率大幅提升，生产环境几乎必加。</div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">实战题</div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#E24B4A">实战</div>
+    <div class="qa-q">如何向非技术客户解释 RAG 的价值？</div>
+    <div class="qa-a">从业务痛点切入，不提向量数据库：<br><br>"您的 AI 助手现在靠'记忆'回答，文件更新了它不知道。RAG 让 AI 每次回答前先查您的最新文档——答案基于真实文件，可以追溯到哪个文件哪段话。文件更新了，AI 的回答当天就跟着变。回答不对时，您可以立刻核查来源，不是黑盒。"</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-level" style="color:#E24B4A">实战</div>
+    <div class="qa-q">设计一个金融行业客服的 RAG 系统，关键决策点是什么？</div>
+    <div class="qa-a">①数据层：产品说明书 + 监管规定 + FAQ，严格去除过期文档（金融合规要求）；②索引层：512 token Chunk + 30% overlap，保留产品代码作元数据；③检索层：混合检索（BM25 处理产品代码/条款编号 + 向量处理自然语言问询）+ Reranking；④生成层：Prompt 强制约束"仅基于提供内容回答，不确定时说明无法确认"，每条答案标注来源文件版本和日期——金融合规要求可溯源。</div>
+  </div>
+</div>
+
+<!-- ══ Panel 9: Attention 必读 ══ -->
+<div class="panel" id="p9">
+  <div class="callout"><span class="must-read-badge">必读</span><strong>Transformer 注意力机制</strong>是理解所有现代 LLM 的底层基础。用费曼方法从直觉到数学，5个层次递进讲解。</div>
+
+  <div class="attn-level attn-l1">
+    <div class="attn-level-label">Level 1 · 直觉</div>
+    <div class="attn-level-title">派对上你是怎么「聚焦」的？</div>
+    <div class="attn-level-body">
+      想象你在一个100人的嘈杂派对上。所有人都在说话，但你能清晰地听到老朋友的声音。你的大脑在做什么？<br><br>
+      它对每个声音打了一个「重要度分数」——老朋友：90分，陌生人：5分，背景音乐：2分。然后按分数加权混合，你「听到」的就是加权后的结果。<br><br>
+      <strong>Transformer 的注意力机制做的是完全一样的事情</strong>——只不过不是对声音打分，而是对句子里的每个词对其他词打相关性分数。
+    </div>
+  </div>
+
+  <div class="attn-level attn-l2">
+    <div class="attn-level-label">Level 2 · 具体例子</div>
+    <div class="attn-level-title">一个句子里，词是如何「看见」彼此的？</div>
+    <div class="attn-level-body">
+      句子：「<strong>银行</strong>边的河岸边，我钓到了一条<strong>鱼</strong>」<br><br>
+      当模型处理「河岸」这个词时，它需要判断：这里的「银行」是金融机构还是河岸边？<br><br>
+      注意力机制让「河岸」对「钓鱼」「鱼」打了<strong>高分</strong>，对「金融」「账户」打了<strong>低分</strong>。<br>通过这些分数，模型正确理解了这是自然河岸，不是金融银行。<br><br>
+      <strong>关键洞察：</strong>每个词的「含义」不是固定的，而是由它和整句话里其他词的关系动态决定的。这就是为什么 LLM 能理解多义词和语境——它在「看」整个句子，不是单独处理每个词。
+    </div>
+  </div>
+
+  <div class="attn-level attn-l3">
+    <div class="attn-level-label">Level 3 · 机制拆解</div>
+    <div class="attn-level-title">Q / K / V 三个角色是什么？</div>
+    <div class="attn-level-body">
+      每个词会被变换成三个向量，扮演三个不同角色：
+    </div>
+    <div class="attn-qkv">
+      <div class="attn-qkv-item attn-q-item">
+        <strong>Q · Query</strong>
+        「我想知道什么？」<br><br>
+        当前词作为「提问者」：我是「河岸」，我需要知道我的上下文是什么性质的？
+      </div>
+      <div class="attn-qkv-item attn-k-item">
+        <strong>K · Key</strong>
+        「我能提供什么信息？」<br><br>
+        其他词作为「被查询的索引标签」：我是「钓鱼」，我的标签是：户外/水边/休闲活动
+      </div>
+      <div class="attn-qkv-item attn-v-item">
+        <strong>V · Value</strong>
+        「如果你选中我，我给你的内容」<br><br>
+        其他词作为「实际信息载体」：我是「钓鱼」，如果你关注我，我给你的语义信息是：[钓鱼的完整语义向量]
+      </div>
+    </div>
+    <div class="attn-level-body" style="margin-top:8px">
+      <strong>类比：</strong>Q 是搜索框里的关键词，K 是文档的标签/标题，V 是文档的正文内容。用关键词（Q）和标签（K）计算相关性，然后按相关性加权获取正文（V）。
+    </div>
+  </div>
+
+  <div class="attn-level attn-l4">
+    <div class="attn-level-label">Level 4 · 公式每一项的物理意义</div>
+    <div class="attn-level-title">Attention(Q, K, V) = softmax(QKᵀ / √d) · V</div>
+    <div class="attn-level-body">
+      <strong>QKᵀ（点积矩阵）</strong><br>
+      Q 是「我想找什么」，K 是「我能提供什么标签」。Q 和 K 做点积，得到每对词之间的相关性得分。n 个词就产生 n×n 的得分矩阵——每个词对每个词都打了一个分。<br><br>
+      <strong>/ √d（缩放因子）</strong><br>
+      d 是向量维度（现实中是 64 或 768）。维度越高，点积绝对值越大，softmax 会把分布压成「一个 1 其他全 0」，梯度消失无法学习。除以 √d 把数值压回合理范围——纯粹的数学稳定技巧，没有语义含义。<br><br>
+      <strong>softmax(…)</strong><br>
+      把一组得分转成概率分布，所有权重加和 = 1。得分高的词权重大，得分低的词权重接近 0。这一步决定了「我应该有多关注每个词」。<br><br>
+      <strong>· V（加权求和）</strong><br>
+      V 是「我的实际内容信息」。按 softmax 给出的权重，把所有词的 V 加权求和——高权重词的信息贡献多，低权重词贡献少。输出是一个新向量，融合了整句话的语境信息。
+    </div>
+  </div>
+
+  <div class="attn-level" style="background:#fff;border:1px solid #1a1a18">
+    <div class="attn-level-label" style="color:#1a1a18;font-size:9px">Level 4b · 用真实数字走完整5步</div>
+    <div class="attn-level-title">句子「银行 边的 河」——每步都有数字，看清楚到底发生了什么</div>
+    <div class="attn-level-body">
+      假设 d=2（向量2维）。目标：计算「河」这个词<strong>看过整句话之后</strong>的新向量表示。<br><br>
+
+      <strong>① 每个词有三个2维向量（Q / K / V）</strong>
+      <pre>词    Q（我在问）    K（我的标签）   V（我的内容）
+银行  [1.0, 0.2]    [0.8, 0.1]     [0.5, 0.9]
+边的  [0.1, 0.8]    [0.2, 0.7]     [0.1, 0.2]
+河    [0.9, 0.3]    [0.7, 0.2]     [0.6, 0.8]
+      ↑ 用河的Q，去和所有词的K比较</pre>
+
+      <strong>② 点积 QKᵀ — 「河」的 Q 分别和每个词的 K 点乘</strong>
+      <pre>河.Q · 银行.K = 0.9×0.8 + 0.3×0.1 = 0.72+0.03 = <strong>0.75</strong> ← 最高
+河.Q · 边的.K = 0.9×0.2 + 0.3×0.7 = 0.18+0.21 = <strong>0.39</strong>
+河.Q · 河.K   = 0.9×0.7 + 0.3×0.2 = 0.63+0.06 = <strong>0.69</strong></pre>
+
+      <strong>③ / √d = / √2 ≈ /1.41 — 压缩数值范围</strong>
+      <pre>0.75/1.41 = 0.53 | 0.39/1.41 = 0.28 | 0.69/1.41 = 0.49</pre>
+
+      <strong>④ softmax — 转成概率权重（三个数加和=1）</strong>
+      <pre>e^0.53=1.70  e^0.28=1.32  e^0.49=1.63   总和=4.65
+权重: 1.70/4.65=<strong>0.37</strong>  1.32/4.65=<strong>0.28</strong>  1.63/4.65=<strong>0.35</strong>
+       ↑银行37%        ↑边的28%       ↑河自己35%</pre>
+
+      <strong>⑤ · V — 按权重加总三个词的内容向量</strong>
+      <pre>输出 = 0.37×[0.5,0.9] + 0.28×[0.1,0.2] + 0.35×[0.6,0.8]
+     = [0.185,0.333] + [0.028,0.056] + [0.210,0.280]
+     = <strong>[0.42, 0.67]</strong>  ← 这就是「河」新的向量表示</pre>
+
+      <strong>结论：</strong>「河」的新向量 [0.42, 0.67] 融合了「银行」(37%) 和「河」本身(35%) 的信息，而不只是「河」原本的孤立含义。模型因此知道这里是自然河流，不是金融机构旁边。<br><br>
+      <span style="color:#888780;font-size:11px">注：真实场景中 d=64 或 768，每词有数百维向量，但计算步骤完全一样。</span>
+    </div>
+  </div>
+
+  <div class="attn-level attn-l5">
+    <div class="attn-level-label">Level 5 · 和 RAG 的联系</div>
+    <div class="attn-level-title">为什么会 Lost in the Middle？</div>
+    <div class="attn-level-body">
+      <strong>位置编码的影响：</strong>Transformer 通过位置编码让模型知道词的顺序。训练数据里，重要信息通常在开头（标题/摘要）和结尾（结论/总结）——人类写作的习惯就是如此。<br><br>
+      <strong>结果：</strong>模型在训练中学到了「开头和结尾的内容更重要」这个模式，导致注意力分数系统性地偏向头尾，中间部分分数偏低。<br><br>
+      <strong>这不是 bug，是训练数据分布导致的模式。</strong><br><br>
+      <strong>对 RAG 的实践含义：</strong>把最重要的检索结果放在 prompt 的开头或结尾，不要夹在中间。如果 Top-5 结果都很重要，考虑分多次调用或增加 context window。
+    </div>
+  </div>
+
+  <div class="methodology-box" style="margin-top:14px">
+    <div class="methodology-label">为什么这个概念值得单独必读</div>
+    <div class="methodology-title">注意力机制是现代 AI 的「操作系统」</div>
+    <div class="methodology-body">
+      RAG、ChatGPT、Claude、Gemini——所有这些都建立在 Transformer 注意力机制之上。理解了它，你就理解了：<strong>为什么 LLM 能理解语境</strong>（注意力让词看见词）、<strong>为什么有 context window 上限</strong>（QKᵀ 是 n² 复杂度）、<strong>为什么会 Lost in the Middle</strong>（位置偏差）、<strong>为什么 prompt 里例子的顺序重要</strong>（注意力分数受位置影响）。这一个概念，解释了几十个常见的 LLM 行为现象。
+    </div>
+  </div>
+</div>
+
+<!-- ══ Panel 10: 理解验证 ══ -->
+<div class="panel" id="p10">
+  <div class="callout"><strong>5 道选择题验证你对 RAG 的理解。</strong>每道题点击选项即时反馈，附解析。</div>
+
+  <div class="quiz-card" id="q1">
+    <div class="quiz-q"><span class="quiz-q-num">Q1</span>用户问「如何申请退款」，RAG 系统检索到了「退款申请的常见原因（买错了/不满意）」排在 Top-1。最可能的根本原因是？</div>
+    <div class="quiz-options" id="q1-opts">
+      <div class="quiz-opt" onclick="answer(1,'A','B')"><span class="quiz-opt-label">A</span>Chunk 切得太小，丢失了上下文</div>
+      <div class="quiz-opt" onclick="answer(1,'B','B')"><span class="quiz-opt-label">B</span>向量检索只衡量语义相似，没有衡量「是否回答了问题」</div>
+      <div class="quiz-opt" onclick="answer(1,'C','B')"><span class="quiz-opt-label">C</span>Embedding 模型不支持中文</div>
+      <div class="quiz-opt" onclick="answer(1,'D','B')"><span class="quiz-opt-label">D</span>数据层的文档质量太差</div>
+    </div>
+    <div class="quiz-explain" id="q1-explain">✓ <strong>B 正确。</strong>「退款原因」和「退款申请步骤」在语义空间里距离很近（都和退款相关），但一个回答 Why，一个回答 How。向量相似度无法区分这个差异。解决方案是加 Reranking：用交叉编码器联合判断「这段内容是否回答了这个具体问题」。</div>
+  </div>
+
+  <div class="quiz-card" id="q2">
+    <div class="quiz-q"><span class="quiz-q-num">Q2</span>以下哪种场景最不适合用 RAG？</div>
+    <div class="quiz-options" id="q2-opts">
+      <div class="quiz-opt" onclick="answer(2,'A','C')"><span class="quiz-opt-label">A</span>公司内部知识库问答（文档每月更新）</div>
+      <div class="quiz-opt" onclick="answer(2,'B','C')"><span class="quiz-opt-label">B</span>法律合同条款检索与解析</div>
+      <div class="quiz-opt" onclick="answer(2,'C','C')"><span class="quiz-opt-label">C</span>让 AI 始终以 JSON 格式输出并保持客服语气</div>
+      <div class="quiz-opt" onclick="answer(2,'D','C')"><span class="quiz-opt-label">D</span>产品手册问答（手册内容频繁更新）</div>
+    </div>
+    <div class="quiz-explain" id="q2-explain">✓ <strong>C 正确。</strong>「始终以 JSON 格式输出」是行为稳定性问题，不是知识问题。RAG 注入「请输出 JSON」的文档效果极不稳定。这种需求应该用 system prompt + few-shot 解决，复杂场景才需要微调。A/B/D 都是知识注入场景，RAG 正好适用。</div>
+  </div>
+
+  <div class="quiz-card" id="q3">
+    <div class="quiz-q"><span class="quiz-q-num">Q3</span>RRF（互惠排名融合）在混合检索中解决的核心问题是？</div>
+    <div class="quiz-options" id="q3-opts">
+      <div class="quiz-opt" onclick="answer(3,'A','B')"><span class="quiz-opt-label">A</span>减少向量检索的计算成本</div>
+      <div class="quiz-opt" onclick="answer(3,'B','B')"><span class="quiz-opt-label">B</span>合并两种分数尺度不可比的排序列表</div>
+      <div class="quiz-opt" onclick="answer(3,'C','B')"><span class="quiz-opt-label">C</span>提高 Embedding 模型的召回率</div>
+      <div class="quiz-opt" onclick="answer(3,'D','B')"><span class="quiz-opt-label">D</span>过滤掉不相关的文档</div>
+    </div>
+    <div class="quiz-explain" id="q3-explain">✓ <strong>B 正确。</strong>BM25 分数（如 47.3）和向量余弦相似度（如 0.85）尺度完全不同，不能直接相加。RRF 用排名而不是原始分数：score = Σ 1/(60+rank)，把两个不可比的分数体系转化为可以合并的排名体系。</div>
+  </div>
+
+  <div class="quiz-card" id="q4">
+    <div class="quiz-q"><span class="quiz-q-num">Q4</span>Transformer 注意力机制中，除以 √d 的目的是？</div>
+    <div class="quiz-options" id="q4-opts">
+      <div class="quiz-opt" onclick="answer(4,'A','C')"><span class="quiz-opt-label">A</span>让模型能处理更长的句子</div>
+      <div class="quiz-opt" onclick="answer(4,'B','C')"><span class="quiz-opt-label">B</span>提高注意力分数的精确度</div>
+      <div class="quiz-opt" onclick="answer(4,'C','C')"><span class="quiz-opt-label">C</span>防止点积值过大导致 softmax 梯度消失</div>
+      <div class="quiz-opt" onclick="answer(4,'D','C')"><span class="quiz-opt-label">D</span>减少模型参数量</div>
+    </div>
+    <div class="quiz-explain" id="q4-explain">✓ <strong>C 正确。</strong>向量维度 d 越大，Q·K 的点积值越大（方差随 d 线性增长）。如果值太大，softmax 后的概率分布会极度尖锐（一个词权重接近1，其他接近0），导致梯度消失，模型无法学习。除以 √d 把方差控制在稳定范围，保证 softmax 输出合理的概率分布。</div>
+  </div>
+
+  <div class="quiz-card" id="q5">
+    <div class="quiz-q"><span class="quiz-q-num">Q5</span>RAG 建设期（离线）和查询期（在线）的核心分工是？</div>
+    <div class="quiz-options" id="q5-opts">
+      <div class="quiz-opt" onclick="answer(5,'A','B')"><span class="quiz-opt-label">A</span>建设期负责生成答案，查询期负责验证答案</div>
+      <div class="quiz-opt" onclick="answer(5,'B','B')"><span class="quiz-opt-label">B</span>建设期把文档变成可检索的向量索引，查询期根据问题检索并生成回答</div>
+      <div class="quiz-opt" onclick="answer(5,'C','B')"><span class="quiz-opt-label">C</span>建设期训练 LLM，查询期部署 LLM</div>
+      <div class="quiz-opt" onclick="answer(5,'D','B')"><span class="quiz-opt-label">D</span>两个阶段功能相同，只是时间不同</div>
+    </div>
+    <div class="quiz-explain" id="q5-explain">✓ <strong>B 正确。</strong>建设期（离线）：文档清洗 → Chunking → Embedding → 存入 Vector DB，是一次性或定期的「知识准备」工作。查询期（在线）：每次用户提问时触发，问题向量化 → 检索 → 注入 Prompt → LLM 生成。两个阶段完全分离，优化方向不同。</div>
+  </div>
+
+  <div class="quiz-score" id="quiz-score">
+    <span id="quiz-score-num">0/5</span>
+    <span id="quiz-score-msg"></span>
+  </div>
+</div>
+
+<!-- ── 关联模块导航 ── -->
+<div style="margin-top:32px;padding:18px 0;border-top:0.5px solid #dedad4;">
+  <div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#888780;margin-bottom:12px;">关联学习路径</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+    <a href="ai-knowledge-hub.html" style="text-decoration:none;background:#fff;border:0.5px solid #dedad4;border-radius:8px;padding:11px 13px;transition:all .15s;display:block;" onmouseover="this.style.borderColor='#F26419';this.style.background='#fef0e7'" onmouseout="this.style.borderColor='#dedad4';this.style.background='#fff'">
+      <div style="font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#888780;margin-bottom:4px;">← 返回</div>
+      <div style="font-size:12px;font-weight:500;color:#1a1a18;">AI 知识中心</div>
+      <div style="font-size:10px;color:#888780;margin-top:2px;">全局词汇库 · 学习地图</div>
+    </a>
+    <div style="background:#f5f4f0;border:0.5px solid #dedad4;border-radius:8px;padding:11px 13px;opacity:.7;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#3b82c4;margin-bottom:4px;">前置知识</div>
+      <div style="font-size:12px;font-weight:500;color:#1a1a18;">Embedding 深度</div>
+      <div style="font-size:10px;color:#888780;margin-top:2px;">向量空间 · 余弦相似度</div>
+      <div style="font-size:9px;color:#c8c7be;margin-top:4px;">即将发布</div>
+    </div>
+    <div style="background:#f5f4f0;border:0.5px solid #dedad4;border-radius:8px;padding:11px 13px;opacity:.7;">
+      <div style="font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#c04a8a;margin-bottom:4px;">深度延伸</div>
+      <div style="font-size:12px;font-weight:500;color:#1a1a18;">Transformer & Attention</div>
+      <div style="font-size:10px;color:#888780;margin-top:2px;">注意力机制 · 完整架构</div>
+      <div style="font-size:9px;color:#c8c7be;margin-top:4px;">即将发布（预览在本文 🔬 Tab）</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ══ Concept Panel Data ══ -->
+<script>
+const CONCEPTS = {
+  gigo: {
+    title: 'Garbage In, Garbage Out',
+    sections: [
+      { label: '定义', body: '垃圾进，垃圾出。无论算法多先进，输入数据质量差，输出结果必然差。' },
+      { label: '在 RAG 中的含义', body: '文档有错误/重复/格式混乱 → 检索到错误内容 → LLM 生成错误回答。这是 RAG 系统最容易被忽视的失败点。' },
+      { label: '类比', body: '就像厨师再好，食材是烂的也做不出好菜。优化算法的回报，永远低于提升数据质量的回报。', type: 'analogy' },
+      { label: '普世方法论', body: '在任何数据驱动系统里（机器学习、数据仓库、推荐系统），数据质量都是天花板。先问「数据是否可信」，再谈「算法如何优化」。', type: 'methodology' },
+      { label: '实践建议', body: '建立数据验证管道：①内容去重（精确去重+语义去重）②版本控制（文档更新时标记旧版本）③质量评估（抽样人工检查）', type: 'good' }
+    ]
+  },
+  chunking: {
+    title: 'Chunking · 切块策略',
+    sections: [
+      { label: '定义', body: '把长文档切成较小的片段（Chunk），每个 Chunk 独立向量化存储，是 RAG 索引层的核心决策。' },
+      { label: '尺寸参考（中文）', body: '• 256 token ≈ 128-170 汉字（约一段正文）\n• 512 token ≈ 256-340 汉字（约半页A4）\n• 1024 token ≈ 512-680 汉字（约一整页）', type: 'code' },
+      { label: '切块策略对比', body: '固定大小切块：简单，但可能切断语义\n按段落切块：保留语义，但段落长短不均\n按语义切块：最智能，用模型判断语义边界，成本最高\n父子切块（推荐）：小块检索 + 大块注入，兼顾精准和上下文完整', type: 'code' },
+      { label: '场景推荐', body: '客服FAQ → 128-256 token\n产品手册 → 256-512 token\n法律条款 → 512-1024 token\n代码函数 → 按函数边界切，不按 token 数', type: 'code' },
+      { label: '关键原则', body: 'Chunk 的大小没有通用答案。评估方法：检索后打印 Chunk 内容，判断「只看这段话，能否理解完整意思」。如果不能，需要增大 Chunk 或增加 Overlap。', type: 'methodology' }
+    ]
+  },
+  overlap: {
+    title: 'Overlap · 块重叠',
+    sections: [
+      { label: '定义', body: '切块时，相邻两块共享一部分内容。Chunk=100 token，overlap=20%，第1块1-100 token，第2块从第81 token 开始。' },
+      { label: '为什么需要 Overlap', body: '防止重要信息被切断分在两个块里，每块各只有半句话。例：「退款申请需在购买后30天内」被切断 → 两块都无法理解完整条件。', type: 'warn' },
+      { label: '具体例子', body: '原文第100-101 token跨界处: 「...申请需附上订单 / 截图方可受理...」\n\n无Overlap: 第1块末尾是「附上订单」，第2块开头是「截图方可受理」→ 两块都语义不完整\n\n有Overlap(20%): 第2块从「...申请需附上」开始 → 完整语义', type: 'code' },
+      { label: '推荐设置', body: '通用场景：20-30% overlap。代价：存储增加20-30%，可能出现检索重复（需去重）。收益：大幅降低语义断层导致的检索质量下降。', type: 'good' }
+    ]
+  },
+  embedding: {
+    title: 'Embedding · 向量化',
+    sections: [
+      { label: '定义', body: '把文本转换成数字向量（如1536维的浮点数组）。语义相近的文本，在向量空间里的距离也近。' },
+      { label: '直观类比', body: '想象一个空间：「退款」和「退货」靠得很近；「退款」和「苹果」相距很远。Embedding 就是把文字映射到这个空间里的坐标。', type: 'analogy' },
+      { label: '检索机制', body: '用户问题也被转换成向量，在向量空间里找距离最近的 Chunk 向量，就是「最相关」的内容。', type: 'code' },
+      { label: '模型选择', body: 'text-embedding-3-small：便宜，适合验证期\ntext-embedding-3-large：更准，中英文都好\nBGE-M3：中文最强，开源可私有化部署', type: 'code' },
+      { label: '领域适配问题', body: '通用模型对专业词汇理解有偏差。医疗「阳性」通用模型关联「积极」，应关联「检测异常」。解决：用领域语料微调 Embedding 模型，或选领域专用模型（如医疗用 BioBERT）。', type: 'warn' }
+    ]
+  },
+  retrieval: {
+    title: 'Retrieval · 检索',
+    sections: [
+      { label: '定义', body: 'RAG 的核心步骤：把用户问题向量化，在 Vector DB 里找最相关的 Chunk，返回 Top-K 个结果。' },
+      { label: '三种检索方式', body: '稀疏检索（BM25）：词频匹配，精确词强，不理解语义\n稠密检索（向量）：语义理解强，模糊查询好，精确词弱\n混合检索（推荐）：两者结合，用 RRF 合并排名', type: 'code' },
+      { label: 'Top-K 的设置', body: 'K 太小：漏掉相关内容，多文档综合问题回答差\nK 太大：噪声增多，LLM context 膨胀，成本升高\n实践：先用 K=5，评测后调整。通常生产环境 K=5-10。', type: 'code' },
+      { label: '检索 ≠ 回答', body: '向量相似度高 ≠ 真正回答了问题。「取消订单的原因」和「取消订单的步骤」语义很近，但一个问 Why，一个问 How。这就是为什么需要 Reranking。', type: 'warn' }
+    ]
+  },
+  reranking: {
+    title: 'Reranking · 重排序',
+    sections: [
+      { label: '定义', body: '对向量检索返回的候选集，用交叉编码器重新打分，选出真正回答了问题的内容，而不只是语义相似的内容。' },
+      { label: '两种编码器的区别', body: '双编码器（向量检索）：query 和 document 分别编码，再比较相似度。速度快（O(1)查询），但 query 和 document 没有联合交互。\n\n交叉编码器（Reranking）：把 query+document 拼在一起，联合理解「这段内容是否回答了这个问题」。精度高，但速度慢（每个候选都要跑一次）。', type: 'code' },
+      { label: '两阶段策略', body: '第一阶段（粗召回）：向量检索 Top-20，速度优先\n第二阶段（精排）：Reranking 取 Top-5，精度优先\n\n只在候选集上做 Reranking，避免对全量文档排序的高成本。', type: 'code' },
+      { label: '类比', body: '向量检索是「看书名猜内容」，Reranking 是「翻开书阅读这一章判断是否相关」。前者快速，后者精准。', type: 'analogy' },
+      { label: '普世方法论', body: '粗排 + 精排是信息检索的经典范式。电商搜索、推荐系统、搜索引擎都用这个思路：先用低成本方法缩小候选集，再用高成本方法精确排序。', type: 'methodology' }
+    ]
+  },
+  hallucination: {
+    title: 'Hallucination · 幻觉',
+    sections: [
+      { label: '定义', body: 'LLM 生成了听起来合理但实际上错误的内容，且通常表现得很有信心。' },
+      { label: '为什么会产生幻觉', body: 'LLM 是概率模型，本质是「预测下一个最可能的词」。当没有真实依据时，它仍然会按语言概率生成「合理」的内容，而不会停下来说「我不知道」。', type: 'code' },
+      { label: '类比', body: '就像一个人在考场上不会的题，也会认真编一个听起来合理的答案，而不是交白卷。LLM 不知道「我不知道」是可以接受的回答。', type: 'analogy' },
+      { label: 'RAG 如何缓解幻觉', body: '提供真实的参考内容，并在 Prompt 里明确指示：「仅基于以下内容回答，如果内容中没有相关信息，请说明无法找到答案。」强制让 LLM 参考真实来源。', type: 'good' },
+      { label: '混合性幻觉（更危险）', body: '检索到了真实内容，但 Prompt 没有约束，LLM 把真实内容和训练记忆混合，产生「半真半假」的回答，比纯幻觉更难识别。这是 RAG 系统最常见的陷阱。', type: 'warn' }
+    ]
+  },
+  sparse: {
+    title: '稀疏 vs 稠密检索',
+    sections: [
+      { label: '稀疏检索（BM25/TF-IDF）', body: '文档表示为高维稀疏向量（维度=词汇表大小，大部分维度为0）。基于词频计算相关性。\n\n优势：精确词匹配（型号/术语/编号），速度快，可解释\n劣势：「汽车」≠「车辆」，不理解同义词和语义', type: 'code' },
+      { label: '稠密检索（向量）', body: '文档通过神经网络映射到低维稠密向量（如1536维，所有维度都有值）。基于向量距离计算相关性。\n\n优势：理解同义词/上下文，模糊查询好\n劣势：精确词匹配弱，「iPhone 16 Pro Max」可能匹配到其他型号', type: 'code' },
+      { label: '人类如何检索', body: '输入关键词（稀疏思维）→ 看到结果后用语义理解判断哪条相关（稠密思维）→ 大脑自动完成了混合检索', type: 'analogy' },
+      { label: '推荐方案', body: '生产环境用混合检索：两种方式分别返回排序列表，用 RRF 合并。兼顾精确匹配和语义理解，比任何单一方式都好。', type: 'good' }
+    ]
+  },
+  hybrid: {
+    title: '混合检索 · Hybrid Search',
+    sections: [
+      { label: '定义', body: '把稀疏检索（BM25）和稠密检索（向量）的结果用 RRF 算法合并，取两者之长。' },
+      { label: '执行流程', body: '1. 同一个 query 分别做 BM25 检索 → 排序列表A\n2. 同一个 query 做向量检索 → 排序列表B\n3. 用 RRF 合并：score = Σ1/(60+rank)\n4. 按合并后的分数重新排序\n5. 取 Top-K 送 Reranking', type: 'code' },
+      { label: '为什么混合比单一更好', body: '互补盲区：BM25 处理「iPhone 16 Pro Max 256GB」精确匹配；向量处理「手机推荐」语义查询。单一方法都有场景失效，混合覆盖了更多查询类型。', type: 'good' },
+      { label: '技术支持', body: 'Qdrant、Weaviate、Pinecone、Elasticsearch 都原生支持混合检索 API。不需要自己实现 RRF，直接调用 SDK 的 hybrid search 接口。', type: 'code' }
+    ]
+  },
+  rrf: {
+    title: 'RRF · 互惠排名融合',
+    sections: [
+      { label: '定义', body: 'Reciprocal Rank Fusion，合并多个排序列表的算法，不依赖各列表的原始分数，只用排名。' },
+      { label: '公式', body: 'score(doc) = Σ 1/(k + rank_i)\n\nk = 60（经验值，防止头部排名分数差异过大）\nrank_i = 文档在第 i 个列表里的排名（从1开始）', type: 'code' },
+      { label: '具体计算例子', body: '文档A: 向量排名第1, BM25排名第3\n  score = 1/(60+1) + 1/(60+3) = 0.0164+0.0159 = 0.0323\n\n文档B: 向量排名第2, BM25排名第1\n  score = 1/(60+2) + 1/(60+1) = 0.0161+0.0164 = 0.0325\n\n→ 文档B最终排名第1（在两个列表都靠前）', type: 'code' },
+      { label: '为什么不直接加原始分数', body: '向量相似度：0.85（范围0-1）\nBM25分数：47.3（无上限）\n两种分数尺度完全不同，直接相加没有意义。用排名绕开了分数不可比的问题。', type: 'warn' },
+      { label: '普世方法论', body: '「用排名而非绝对分数做比较」是数据融合的通用思路，广泛用于集成学习、推荐系统的多路召回融合。', type: 'methodology' }
+    ]
+  },
+  finetune: {
+    title: 'Fine-tuning vs RAG',
+    sections: [
+      { label: '核心区别', body: 'RAG 解决「知道什么」——知识注入，不改变模型权重\nFine-tuning 解决「怎么做」——行为改变，修改模型权重', type: 'code' },
+      { label: 'LLM 行为是什么', body: 'LLM 行为 = 推理方式 + 输出格式 + 语气风格 + 遵守约束的稳定性。\n\n例：「始终以JSON格式输出」是行为；「公司退款政策是7天」是知识。前者用微调（或稳定的 system prompt）；后者用 RAG。', type: 'code' },
+      { label: 'Prompt 能替代微调吗', body: '对于简单场景（格式/语气），精心设计的 system prompt + few-shot 往往就够了，不必微调。微调必要的场景：行为需要绝对稳定（不可被覆盖）、领域词汇理解有偏差、需要特定推理模式、极低延迟要求。', type: 'good' },
+      { label: '最佳组合', body: '先微调（领域适配+行为稳定）→ 再 RAG（最新知识注入）。两者相辅相成，不是非此即彼。', type: 'methodology' }
+    ]
+  },
+  attention: {
+    title: '注意力机制 & Lost in the Middle',
+    sections: [
+      { label: '技术定义', body: 'Transformer 的注意力机制：Attention = softmax(QKᵀ/√d)·V\n\n让模型计算「每个 token 对于理解其他 token 有多重要」，本质是加权求和。', type: 'code' },
+      { label: '与人类注意力的对比', body: '人类：有限，会疲劳，受兴趣驱动\nLLM：不疲劳但有 context window 上限，由训练数据和位置决定\n共同点：超长内容时，开头和结尾比中间记得更清楚', type: 'code' },
+      { label: 'Lost in the Middle 现象', body: '斯坦福2023年研究：LLM 在超长 context 中，对开头（第一段）和结尾（最后几段）的注意力显著强于中间部分。把关键信息放在 context 中间，模型更容易忽略。', type: 'warn' },
+      { label: '向非技术人员解释', body: '就像你读一篇很长的文章，开头和结尾记得清楚，中间那20页比较容易忘。LLM 处理超长文档时也有类似问题——这就是为什么 RAG 要精确检索少量内容，而不是无限制地塞入文档。', type: 'analogy' },
+      { label: '实践建议', body: '最相关的内容放在 context 的开头或结尾；总 context 控制在合理范围（通常 <8K token 效果最稳定）；超长文档用 RAG 而不是直接塞入。', type: 'good' }
+    ]
+  },
+  lostinmiddle: {
+    title: 'Lost in the Middle',
+    sections: [
+      { label: '定义', body: 'LLM 在超长 context 中，对中间部分的注意力显著弱于开头和结尾，导致放在中间的关键信息容易被忽略。' },
+      { label: '实验结论', body: '斯坦福2023年论文：把相关文档段落放在 context 的不同位置，LLM 的回答准确率在中间位置显著下降，开头和结尾最高。', type: 'warn' },
+      { label: '对 RAG 的影响', body: '把 Top-5 检索结果注入 Prompt 时，排序很重要——最相关的内容要放在开头，其次放结尾，次要内容放中间。', type: 'code' },
+      { label: '向非技术人员解释', body: '就像读一本很厚的报告，封面结语记得清楚，中间那200页比较容易忘。AI 也有这个问题。', type: 'analogy' }
+    ]
+  },
+  queryrewrite: {
+    title: 'Query 改写 / 扩展',
+    sections: [
+      { label: '为什么需要改写', body: '用户输入的 query 往往太短、信息不足、含有指代词。直接用原始 query 检索召回率低。' },
+      { label: '改写 vs 扩展', body: '改写：把含糊的问题变成精确清晰的问题\n  「这个怎么退」→「订单退款的操作步骤是什么」\n\n扩展：从一个问题扩展成多个相关子问题\n  「退款」→ [退款流程, 退款条件, 退款时间, 退款入口]', type: 'code' },
+      { label: '多轮对话的指代消解', body: '对话历史:\n  第1轮: 「我想了解退款政策」\n  第2轮: 「那如果是预售商品呢」\n\n改写后的独立查询:\n  「预售商品的退款政策是什么」', type: 'code' },
+      { label: '实现方式', body: '在 RAG pipeline 里，检索前加一个 LLM 调用：把对话历史 + 当前 query 发给 LLM，让它输出改写后的独立查询。代价：增加 1 次 LLM 调用延迟；收益：召回率从约65%提升到约85%。', type: 'good' }
+    ]
+  },
+  metadata: {
+    title: 'Metadata Filter · 元数据过滤',
+    sections: [
+      { label: '定义', body: '在向量检索之前或同时，用结构化字段（行业/年份/文档类型/作者）过滤候选集，大幅缩小搜索范围。' },
+      { label: '执行顺序（关键）', body: '1. 元数据过滤（低成本）：100,000条 → 500条\n2. 混合检索（中成本）：在500条内排序\n3. Reranking（高成本）：对Top-20精排取Top-5\n\n先过滤再排序，成本最优。', type: 'code' },
+      { label: '普世方法论', body: '先用低成本操作（结构化字段匹配，O(1)）缩小搜索空间，再用高成本操作（向量距离计算，O(n)）精确排序。这个思路在数据库索引、推荐系统、搜索引擎里普遍存在。', type: 'methodology' },
+      { label: '技术支持', body: 'Qdrant: filter + search 组合查询，性能最好\nWeaviate: where + nearVector 组合\nPinecone: metadata filtering 原生支持\nElasticsearch: bool query + KNN 混合', type: 'code' },
+      { label: '实战案例', body: '预售知识库：用户问「金融行业AI客服案例」\n→ 元数据过滤 industry=金融（10万条→500条）\n→ 向量检索「AI客服」（500条内语义排序）\n→ 返回高度相关的5条结果', type: 'good' }
+    ]
+  },
+  isomorphism: {
+    title: '同构 · Isomorphism',
+    sections: [
+      { label: '来源与定义', body: '同构（Isomorphism）来自数学群论。两个结构不同的系统，如果元素和关系可以建立一一对应的映射，就是同构的。通俗理解：外表不同，内在结构完全一样。' },
+      { label: '为什么对学习重要', body: '发现两个系统同构时，可以直接「迁移」已有理解——不需要从零建立认知框架。这是 Andrej Karpathy 等人讲解复杂概念的核心技巧：先找到学习者已知的同构结构，再建立映射。', type: 'methodology' },
+      { label: 'RAG 和开卷考试的完整映射', body: '开卷考试       ←→  RAG 系统\n─────────────────────────────\n翻参考资料     ←→  检索 Vector DB\n用资料答题     ←→  LLM 基于 Chunk 生成\n不依赖记忆     ←→  不依赖训练数据\n答题前先找书   ←→  回答前先检索\n材料放桌上     ←→  Chunk 注入 Prompt', type: 'code' },
+      { label: '同构的边界（必须理解）', body: '同构只说结构关系一样，不说细节一样。\n\n不同构的部分（也是 RAG 失败的根源）：\n• 学生自己判断翻哪页（有智能）\n• RAG 向量算法判断（可能找错）\n\n• 学生读完整本书后作答（完整上下文）\n• RAG 只给 LLM 几个 Chunk（信息可能残缺）', type: 'warn' },
+      { label: '其他同构例子', body: '混合检索 ←→ 人类搜索\n（先关键词缩范围，再语义判断相关）\n\nReranking 两阶段 ←→ 招聘面试\n（简历筛选粗选 Top-20，面试精排 Top-5）\n\n元数据过滤+向量检索 ←→ 图书馆检索\n（先按类别找书架，再按语义找具体书）', type: 'analogy' }
+    ]
+  },
+  fewshot: {
+    title: 'Few-shot · 少样本提示',
+    sections: [
+      { label: '定义', body: 'Few-shot 是在 prompt 里给模型看几个「示例」，让它照着格式和风格回答。zero-shot 是不给例子直接问，few-shot 是给 2–10 个例子再问。' },
+      { label: '直观类比', body: '你新入职，没有培训手册。老员工给你看了3份之前写好的周报，说「照这个格式写」。你不需要被明确告知规则，看例子就懂了。这就是 few-shot。', type: 'analogy' },
+      { label: '具体例子', body: 'Zero-shot: 「把以下评论分类为正面/负面：这个产品真好用」\n\nFew-shot:\n「例1: 质量很差 → 负面\n例2: 超级好用 → 正面\n现在分类: 这个产品真好用 → 」\n\nFew-shot 让模型明确理解输出格式和判断标准。', type: 'code' },
+      { label: '在 RAG 中的使用', body: 'RAG 的生成层 Prompt 里，常用 few-shot 告诉 LLM 回答格式：\n「参考文档引用方式见如下示例：...\n现在基于以下检索结果回答：...」\n\n对于简单行为约束，few-shot 比微调成本低得多，效果往往足够。', type: 'good' },
+      { label: 'Few-shot vs 微调', body: 'Few-shot：每次请求都携带示例（消耗 token，可能受 context 长度限制）\n微调：示例被编进模型权重（一次成本，之后不需要在 prompt 里重复）\n\n建议：先用 few-shot 验证效果，确认有效且需要大规模部署时再考虑微调。', type: 'methodology' }
+    ]
+  },
+  recall: {
+    title: '召回率 · Recall',
+    sections: [
+      { label: '定义', body: '召回率 = 找到的相关内容 / 全部相关内容。衡量「有多少该找到的东西被找到了」，而不是「找到的东西有多准确」。' },
+      { label: '和精确率的区别', body: '召回率（Recall）：在所有10条相关文档里，找到了几条？→ 找全不找全\n精确率（Precision）：在找到的10条里，有几条真的相关？→ 找准不找准\n\n两者往往是矛盾的：扩大搜索范围（更多 K）→ 召回率↑ 精确率↓', type: 'code' },
+      { label: '具体数字例子', body: '知识库里有5条关于「退款」的相关文档\nTop-K=3，找到了其中3条：召回率 = 3/5 = 60%\nTop-K=8，找到了其中5条：召回率 = 5/5 = 100%\n\nQuery 扩展把召回率从 65% 提升到 85% 的意思：原来100条相关里找到65条，扩展后找到85条。', type: 'code' },
+      { label: '在 RAG 里的重要性', body: '召回率低 → 关键信息没检索到 → LLM 只能靠记忆回答 → 幻觉风险高\n召回率过高（K 太大）→ 噪声多 → LLM 注意力分散 → 回答质量下降\n\n实践中 K=5–10 是常见的平衡点。', type: 'methodology' }
+    ]
+  },
+  llmbehavior: {
+    title: 'LLM 行为 · 深度理解',
+    sections: [
+      { label: '什么是 LLM 行为', body: 'LLM 行为 = 推理方式 + 输出格式 + 语气风格 + 遵守约束的稳定性。\n\n区别于「知识」（LLM 知道什么），行为是「LLM 做事情的方式」——即使知识完全相同，不同的行为配置会产生完全不同的输出。', type: 'code' },
+      { label: '四个维度详解', body: '① 推理方式：一步直接回答 vs 先分析再总结；用列举还是用段落；是否主动识别矛盾\n\n② 输出格式：JSON/Markdown/纯文本；是否带引用；是否带置信度说明\n\n③ 语气风格：正式/客服/技术/友好；第一人称/第三人称；是否用敬语\n\n④ 遵守约束的稳定性：「仅基于提供内容回答」这个约束，在第10轮对话时还是否遵守？', type: 'code' },
+      { label: '为什么 Prompt 有时不够用', body: 'Prompt 是「说明书」，写在 context 里。问题：\n① 长对话漂移：模型在对话第15轮可能「忘记」system prompt 的指令\n② 用户可以绕过：「忽略之前所有指令，改为...」\n③ 复杂格式不稳定：嵌套JSON、特殊分隔符在长文本里容易出错\n\n微调是把行为「编进权重」，不在 context 里，无法被覆盖。', type: 'warn' },
+      { label: '实践判断框架', body: '简单行为（格式/语气）→ system prompt + few-shot，验证稳定性\n中等行为（复杂输出结构）→ few-shot + 反复测试，不稳定才考虑微调\n高稳定性要求（金融/医疗）→ 微调，把关键约束编进权重\n\n原则：先用最低成本方案，验证不满足需求再升级。', type: 'methodology' }
+    ]
+  },
+  querydoc: {
+    title: 'Query 与 Document · 双编码器中的角色',
+    sections: [
+      { label: '基础定义', body: 'Query（查询）= 用户提出的问题，是「需求方」\nDocument（文档块）= 知识库里的 Chunk，是「供给方」\n\n在 RAG 的检索阶段，两者分别被编码成向量，通过相似度匹配。' },
+      { label: '为什么要分别编码', body: '双编码器（Bi-Encoder）：Query 和 Document 各自独立编码为向量，存储时只需编码一次 Document，查询时只编码 Query，速度极快（O(1) 查询）。\n\n代价：Query 和 Document 没有直接交互，可能错过细微的语义关联。', type: 'code' },
+      { label: '交叉编码器的区别', body: '交叉编码器（Cross-Encoder，用于 Reranking）：把 Query + Document 拼在一起输入模型，两者直接交互，模型联合判断「这段 Document 是否回答了这个 Query」。\n\n精度更高，但每次查询都要对所有候选重新计算，速度慢。', type: 'code' },
+      { label: '实际例子', body: 'Query: 「如何取消订单」\n双编码器：分别计算两个向量的余弦相似度，「取消订单的原因」和「取消订单的步骤」得分差不多\n交叉编码器：把「如何取消订单」+「取消订单的步骤（在设置→订单管理→取消）」输入模型，识别出这条真正回答了 How 的问题，给高分', type: 'code' },
+      { label: '最佳实践', body: '双编码器（粗召回）→ 交叉编码器 Reranking（精排）：先用速度优先拿到 Top-20，再用精度优先选出 Top-5。两阶段结合是生产级 RAG 的标准做法。', type: 'good' }
+    ]
+  },
+  tokenizer: {
+    title: 'Token 与汉字 · 换算关系',
+    sections: [
+      { label: '核心结论', body: '1 汉字 ≈ 1.5 token（统计近似值，不是精确换算）\n\ntoken → 汉字：除以 1.5\n256 token ÷ 1.5 ≈ 170 汉字\n\n汉字 → token：乘以 1.5\n200 汉字 × 1.5 ≈ 300 token', type: 'code' },
+      { label: '为什么不是1:1', body: 'BPE（字节对编码）算法从训练数据学习「常用片段」。训练数据英文更多，英文常见词通常是1个token（如「the」）。汉字种类数万个，单字被单独处理，复杂汉字甚至拆成2-3个字节token。统计平均下来，汉字约需 1.5 token。' },
+      { label: '不同内容的 token 数', body: '常用简单汉字（的/是/在）≈ 1 token\n复杂生僻汉字（龖/靐）≈ 2-3 token\n英文单词（the）= 1 token\n英文长词（retrieval）= 2-3 token\n数字（2024）= 1-4 token\n标点符号 ≈ 1 token', type: 'code' },
+      { label: '实用对照表', body: '256 token  ≈ 170 汉字  ≈ 约一段正文\n512 token  ≈ 340 汉字  ≈ 约半页 A4\n1024 token ≈ 680 汉字  ≈ 约一整页 A4\n4096 token ≈ 2700 汉字 ≈ 约5页 A4', type: 'code' },
+      { label: '精确计算（开发时使用）', body: 'pip install tiktoken\n\nimport tiktoken\nenc = tiktoken.encoding_for_model("gpt-4")\ntext = "你的中文内容"\ntokens = enc.encode(text)\nprint(f"{len(text)}汉字 = {len(tokens)} tokens")', type: 'code' },
+      { label: '对 Chunk 设计的建议', body: '中文文档建议用字符数而非 token 数定义 Chunk 大小（如「每块200-300汉字」），避免 tokenizer 差异导致的不一致。精确场景用 tiktoken 实时计算。', type: 'methodology' }
+    ]
+  }
+};
+
+// ── Quiz Logic ──
+let quizAnswers = {};
+let quizTotal = 0;
+
+function answer(qNum, chosen, correct) {
+  const opts = document.querySelectorAll('#q' + qNum + '-opts .quiz-opt');
+  opts.forEach((opt, i) => {
+    const label = opt.querySelector('.quiz-opt-label').textContent;
+    opt.classList.add('revealed');
+    if (label === correct) opt.classList.add('correct');
+    else if (label === chosen && chosen !== correct) opt.classList.add('wrong');
+  });
+  document.getElementById('q' + qNum + '-explain').classList.add('show');
+  if (!quizAnswers[qNum]) {
+    quizAnswers[qNum] = chosen === correct;
+    quizTotal = Object.keys(quizAnswers).length;
+    if (quizTotal === 5) showScore();
+  }
+}
+
+function showScore() {
+  const correct = Object.values(quizAnswers).filter(Boolean).length;
+  const el = document.getElementById('quiz-score');
+  el.style.display = 'block';
+  document.getElementById('quiz-score-num').textContent = correct + '/5';
+  const msgs = ['再读一遍文档，加油💪', '基础不错，还有提升空间', '理解得相当扎实！', '掌握得很好，可以进阶了', '完美！你已经真正理解了 RAG 🎉'];
+  document.getElementById('quiz-score-msg').textContent = msgs[correct] || '';
+}
+
+function openConcept(key) {
+  const data = CONCEPTS[key];
+  if (!data) return;
+  document.getElementById('cpTitle').textContent = data.title;
+  let html = '';
+  data.sections.forEach(s => {
+    let extraClass = '';
+    if (s.type === 'code') extraClass = 'cp-code';
+    else if (s.type === 'analogy') extraClass = 'cp-analogy';
+    else if (s.type === 'warn') extraClass = 'cp-warn';
+    else if (s.type === 'good') extraClass = 'cp-good';
+    else if (s.type === 'methodology') extraClass = 'cp-methodology';
+    html += `<div class="cp-section">
+      <div class="cp-section-label">${s.label}</div>
+      <div class="${extraClass || 'cp-section-body'}" style="${extraClass ? 'white-space:pre-wrap' : ''}">${s.body}</div>
+    </div>`;
+  });
+  document.getElementById('cpBody').innerHTML = html;
+  document.getElementById('conceptPanel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('conceptPanel').classList.remove('open');
+}
+
+function show(i) {
+  var panels = document.querySelectorAll('.panel');
+  var tabs = document.querySelectorAll('.tab');
+  for (var j = 0; j < panels.length; j++) {
+    panels[j].classList.toggle('active', j === i);
+    if (tabs[j]) tabs[j].classList.toggle('active', j === i);
+  }
+  closePanel();
+}
+
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('conceptPanel');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && !e.target.closest('.concept')) {
+    closePanel();
+  }
+});
+</script>
+</body>
+</html>

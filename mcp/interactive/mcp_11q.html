@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP深挖 · 11问</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  background: #f5f4f0; color: #1a1a18;
+  min-height: 100vh; padding: 24px 16px 60px;
+}
+.container { max-width: 780px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+.sub { font-size: 12px; color: #E24B4A; font-weight: 500; margin-bottom: 24px; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 20px; }
+.tab {
+  padding: 6px 11px; font-size: 11px; border-radius: 6px; cursor: pointer;
+  color: #5f5e5a; border: 0.5px solid #c8c7be; background: #fff;
+  transition: all .15s; white-space: nowrap;
+}
+.tab.active { color: #fff; background: #F26419; border-color: #F26419; font-weight: 500; }
+.tab.red { border-color: #f09595; }
+.tab.red.active { background: #E24B4A; border-color: #E24B4A; }
+.tab:hover:not(.active) { background: #f1efe8; }
+.panel { display: none; }
+.panel.active { display: block; }
+.card { background: #f1efe8; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.card-t { font-size: 14px; font-weight: 500; color: #1a1a18; margin-bottom: 5px; }
+.card-b { font-size: 13px; color: #5f5e5a; line-height: 1.7; }
+.callout {
+  border-left: 3px solid #F26419; padding: 10px 14px;
+  background: #fff3ec; border-radius: 0 8px 8px 0;
+  margin: 10px 0; font-size: 13px; color: #5f5e5a; line-height: 1.6;
+}
+.callout strong { color: #1a1a18; }
+.alert {
+  border-left: 3px solid #E24B4A; padding: 10px 14px;
+  background: #fcebeb; border-radius: 0 8px 8px 0;
+  margin: 10px 0; font-size: 13px; color: #501313; line-height: 1.6;
+}
+.alert strong { color: #E24B4A; display: block; margin-bottom: 4px; }
+pre {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px; background: #fff; border-radius: 7px;
+  padding: 11px 13px; border: 0.5px solid #c8c7be;
+  margin: 8px 0; line-height: 1.85; overflow-x: auto; white-space: pre; color: #1a1a18;
+}
+code { font-family: "SF Mono", monospace; font-size: 11px; background: #e8e6df; padding: 1px 5px; border-radius: 3px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.sep { border: none; border-top: 0.5px solid #c8c7be; margin: 12px 0; }
+.sl { font-size: 10px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: #888780; margin: 14px 0 8px; }
+.gbox { border-radius: 8px; padding: 11px 13px; font-size: 12px; line-height: 1.7; border: 0.5px solid #97c459; background: #eaf3de; color: #173404; }
+.rbox { border-radius: 8px; padding: 11px 13px; font-size: 12px; line-height: 1.7; border: 0.5px solid #f09595; background: #fcebeb; color: #501313; }
+.step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+.sn { width: 22px; height: 22px; border-radius: 50%; background: #F26419; color: #fff; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.sb { flex: 1; font-size: 13px; color: #5f5e5a; line-height: 1.6; }
+.sb strong { color: #1a1a18; }
+.tl { border-left: 2px solid #c8c7be; padding: 0 0 14px 16px; position: relative; margin-left: 8px; }
+.tl:last-child { padding-bottom: 0; }
+.tld { width: 10px; height: 10px; border-radius: 50%; background: #F26419; position: absolute; left: -6px; top: 2px; }
+.tly { font-size: 10px; font-weight: 500; color: #F26419; margin-bottom: 2px; }
+.tlt { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 3px; }
+.tlb { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+.wc { border: 0.5px solid #c8c7be; border-radius: 8px; padding: 11px 13px; margin-bottom: 8px; background: #fff; }
+.we { font-family: "SF Mono", monospace; font-size: 14px; font-weight: 500; color: #F26419; margin-bottom: 3px; }
+.wd { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+.hl { background: #fff3ec; border-left: 3px solid #F26419; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; color: #633806; margin: 8px 0; line-height: 1.6; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+th { background: #f1efe8; padding: 8px 10px; text-align: left; font-weight: 500; border: 0.5px solid #c8c7be; }
+td { padding: 8px 10px; border: 0.5px solid #c8c7be; color: #5f5e5a; line-height: 1.5; vertical-align: top; }
+@media(max-width:560px){ .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>MCP深挖 · 11问</h1>
+<p class="sub">⑤ 含重要纠错 · AI应用工程师备战</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="show(0)">① Prompt用法</button>
+  <button class="tab" onclick="show(1)">② Gateway写码</button>
+  <button class="tab" onclick="show(2)">③ 动态Tool注册</button>
+  <button class="tab" onclick="show(3)">④ Evals方案</button>
+  <button class="tab red" onclick="show(4)">⑤ FC输出给谁 ⚠</button>
+  <button class="tab" onclick="show(5)">⑥ FC前世今生</button>
+  <button class="tab" onclick="show(6)">⑦ 意图→执行桥梁</button>
+  <button class="tab" onclick="show(7)">⑧ API文档改造</button>
+  <button class="tab" onclick="show(8)">⑨ 透明=理解?</button>
+  <button class="tab" onclick="show(9)">⑩ 更好的词</button>
+  <button class="tab" onclick="show(10)">⑪ AI为何懂Tool</button>
+</div>
+
+<!-- Panel 0: Prompt usage -->
+<div class="panel active" id="p0">
+  <div class="callout">路径：<strong>Server定义模板 → Host展示斜杠命令 → 用户填参数 → Server展开 → 发给AI</strong>。AI全程被动，主动权在用户。</div>
+  <div class="sl">完整流程（以 Claude Desktop 为例）</div>
+  <div class="step"><div class="sn">1</div><div class="sb"><strong>Server声明模板：</strong>GitHub MCP Server 声明有 code_review / write_commit_msg 等模板</div></div>
+  <div class="step"><div class="sn">2</div><div class="sb"><strong>Host展示为 "/" 斜杠命令：</strong>用户在输入框输 "/" 看到可用模板列表，体验和 Slack slash command 完全一样</div></div>
+  <div class="step"><div class="sn">3</div><div class="sb"><strong>用户选择并填参数：</strong>选 code_review → 弹出表单 → 填 file_path="src/auth.py", focus="security"</div></div>
+  <div class="step"><div class="sn">4</div><div class="sb"><strong>Host调Server展开模板：</strong>Server把参数填入模板，同时自动注入 auth.py 文件内容作为 Resource，生成完整 prompt</div></div>
+  <div class="step"><div class="sn">5</div><div class="sb"><strong>完整prompt发给AI：</strong>AI收到带上下文的专家级指令，直接开始分析，不需要用户解释背景</div></div>
+  <div class="sep"></div>
+  <div class="row">
+    <div class="rbox"><strong>用户直接打字</strong><br><br>"帮我看下 auth.py 有没有安全问题"<br><br>→ AI不知道要检查哪些维度<br>→ 质量取决于用户描述能力<br>→ 每次结果质量不稳定</div>
+    <div class="gbox"><strong>使用 Prompt 模板</strong><br><br>用户只填：file_path + focus<br><br>→ 模板展开成专家级 prompt<br>→ 包含 SQL注入/权限/输入验证清单<br>→ 质量稳定，可复用，可分享</div>
+  </div>
+  <div class="callout" style="margin-top:12px"><strong>产品本质：</strong>把专家的"最佳用法"封进模板，普通用户填参数就能得到专家级结果。这是 MCP 三类能力里商业化价值最直接的一个。</div>
+</div>
+
+<!-- Panel 1: Gateway code -->
+<div class="panel" id="p1">
+  <div class="callout">你理解正确，<strong>Gateway必须写代码，没有魔法</strong>。它本质是一个普通 MCP Server，Tool 的实现内部调的是其他服务。</div>
+  <div class="sl">Gateway 核心代码结构</div>
+  <pre>const gw = new MCPServer("enterprise-gateway");
+
+// 包装内部 REST API
+gw.addTool({
+  name: "get_customer",
+  description: "获取客户详情，已知 customer_id 时使用...",
+  handler: async ({ customer_id }) => {
+    return await fetch(`http://crm/api/customers/${customer_id}`);
+  }
+});
+
+// 包装内部 gRPC
+gw.addTool({
+  name: "get_orders",
+  description: "获取客户订单列表...",
+  handler: async ({ customer_id }) => {
+    return await orderGrpcClient.ListOrders({ customer_id });
+  }
+});
+
+// Gateway 核心价值：聚合多服务（AI看到1个Tool，背后是3个服务）
+gw.addTool({
+  name: "get_full_profile",
+  description: "获取客户完整画像，含订单和风控评分...",
+  handler: async ({ customer_id }) => {
+    const [customer, orders, risk] = await Promise.all([
+      crmFetch(customer_id),
+      orderGrpc.list(customer_id),
+      riskGrpc.score(customer_id)
+    ]);
+    return { customer, orders, risk_score: risk.score };
+  }
+});</pre>
+  <div class="row">
+    <div class="card" style="margin:0"><div class="card-t">单服务 Adapter</div><div class="card-b">有 OpenAPI spec → 1天<br>纯手写 → 2-3天<br>gRPC 有 proto → 2-3天</div></div>
+    <div class="card" style="margin:0"><div class="card-t">完整 Gateway</div><div class="card-b">含权限/限流/审计 → 1-2周<br>生产级稳定性 → 1个月+<br>这是真实的工程成本</div></div>
+  </div>
+  <div class="callout" style="margin-top:10px"><strong>没有银弹：</strong>MCP 标准化了"接口协议"，没有标准化"业务逻辑翻译"。把 gRPC protobuf 翻译成 AI 友好的 Tool description，这个业务理解的工作永远需要人来做。</div>
+</div>
+
+<!-- Panel 2: Dynamic tool registration -->
+<div class="panel" id="p2">
+  <div class="callout"><strong>动态 Tool 注册</strong> = 根据对话上下文，实时决定向 AI 暴露哪些 Tool，而不是一次性暴露全部 Tool。</div>
+  <div class="row" style="margin-bottom:12px">
+    <div class="rbox"><strong>静态注册（常见做法）</strong><br><br>启动时声明全部 80 个 Tool<br>AI 同时看到所有 Tool<br><br>→ 选错概率高<br>→ 大量 token 浪费<br>→ 无法按角色限制权限</div>
+    <div class="gbox"><strong>动态注册（智能做法）</strong><br><br>用户说"查客户" → 暴露2个<br>用户说"处理退款" → 切换3个<br><br>→ 准确率高<br>→ token 少<br>→ 天然支持权限控制</div>
+  </div>
+  <pre>const groups = {
+  "客户查询": ["search_customer", "get_customer", "list_contacts"],
+  "支付退款": ["get_order", "verify_refund", "issue_refund"],
+  "报表分析": ["generate_report", "export_data"],
+};
+
+async function getTools(userMsg) {
+  const intent = await classifyIntent(userMsg);
+  return groups[intent] ?? defaultTools;
+}
+
+// 每轮对话前动态设置
+mcpClient.setAvailableTools(await getTools(userInput));</pre>
+  <div class="sl">3个核心价值</div>
+  <div class="card"><div class="card-t">① 降低 AI 选错 Tool 的概率</div><div class="card-b">80 个 Tool 里选对 vs 5 个里选对，准确率差异极大。</div></div>
+  <div class="card"><div class="card-t">② 减少 context token 消耗</div><div class="card-b">Tool 定义本身占 token。80 个 Tool 的描述可能占 4000 tokens，5 个只需 250 tokens。</div></div>
+  <div class="card"><div class="card-t">③ 实现业务级权限控制</div><div class="card-b">销售只看客户 Tool，财务只看支付 Tool——动态注册天然支持。</div></div>
+</div>
+
+<!-- Panel 3: Evals -->
+<div class="panel" id="p3">
+  <div class="callout">有成熟方案，分<strong>通用 Eval 框架</strong>和<strong>MCP 专用测试</strong>两层。</div>
+  <div class="card">
+    <div class="card-t">LangSmith <span style="display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;background:#e6f1fb;color:#185fa5;font-weight:500">最推荐</span></div>
+    <div class="card-b">LangChain 生态，最成熟的 LLM Eval 平台。有 UI，支持 Tool Call 追踪、A/B 测试不同 description、可视化对比结果。支持生产流量自动采样评测。</div>
+  </div>
+  <div class="card">
+    <div class="card-t">PromptFoo <span style="display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;background:#eaf3de;color:#3b6d11;font-weight:500">轻量开源</span></div>
+    <div class="card-b">专做 prompt + tool 评测，配置简单，1天内可搭好。</div>
+    <pre>npx promptfoo eval --config tool-evals.yaml</pre>
+  </div>
+  <div class="card">
+    <div class="card-t">最小可行 Eval 体系（立即可用）</div>
+    <pre># 黄金测试用例
+- input: "帮我找一下张三的客户信息"
+  expected_tool: "search_customer"
+- input: "查 customer_id=123 的详情"
+  expected_tool: "get_customer"
+- input: "帮我把这笔订单退款"
+  expected_tool: "issue_refund"
+
+# CI 规则：通过率 &lt; 85% → 阻断合并，重写 description</pre>
+    <div class="card-b">第一步：写20条黄金用例 → 第二步：CI自动跑 → 第三步：每次改 description 都跑一遍防退步</div>
+  </div>
+</div>
+
+<!-- Panel 4: FC output - CORRECTION -->
+<div class="panel" id="p4">
+  <div class="alert">
+    <strong>⚠ 你有一个关键误解需要纠正</strong>
+    你说"输出的结构化内容也是给AI的，让AI去调用Tool"——这个不对。<br>
+    AI 输出的 JSON 是给<strong>你的代码（Host）</strong>的，由代码执行真实操作，再把结果返回给 AI。
+  </div>
+  <div class="sl">完整的 Function Calling 循环</div>
+  <pre>用户："上海今天天气怎么样？"
+         │
+         ▼
+【你的代码】把 用户消息 + Tool定义 发给 AI 模型
+         │
+         ▼
+【AI 模型】分析后输出结构化 JSON（只是"表达意图"，不是执行）:
+  {
+    "type": "tool_use",
+    "name": "get_weather",
+    "input": { "city": "上海" }
+  }
+         │
+         ▼  ← ✋ AI 在此停止，等待结果
+【你的代码】读取 JSON，执行真实操作:
+  result = weather_api.query("上海")
+  → 返回: { temp: 22, weather: "晴" }
+         │
+         ▼
+【你的代码】把结果传回给 AI（作为 tool_result）
+         │
+         ▼
+【AI 模型】生成最终自然语言回答:
+  "上海今天晴天，气温 22°C，适合出行。"</pre>
+  <div class="row">
+    <div class="rbox"><strong>如果 AI 能直接执行</strong><br><br>AI 可任意访问网络/文件/数据库<br>完全不可控 → 安全灾难</div>
+    <div class="gbox"><strong>AI 只输出意图，代码执行</strong><br><br>代码做权限检查/参数验证/速率限制<br>AI 的能力在开发者掌控之内</div>
+  </div>
+  <div class="callout" style="margin-top:10px"><strong>核心认知：AI 永远不直接执行任何操作。</strong>AI 只做：①决定调哪个 Tool、填什么参数（输出 JSON）；②拿到结果后生成自然语言。真正执行的永远是你的代码。这个边界是整个 Agent 架构安全模型的基石。</div>
+</div>
+
+<!-- Panel 5: FC history -->
+<div class="panel" id="p5">
+  <div class="callout">FC 的演化，是<strong>"让 AI 从聊天工具变成能做事的 Agent"</strong>的技术史。</div>
+  <div class="tl"><div class="tld"></div><div class="tly">2020-2022 · 史前时代</div><div class="tlt">Prompt 硬解析</div><div class="tlb">AI 只输出文本，开发者用正则提取信息。让 AI 回答 "CITY:上海"，再解析字符串——AI 稍微换格式就崩，极其脆弱。</div></div>
+  <div class="tl"><div class="tld"></div><div class="tly">2023年6月 · 里程碑</div><div class="tlt">OpenAI 发布 Function Calling</div><div class="tlb">GPT-3.5/4 首次支持结构化 Tool 调用，AI 可以输出标准 JSON，不再需要解析自然语言。AI 从"聊天机器人"走向"能做事的 Agent"的真正起点。</div></div>
+  <div class="tl"><div class="tld"></div><div class="tly">2023年下半年</div><div class="tlt">各家跟进，但格式各异</div><div class="tlb">Claude、Gemini、各开源模型都支持 Tool Call，但 JSON 格式、字段名、调用方式各不相同——生态碎片化出现，一个 Server 无法跨模型复用。</div></div>
+  <div class="tl"><div class="tld"></div><div class="tly">2024年11月</div><div class="tlt">Anthropic 发布 MCP</div><div class="tlb">在 FC 之上加标准协议：统一服务发现、传输层、三类能力（Tool/Resource/Prompt）。FC 是原子能力，MCP 是工程化标准。关系类比：FC:MCP = HTTP:REST。</div></div>
+  <div class="tl"><div class="tld"></div><div class="tly">2025年 · 现在</div><div class="tlt">Agent 时代，工具调用成基础设施</div><div class="tlb">竞争从"支不支持"转向"生态有多少工具、调用多准确"。MCP 成为 AI 工具生态事实标准候选。Google 推出 A2A 作为竞争方案，标准之争仍在进行。</div></div>
+</div>
+
+<!-- Panel 6: Bridge -->
+<div class="panel" id="p6">
+  <div class="callout"><strong>核心问题：AI（LLM）是文本处理器，只能读文本、输出文本；但现实操作需要真正执行代码。</strong>桥梁解决的是这个物理鸿沟。</div>
+  <div class="card">
+    <div class="card-t">没有桥梁，AI 只能"表演"</div>
+    <pre>用户："帮我发一封邮件给 boss@company.com"
+
+没有桥梁的 AI 只能说：
+"好的，我已经帮您起草了邮件：
+ 收件人：boss@company.com ..."
+
+→ 邮件根本没有真的发出去。AI 只是"说"了发邮件。</pre>
+  </div>
+  <div class="card">
+    <div class="card-t">有了桥梁，意图变成现实</div>
+    <pre>AI 输出意图（JSON）:
+{ "tool": "send_email", "to": "boss@...", "body": "..." }
+         ↓
+桥梁（你的代码）拦截，执行真实操作:
+gmail_api.send(to="boss@...", ...)  ← 邮件真的发出去了
+         ↓
+结果回传 AI → AI 确认："邮件已发送成功！"</pre>
+  </div>
+  <div class="callout"><strong>桥梁的本质：</strong>FC 定义了意图的格式（JSON schema），MCP 标准化了桥梁的协议（谁执行、怎么传结果）。两者合在一起，让 AI 第一次能真正"改变世界的状态"，而不只是"说说而已"。</div>
+</div>
+
+<!-- Panel 7: API doc rewrite -->
+<div class="panel" id="p7">
+  <div class="callout"><strong>改造 API 文档解决了"语义理解"这半步，但缺"执行桥梁"那半步——两步都需要才能形成完整闭环。</strong></div>
+  <div class="row" style="margin-bottom:12px">
+    <div class="gbox"><strong>✓ 改造文档能解决</strong><br><br>AI 理解"何时调、为什么调"<br>减少选错 Tool 的概率<br>和写好 MCP Tool description 本质相同</div>
+    <div class="rbox"><strong>✗ 改造文档解决不了</strong><br><br>AI 看懂了"要调 POST /v1/pay"<br>谁来发这个 HTTP 请求？<br>AI 不能自己执行，必须有代码桥梁</div>
+  </div>
+  <div class="card">
+    <div class="card-t">改造文档的正确定位</div>
+    <div class="card-b">
+      改造 API 文档成 AI 友好格式 ≈ 写好 MCP Tool description，本质相同：都是把接口语义用 AI 能理解的方式表达。<br><br>
+      区别：改造文档还需要手动搭配 FC 代码才能执行；MCP Tool 是 description + 执行代码一体化，开箱即用。<br><br>
+      改造文档不是错的，只是不完整——它是 MCP Tool 的语义子集。
+    </div>
+  </div>
+</div>
+
+<!-- Panel 8: Transparent -->
+<div class="panel" id="p8">
+  <div class="callout">你的理解<strong>基本对，但"透明"这个词有两种截然相反的用法</strong>，在工程领域容易混淆。</div>
+  <div class="row">
+    <div class="card">
+      <div class="card-t">含义 A：可见、可理解</div>
+      <div class="card-b">"对 AI 透明" = AI 能看见、读懂、据此决策。<br><br>这是你的理解，在 MCP 语境下正确。MCP Tool description 对 AI 透明：AI 能理解何时用、边界在哪。</div>
+    </div>
+    <div class="card">
+      <div class="card-t">含义 B：不可见、无感知（相反！）</div>
+      <div class="card-b">"对用户透明"在工程语境常指"用户感知不到这层"。<br><br>例："负载均衡对用户透明" = 用户不知道被分发到哪台服务器。<br><br>和含义 A 完全相反，容易造成混淆。</div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:10px">在 MCP 语境下你的理解是对的。但这个词有歧义，建议用更精确的专业词汇替代（见下一问）。</div>
+</div>
+
+<!-- Panel 9: Better word -->
+<div class="panel" id="p9">
+  <div class="callout">你的直觉准确，<strong>"透明"在这里确实不够精确</strong>。工程领域有更合适的词，面试中用这些词会显得认知非常精准。</div>
+  <div class="wc">
+    <div class="we">Self-describing</div>
+    <div class="wd"><strong>自描述的</strong> — 最推荐。接口本身携带了足够的语义信息，使用者不需要查外部文档就能理解如何使用。<br><br>"MCP Tool definitions are self-describing — the AI can infer intent, parameters, and boundaries from the description alone."</div>
+  </div>
+  <div class="wc">
+    <div class="we">AI-interpretable</div>
+    <div class="wd"><strong>AI 可理解的</strong> — 强调 AI 视角。信息被组织成机器（AI）可以直接处理和推理的形式，而不仅仅是供人阅读的文字。<br><br>"REST API docs are human-readable; MCP Tool specs are AI-interpretable."</div>
+  </div>
+  <div class="wc">
+    <div class="we">Semantically rich</div>
+    <div class="wd"><strong>语义丰富的</strong> — 强调语义密度。不只告诉你"能做什么"，还有"为什么用、什么时候不用、失败了怎么办"。</div>
+  </div>
+  <div class="wc">
+    <div class="we">Semantically opaque（反义词）</div>
+    <div class="wd"><strong>语义不透明的</strong> — 原文"对 AI 语义不透明"的精确英文。<code>POST /v1/txn/proc</code> 对 AI 是 semantically opaque 的——没有自带的语义线索。</div>
+  </div>
+  <div class="hl"><strong>面试建议：</strong>把"对 AI 语义透明"替换为 <strong>self-describing</strong> 或 <strong>AI-interpretable</strong>；把"语义不透明"替换为 <strong>semantically opaque</strong>。这两个词会让面试官感觉你的认知非常扎实。</div>
+</div>
+
+<!-- Panel 10: Why AI understands Tool -->
+<div class="panel" id="p10">
+  <div class="callout"><strong>根本原因：MCP Tool 定义同时用了两种 AI 被大量训练过的语言——自然语言（description）和 JSON Schema（参数结构）。AI 理解这两种，所以 Tool 定义天然对 AI self-describing。</strong></div>
+  <div class="sl">MCP Tool 定义的两个组成部分</div>
+  <pre>{
+  // 部分 1：自然语言 description（AI 的核心强项）
+  "name": "search_customer",
+  "description": "当用户需要按姓名/邮件查找客户时使用。
+    [何时不用] 如果已知 customer_id，用 get_customer 更精确、更快。
+    [副作用] 只读，不修改任何数据。
+    [失败处理] 无匹配结果时返回空数组，而非报错。",
+
+  // 部分 2：JSON Schema（AI 训练数据中大量出现的规范格式）
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "搜索关键词，支持姓名/邮件/手机号，最少2个字符"
+      },
+      "limit": {
+        "type": "integer",
+        "default": 20,
+        "maximum": 100
+      }
+    },
+    "required": ["query"]   // AI 知道这意味着"必须提供"
+  }
+}</pre>
+  <div class="row" style="margin-bottom:12px">
+    <div class="card" style="margin:0"><div class="card-t">自然语言 description</div><div class="card-b">AI 训练时看过海量文本，自然语言理解是核心能力。"何时用、何时不用、失败怎么办"这类说明 AI 理解起来和人一样。</div></div>
+    <div class="card" style="margin:0"><div class="card-t">JSON Schema</div><div class="card-b">广泛使用的规范格式，AI 训练数据里大量出现。required/type/properties/enum 的含义 AI 都准确掌握。</div></div>
+  </div>
+  <div class="sep"></div>
+  <div class="sl">对比：为什么 REST 路径 AI 理解不了</div>
+  <pre>POST /v1/cust/src
+{ "q": "张三", "pg": 1 }
+
+AI 看到这个会想：
+→ "cust" 是 customer 吗？"src" 是 search 还是 source？
+→ "q" 是 query 吗？"pg" 是 page 吗？
+→ 这个接口有副作用吗？会修改数据吗？
+→ 什么时候应该调这个而不是另一个接口？
+
+全部是猜测，无法确定。语义在文档里、在开发者脑子里，不在接口本身。</pre>
+  <div class="callout"><strong>设计哲学：</strong>MCP Tool 把"供人阅读的文档"变成"供 AI 推理的元数据"，嵌入接口定义本身。这让 AI 第一次能真正自主决策"要不要调用这个工具"——这就是 <strong>self-describing interface</strong> 的本质，也是 MCP 存在的根本原因。</div>
+</div>
+
+</div><!-- /container -->
+<script>
+function show(i) {
+  var panels = document.querySelectorAll('.panel');
+  var tabs = document.querySelectorAll('.tab');
+  for (var j = 0; j < panels.length; j++) {
+    panels[j].classList.toggle('active', j === i);
+    tabs[j].classList.toggle('active', j === i);
+  }
+}
+</script>
+</body>
+</html>

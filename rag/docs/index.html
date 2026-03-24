@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Docs 首页</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f1efe8;
+    --border: #dedad4;
+    --border2: #c8c7be;
+    --text: #1a1a18;
+    --muted: #5f5e5a;
+    --dim: #888780;
+    --accent: #F26419;
+    --accent2: #185FA5;
+    --accent3: #3B6D11;
+    --accent4: #A32D2D;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background:
+      radial-gradient(circle at top right, rgba(242,100,25,.12), transparent 28%),
+      radial-gradient(circle at left 28%, rgba(24,95,165,.08), transparent 24%),
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+    line-height: 1.75;
+  }
+  .site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 120;
+    background: rgba(245,244,240,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-nav-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    min-height: 54px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .site-nav-brand, .site-nav-link, .site-nav-home {
+    text-decoration: none;
+    color: var(--text);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+  .site-nav-brand {
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .site-nav-links {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .site-nav-link {
+    padding: 7px 10px;
+    border-radius: 999px;
+    color: var(--muted);
+  }
+  .site-nav-link.current {
+    background: #fef0e7;
+    color: var(--accent);
+    border: 1px solid rgba(242,100,25,.18);
+  }
+  .site-nav-home {
+    margin-left: auto;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .page {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 40px 20px 72px;
+  }
+  .page-header {
+    padding: 28px 28px 24px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(241,239,232,.92));
+  }
+  .page-header-main {
+    display: grid;
+    gap: 12px;
+  }
+  .eyebrow, .section-kicker, .role-kicker, .intro-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .eyebrow { color: var(--accent2); margin-bottom: 14px; }
+  h1 {
+    font-size: clamp(34px, 6vw, 68px);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin-bottom: 14px;
+  }
+  .lead {
+    max-width: 680px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .header-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .header-badges span {
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.75);
+    color: var(--muted);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+  .page-intro {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 14px;
+  }
+  .page-role {
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .page-role strong { color: var(--text); }
+  .page-role a {
+    color: var(--accent2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+  }
+  .intro-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .intro-meta-card {
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 14px;
+  }
+  .intro-label { color: var(--accent2); margin-bottom: 8px; }
+  .intro-body {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .intro-body a {
+    color: var(--accent2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+  }
+  .section { margin-top: 28px; }
+  .section-kicker { color: var(--accent2); margin-bottom: 8px; }
+  .section-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 14px;
+    letter-spacing: -.5px;
+  }
+  .router-grid, .role-grid, .fast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+  }
+  .entry-card, .role-card, .fast-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .entry-tag, .role-tag {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .entry-tag.learn, .role-tag.learn { background: #fef0e7; color: #B8440A; }
+  .entry-tag.build, .role-tag.build { background: #eaf3de; color: var(--accent3); }
+  .entry-tag.find, .role-tag.find { background: #e6f1fb; color: var(--accent2); }
+  .entry-tag.explain, .role-tag.explain { background: #fcebeb; color: var(--accent4); }
+  .entry-card h3, .role-card h3, .fast-card h3 {
+    font-size: 19px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .entry-card p, .role-card p, .fast-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.85;
+    margin-bottom: 12px;
+  }
+  .entry-link, .fast-card a, .role-card a {
+    color: var(--accent2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+  .knowledge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .knowledge-card {
+    background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(241,239,232,.92));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .knowledge-card h3 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .knowledge-card p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    line-height: 1.8;
+  }
+  .knowledge-card a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+    color: var(--accent2);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+  .role-map {
+    margin-top: 28px;
+    padding: 20px 22px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .role-kicker {
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .role-map p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.9;
+    margin-bottom: 12px;
+  }
+  .role-map ul {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+  }
+  .role-map li {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .role-map strong { color: var(--text); }
+  .question-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .question-card h3 {
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .question-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 10px;
+  }
+  .question-card a {
+    color: var(--accent2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+  @media (max-width: 860px) {
+    .page-intro, .intro-meta-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-page-type="hub-home" data-primary-task="route" data-last-updated="2026-03-21">
+<div class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">RAG Docs</a>
+    <div class="site-nav-links">
+      <a href="index.html" class="site-nav-link current">首页</a>
+      <a href="00_课程路线图.html" class="site-nav-link">系统学习</a>
+      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="ai-knowledge-hub.html" class="site-nav-link">快速回查</a>
+      <a href="rag-5d.html" class="site-nav-link">讲解 / 面试</a>
+      <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
+    </div>
+    <a href="index.html" class="site-nav-home">统一入口</a>
+  </div>
+</div>
+
+<div class="page">
+  <section class="page-header">
+    <div class="page-header-main">
+      <div class="eyebrow">Unified Entry / Task Router</div>
+      <h1>RAG Docs 首页</h1>
+      <p class="lead">这个页面是唯一统一入口。不要再从文件名判断该看哪一页，而是先判断你现在的任务：系统学习、做项目、快速回查，还是准备讲解与面试。</p>
+      <div class="header-badges">
+        <span>唯一总站首页</span>
+        <span>按任务分流</span>
+        <span>一跳进入子页</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-intro">
+    <div class="page-role">
+      <strong>这页负责任务分流，不负责长文讲解。</strong> 如果你已经明确知道要查什么，就直接去 <a href="ai-knowledge-hub.html">快速回查</a>；如果你要系统学习，就去 <a href="00_课程路线图.html">课程路线图</a>。
+    </div>
+    <div class="intro-meta-grid">
+      <article class="intro-meta-card">
+        <div class="intro-label">适合任务</div>
+        <div class="intro-body">第一次进入文档体系；需要先判断自己该看哪一类页面。</div>
+      </article>
+      <article class="intro-meta-card">
+        <div class="intro-label">前置阅读</div>
+        <div class="intro-body">无。这里就是统一入口，不需要先读任何子页。</div>
+      </article>
+      <article class="intro-meta-card">
+        <div class="intro-label">下一步</div>
+        <div class="intro-body"><a href="00_课程路线图.html">系统学习</a> · <a href="03_工程方法论手册.html">做项目</a> · <a href="rag-5d.html">讲解 / 面试</a></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-kicker">Task Router</div>
+    <div class="section-title">先判断你现在来干什么</div>
+    <div class="router-grid">
+      <article class="entry-card">
+        <div class="entry-tag learn">系统学习</div>
+        <h3>第一次系统学 RAG</h3>
+        <p>目标是知道先学什么、学到什么算完成、下一步跑什么实验。</p>
+        <a class="entry-link" href="00_课程路线图.html">进入课程路线图 →</a>
+      </article>
+      <article class="entry-card">
+        <div class="entry-tag build">做项目</div>
+        <h3>我要把方案做出来</h3>
+        <p>目标是知道怎么评估、怎么找坏例、怎么判断边界和迭代顺序。</p>
+        <a class="entry-link" href="03_工程方法论手册.html">进入工程方法论手册 →</a>
+      </article>
+      <article class="entry-card">
+        <div class="entry-tag find">快速回查</div>
+        <h3>我要找概念、参数、术语</h3>
+        <p>目标是快速定位定义、常见误区、参数建议和相关代码入口。</p>
+        <a class="entry-link" href="ai-knowledge-hub.html">进入文档索引 →</a>
+      </article>
+      <article class="entry-card">
+        <div class="entry-tag explain">讲解 / 面试</div>
+        <h3>我要讲清楚 RAG</h3>
+        <p>目标是做场景判断、对比辨析、讲边界和准备问答。</p>
+        <a class="entry-link" href="rag-5d.html">进入 5D 完全理解 →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-kicker">Fast Access</div>
+    <div class="section-title">常用辅助入口</div>
+    <div class="fast-grid">
+      <article class="fast-card">
+        <h3>知识地图</h3>
+        <p>适合从系统组件角度看全貌，理解离线、检索、生成和评估之间的关系。</p>
+        <a href="rag-knowledge-map.html">打开知识地图 →</a>
+      </article>
+      <article class="fast-card">
+        <h3>概念手册</h3>
+        <p>适合补底层直觉，尤其是 embedding、向量、余弦相似度和语义检索。</p>
+        <a href="01_概念手册_向量与检索.html">打开概念手册 →</a>
+      </article>
+      <article class="fast-card">
+        <h3>代码讲解</h3>
+        <p>适合看最小 RAG 循环和分块策略如何落到代码实现，而不是只停留在定义层。</p>
+        <a href="02_代码讲解_V1V2.html">打开代码讲解 →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-kicker">Core Knowledge</div>
+    <div class="section-title">高频知识卡</div>
+    <div class="knowledge-grid">
+      <article class="knowledge-card">
+        <h3>Embedding</h3>
+        <p>把语义映射到向量空间，让“意思接近”可被检索系统计算。</p>
+        <a href="ai-knowledge-hub.html#glossary">去索引页看统一定义 →</a>
+      </article>
+      <article class="knowledge-card">
+        <h3>Chunk / Overlap</h3>
+        <p>决定文档如何被切开，是检索质量最常见、也最容易做错的起点。</p>
+        <a href="02_代码讲解_V1V2.html#v2">去代码页看分块策略 →</a>
+      </article>
+      <article class="knowledge-card">
+        <h3>Recall / MRR</h3>
+        <p>决定你如何判断检索系统“有没有把对的内容找回来”。</p>
+        <a href="03_工程方法论手册.html#experiment">去工程页看评估 →</a>
+      </article>
+      <article class="knowledge-card">
+        <h3>Reranking</h3>
+        <p>在粗召回候选集上再做精排序，用延迟换更高的命中准确度。</p>
+        <a href="rag-5d.html">去 5D 看场景边界 →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-kicker">Problem Index</div>
+    <div class="section-title">按问题直达</div>
+    <div class="question-grid">
+      <article class="question-card">
+        <h3>为什么要分块</h3>
+        <p>主答案应该先解释为什么整篇文档不能直接拿来做高质量检索，而不是只给参数经验值。</p>
+        <a href="02_代码讲解_V1V2.html#v2">主答案：代码讲解 / V2 →</a>
+      </article>
+      <article class="question-card">
+        <h3>什么时候需要 reranker</h3>
+        <p>当候选已经“差不多相关”，但排序不够准时，reranker 才有价值。</p>
+        <a href="rag-5d.html">主答案：5D 完全理解 →</a>
+      </article>
+      <article class="question-card">
+        <h3>检索效果差先查哪里</h3>
+        <p>先区分是分块、召回、排序还是评估口径问题，不要直接去调 prompt。</p>
+        <a href="03_工程方法论手册.html#failure">主答案：工程手册 / 失败模式 →</a>
+      </article>
+      <article class="question-card">
+        <h3>RAG 和微调怎么分工</h3>
+        <p>一个解决知识注入，一个解决行为稳定与格式约束，边界必须清楚。</p>
+        <a href="rag-5d.html">主答案：5D 完全理解 →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="role-map">
+    <div class="role-kicker">Page Role Map</div>
+    <p>现在所有入口页职责固定，不再互相抢角色。</p>
+    <ul>
+      <li><strong>首页</strong>只负责分流，不承载长内容。</li>
+      <li><strong>课程路线图</strong>只负责学习顺序，不负责术语速查。</li>
+      <li><strong>文档索引</strong>只负责回查，不负责第一次顺序学习。</li>
+      <li><strong>知识地图</strong>只负责系统结构，不负责全面辨析。</li>
+      <li><strong>5D</strong>只负责对比、边界、讲解与面试。</li>
+    </ul>
+    <p style="margin-top:12px;">维护入口：<a href="knowledge-updates.html">知识库更新日志</a>。</p>
+  </section>
+</div>
+</body>
+</html>

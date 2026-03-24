@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 实战 · V1 &amp; V2 讲解</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f1efe8;
+  --surface3: #fafaf8;
+  --border: #dedad4;
+  --border-bright: #c8c7be;
+  --text: #1a1a18;
+  --text-muted: #5f5e5a;
+  --text-dim: #888780;
+  --accent-y: #F26419;
+  --accent-b: #185FA5;
+  --accent-p: #F26419;
+  --accent-g: #3B6D11;
+  --accent-r: #A32D2D;
+  /* Syntax highlight */
+  --syn-kw:  #9c2f5d;
+  --syn-str: #3B6D11;
+  --syn-num: #8a5a00;
+  --syn-fn:  #185FA5;
+  --syn-cmt: #888780;
+  --syn-punc:#6d6b66;
+  --syn-cls: #F26419;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  line-height: 1.75;
+}
+
+/* ── NOISE ── */
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:0;
+}
+
+.site-nav{position:sticky;top:0;z-index:120;background:rgba(245,244,240,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.site-nav-inner{max-width:1180px;margin:0 auto;min-height:54px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.site-nav-brand,.site-nav-link,.site-nav-home,.sub-nav-label,.sub-nav-link{font-family:'JetBrains Mono',monospace;font-size:11px;text-decoration:none}
+.site-nav-brand{color:#888780;letter-spacing:1.5px;text-transform:uppercase}
+.site-nav-links,.sub-nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.site-nav-link{color:var(--text-muted);padding:7px 10px;border-radius:999px}
+.site-nav-link.current{color:var(--accent-b);background:#e6f1fb;border:1px solid rgba(24,95,165,.16)}
+.site-nav-home{margin-left:auto;color:var(--text);padding:7px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface)}
+.sub-nav{position:sticky;top:54px;z-index:100;background:rgba(245,244,240,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.sub-nav-inner{max-width:1180px;margin:0 auto;min-height:52px;padding:0 20px;display:flex;align-items:center;gap:0}
+.sub-nav-label{color:#888780;letter-spacing:1.2px;text-transform:uppercase;margin-right:auto;white-space:nowrap}
+.sub-nav-link{color:var(--text-muted);padding:0 18px;height:52px;display:flex;align-items:center;border-left:1px solid var(--border);transition:color .15s;white-space:nowrap}
+.sub-nav-link:hover{color:var(--text)}
+.sub-nav-link.v1{color:var(--accent-b)}
+.sub-nav-link.v2{color:var(--accent-p)}
+.sub-nav-links{overflow-x:auto;flex-wrap:nowrap}
+.sub-nav-links::-webkit-scrollbar{display:none}
+.page-role{padding:16px 18px;border:1px solid var(--border);background:var(--surface);border-radius:14px;font-size:13px;color:var(--text-muted);line-height:1.8}
+.page-role strong{color:var(--text)}
+.page-role a,.action-card-body a,.info-body a,.intro-body a{color:var(--accent-b);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+
+/* ── HERO ── */
+.page-header {
+  padding: 72px 60px 52px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(241,239,232,.92));
+  position:relative; overflow:hidden;
+  margin-top: 20px;
+}
+.page-header::after {
+  content:'RAG';
+  position:absolute; right:-10px; top:-10px;
+  font-family:inherit; font-size:240px; font-weight:800;
+  color:var(--text-dim); opacity:.2; user-select:none; line-height:1;
+  pointer-events:none;
+}
+.page-header-main { position: relative; z-index: 1; display: grid; gap: 12px; }
+.hero-eyebrow {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--accent-y);
+  letter-spacing:3px; text-transform:uppercase;
+  margin-bottom:20px;
+  display:flex; align-items:center; gap:12px;
+}
+.hero-eyebrow::before { content:''; width:36px; height:1px; background:var(--accent-y); }
+.page-header h1 {
+  font-family:inherit;
+  font-size:clamp(32px,4.5vw,58px);
+  font-weight:800; letter-spacing:-2px; line-height:1.1;
+  margin-bottom:20px; max-width:700px;
+}
+.lead { font-size:14px; color:var(--text-muted); max-width:640px; line-height:1.9; }
+.header-badges { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+.header-badges span { padding:5px 10px; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.75); color:var(--text-muted); font-family:'JetBrains Mono',monospace; font-size:11px; }
+.page-intro { margin-top:18px; display:grid; grid-template-columns:1.1fr .9fr; gap:14px; }
+.intro-meta-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.intro-meta-card { padding:16px 18px; border:1px solid var(--border); background:var(--surface); border-radius:14px; }
+.intro-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--accent-b); margin-bottom:8px; }
+.intro-body { font-size:13px; color:var(--text-muted); line-height:1.8; }
+.page-summary,.info-rail,.mode-strip,.page-actions{border:1px solid var(--border);background:var(--surface);margin-top:28px}
+.page-summary,.page-actions{padding:22px 24px}
+.summary-kicker,.info-label,.mode-kicker,.actions-kicker{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.summary-kicker,.info-label{color:var(--accent-b)}
+.mode-kicker{color:var(--accent-y)}
+.actions-kicker{color:var(--accent-g);margin-bottom:12px}
+.summary-kicker{margin-bottom:12px}
+.summary-grid,.actions-grid,.mode-grid,.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.summary-card,.action-card,.mode-card,.info-card{background:var(--surface2);border:1px solid var(--border);padding:16px}
+.summary-card-title,.action-card-title,.mode-card-title{font-family:inherit;font-size:17px;font-weight:800;margin-bottom:8px}
+.summary-card-body,.action-card-body,.mode-card-body,.info-body{font-size:13px;color:var(--text-muted);line-height:1.9}
+.info-rail{padding:18px 20px}
+.info-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.info-label{margin-bottom:6px}
+.mode-inner{padding:22px 24px}
+.container.compact-bottom{padding-top:0}
+
+/* ── MAIN LAYOUT ── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 40px 100px; }
+
+/* ── SECTION HEADER ── */
+.section-header {
+  display:flex; align-items:center; gap:16px;
+  margin: 64px 0 36px;
+  padding-bottom:16px; border-bottom:1px solid var(--border);
+}
+.section-dot {
+  width:10px; height:10px; border-radius:50%;
+  flex-shrink:0;
+}
+.v1 .section-dot { background:var(--accent-b); box-shadow:0 0 12px var(--accent-b); }
+.v2 .section-dot { background:var(--accent-p); box-shadow:0 0 12px var(--accent-p); }
+.section-label {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:2px; text-transform:uppercase;
+}
+.v1 .section-label { color:var(--accent-b); }
+.v2 .section-label { color:var(--accent-p); }
+.section-title {
+  font-family:inherit;
+  font-size:26px; font-weight:700; letter-spacing:-0.5px;
+}
+.section-motto {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--text-muted);
+  font-style:italic; margin-left:auto;
+}
+
+/* ── CONCEPTS ROW ── */
+.concepts-row {
+  display:flex; flex-wrap:wrap; gap:8px;
+  margin-bottom:32px;
+}
+.concept-chip {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; padding:5px 12px;
+  border-radius:4px; border:1px solid var(--border-bright);
+  color:var(--text-muted); background:var(--surface2);
+}
+
+/* ── STEP BLOCK ── */
+.step-block {
+  margin-bottom:40px;
+  border:1px solid var(--border);
+  background:var(--surface);
+}
+.step-header {
+  display:flex; align-items:center; gap:14px;
+  padding:16px 24px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+}
+.step-num {
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; font-weight:500;
+  padding:3px 10px; border-radius:3px;
+  letter-spacing:1px;
+}
+.v1 .step-num { background:rgba(24,95,165,.08); color:var(--accent-b); border:1px solid rgba(24,95,165,.22); }
+.v2 .step-num { background:rgba(242,100,25,.08); color:var(--accent-p); border:1px solid rgba(242,100,25,.22); }
+.step-title {
+  font-family:inherit;
+  font-size:16px; font-weight:700;
+}
+.step-desc {
+  font-size:13px; color:var(--text-muted);
+  margin-left:auto; max-width:360px;
+}
+
+.step-body { padding:24px; display:flex; flex-direction:column; gap:20px; }
+
+/* ── EXPLANATION BOX ── */
+.explain {
+  font-size:13.5px; color:var(--text-muted);
+  line-height:2; padding:16px 20px;
+  background:var(--surface2);
+  border-left:3px solid var(--border-bright);
+}
+.explain strong { color:var(--text); font-weight:600; }
+
+/* ── INSIGHT BOX ── */
+.insight {
+  padding:14px 18px;
+  border:1px dashed;
+  font-size:13px; line-height:1.9;
+  display:flex; gap:12px; align-items:flex-start;
+}
+.v1 .insight { border-color:rgba(24,95,165,.3); color:#185FA5; background:rgba(24,95,165,.04); }
+.v2 .insight { border-color:rgba(242,100,25,.3); color:#8a3c16; background:rgba(242,100,25,.05); }
+.insight-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+
+/* ── WARNING BOX ── */
+.warning {
+  padding:12px 18px;
+  border:1px solid rgba(163,45,45,.18);
+  background:rgba(163,45,45,.04);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px; color:var(--accent-r);
+  display:flex; gap:10px;
+}
+
+/* ── CODE BLOCK ── */
+.code-wrap {
+  background:var(--surface3);
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.code-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+}
+.code-filename {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--text-muted);
+  letter-spacing:1px;
+}
+.code-lang {
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; color:var(--text-dim);
+  letter-spacing:2px; text-transform:uppercase;
+}
+pre {
+  overflow-x:auto; padding:20px 24px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px; line-height:1.85;
+  tab-size:4; color:var(--text);
+}
+code { font-family:'JetBrains Mono',monospace; }
+
+/* Syntax tokens */
+.kw   { color:var(--syn-kw); }
+.fn   { color:var(--syn-fn); }
+.str  { color:var(--syn-str); }
+.num  { color:var(--syn-num); }
+.cmt  { color:var(--syn-cmt); font-style:italic; }
+.cls  { color:var(--syn-cls); }
+.punc { color:var(--syn-punc); }
+.self { color:var(--accent-r); }
+
+/* ── OUTPUT BLOCK ── */
+.output-wrap {
+  background:var(--surface3);
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.output-header {
+  padding:8px 16px;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; color:var(--text-dim);
+  letter-spacing:2px; text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+.output-header::before {
+  content:'';
+  width:6px; height:6px; border-radius:50%;
+  background:var(--accent-g);
+  box-shadow:0 0 6px var(--accent-g);
+}
+.output-pre {
+  padding:16px 20px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px; line-height:1.85;
+  color:var(--text-dim); white-space:pre-wrap;
+}
+.out-head  { color:var(--accent-y); font-weight:500; }
+.out-ok    { color:var(--accent-g); }
+.out-err   { color:var(--accent-r); }
+.out-num   { color:var(--syn-num); }
+.out-hi    { color:var(--text); }
+
+/* ── FORMULA ── */
+.formula-box {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  padding:20px 24px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.formula-line { color:var(--text-muted); }
+.formula-main { color:var(--text); font-size:14px; letter-spacing:.5px; }
+
+/* ── COMPARISON TABLE ── */
+.cmp-table {
+  width:100%; border-collapse:collapse;
+  font-family:'JetBrains Mono',monospace; font-size:11.5px;
+}
+.cmp-table th {
+  text-align:left; padding:10px 14px;
+  background:var(--surface2); color:var(--text-muted);
+  border-bottom:1px solid var(--border);
+  letter-spacing:1px; font-size:10px; text-transform:uppercase;
+}
+.cmp-table td {
+  padding:10px 14px; border-bottom:1px solid var(--border);
+  color:var(--text-muted); vertical-align:top;
+}
+.cmp-table tr:last-child td { border-bottom:none; }
+.cmp-table td.label { color:var(--text); font-weight:500; }
+.cmp-table td.ok { color:var(--accent-g); }
+.cmp-table td.warn { color:var(--accent-r); }
+.cmp-table td.mid { color:var(--accent-y); }
+
+/* ── DIVIDER ── */
+.divider {
+  display:flex; align-items:center; gap:20px;
+  margin:52px 0 0; color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px; letter-spacing:2px;
+}
+.divider::before, .divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+/* ── FLOW DIAGRAM ── */
+.flow-box {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  padding:24px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; line-height:2.1;
+  color:var(--text-muted);
+  white-space:pre;
+  overflow-x:auto;
+}
+.flow-y { color:var(--accent-y); }
+.flow-b { color:var(--accent-b); }
+.flow-p { color:var(--accent-p); }
+.flow-g { color:var(--accent-g); }
+
+@media(max-width:768px){
+  .page-header, .container { padding-left:20px; padding-right:20px; }
+  .page-intro, .intro-meta-grid { grid-template-columns:1fr; }
+  .site-nav-inner, .sub-nav-inner { padding-left:20px; padding-right:20px; }
+  .step-desc { display:none; }
+  pre { font-size:11px; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">RAG Docs</a>
+    <div class="site-nav-links">
+      <a href="index.html" class="site-nav-link">首页</a>
+      <a href="00_课程路线图.html" class="site-nav-link current">系统学习</a>
+      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="ai-knowledge-hub.html" class="site-nav-link">快速回查</a>
+      <a href="rag-5d.html" class="site-nav-link">讲解 / 面试</a>
+      <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
+    </div>
+    <a href="index.html" class="site-nav-home">返回首页</a>
+  </div>
+</div>
+
+<div class="sub-nav">
+  <div class="sub-nav-inner">
+    <span class="sub-nav-label">当前页 · 代码讲解</span>
+    <div class="sub-nav-links">
+      <a href="#v1" class="sub-nav-link v1">V1 最小循环</a>
+      <a href="#v2" class="sub-nav-link v2">V2 文档分块</a>
+      <a href="01_概念手册_向量与检索.html" class="sub-nav-link">概念手册</a>
+      <a href="03_工程方法论手册.html" class="sub-nav-link">工程手册</a>
+    </div>
+  </div>
+</div>
+
+<section class="page-header">
+  <div class="page-header-main">
+  <div class="hero-eyebrow">Code Walkthrough / Data Flow</div>
+  <h1>从数据流动<br>理解每一行代码</h1>
+  <p class="lead">这页不只解释“怎么写”，更是把“文本怎么流到向量、chunk 怎么影响召回、Prompt 为什么这样组装”拆成可跟踪的数据流。</p>
+  <div class="header-badges">
+    <span>V1 最小闭环</span>
+    <span>V2 分块策略</span>
+    <span>数据流</span>
+    <span>实现理解</span>
+  </div>
+  </div>
+</section>
+
+<div class="container">
+<section class="page-intro">
+  <div class="page-role">
+    <strong>这页负责解释数据流和实现，不负责统一定义概念。</strong> 如果你还没建立 embedding / 余弦的直觉，先回到 <a href="index.html">总站首页</a> 后进入 <a href="01_概念手册_向量与检索.html">概念手册</a>。
+  </div>
+  <div class="intro-meta-grid">
+    <article class="intro-meta-card">
+      <div class="intro-label">适合任务</div>
+      <div class="intro-body">已经理解基础概念，准备把 V1 和 V2 的输入、输出和关键决策看清楚。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">前置阅读</div>
+      <div class="intro-body"><a href="01_概念手册_向量与检索.html">概念手册</a>，尤其是 embedding、向量和余弦相似度部分。</div>
+    </article>
+    <article class="intro-meta-card">
+      <div class="intro-label">下一步</div>
+      <div class="intro-body"><a href="03_工程方法论手册.html#experiment">去看评估方法</a> · <a href="ai-knowledge-hub.html">回快速回查</a></div>
+    </article>
+  </div>
+</section>
+<section class="page-summary">
+  <div class="summary-kicker">Page Summary</div>
+  <div class="summary-grid">
+    <article class="summary-card">
+      <div class="summary-card-title">V1 的核心</div>
+      <div class="summary-card-body">把“文本 → 向量 → 排序 → Prompt 注入”这条最小闭环看清楚。</div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-card-title">V2 的核心</div>
+      <div class="summary-card-body">理解 chunk_size 和 overlap 如何影响检索命中的完整性，而不是只看代码写法。</div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-card-title">必须记住的结论</div>
+      <div class="summary-card-body">RAG 质量的上限先由检索决定，而检索上限先由分块质量决定。</div>
+    </article>
+  </div>
+</section>
+
+<section class="info-rail">
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-label">适合阶段</div>
+      <div class="info-body">已经理解基础概念，准备把 V1 和 V2 数据流跑通。</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">相关文档</div>
+      <div class="info-body"><a href="01_概念手册_向量与检索.html">概念手册</a> · <a href="03_工程方法论手册.html#experiment">评估方法</a></div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">对应代码</div>
+      <div class="info-body">`demo/code/01_v1_最小RAG循环.py` 与 `demo/code/02_v2_文档分块策略.py`。</div>
+    </div>
+  </div>
+</section>
+
+<section class="mode-strip">
+  <div class="mode-inner">
+    <div class="mode-kicker">Reading Modes</div>
+    <div class="mode-grid">
+      <article class="mode-card">
+        <div class="mode-card-title">讲解模式</div>
+        <div class="mode-card-body">适合第一次学习。顺着 step 读，理解每段代码在数据流里的职责。</div>
+      </article>
+      <article class="mode-card">
+        <div class="mode-card-title">速查模式</div>
+        <div class="mode-card-body">复习时只看 `code-filename`、`insight` 和 V2 对比表，快速定位关键函数和结论。</div>
+      </article>
+      <article class="mode-card">
+        <div class="mode-card-title">实验模式</div>
+        <div class="mode-card-body">重点观察输入输出变化：Top-K 排序、chunk 边界、最终回答是否变完整。</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     V1 · 最小 RAG 循环
+════════════════════════════════════════════ -->
+<div id="v1">
+  <div class="section-header v1">
+    <div class="section-dot"></div>
+    <span class="section-label">v1</span>
+    <span class="section-title">最小 RAG 循环</span>
+    <span class="section-motto">"三步走完，RAG 的本质就在这里"</span>
+  </div>
+
+  <div class="concepts-row">
+    <span class="concept-chip">Embedding</span>
+    <span class="concept-chip">cosine_similarity</span>
+    <span class="concept-chip">Top-K 检索</span>
+    <span class="concept-chip">Prompt 注入上下文</span>
+    <span class="concept-chip">有/无 RAG 对比</span>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step-block v1">
+    <div class="step-header">
+      <span class="step-num">STEP 01</span>
+      <span class="step-title">文档 → Embedding 向量</span>
+      <span class="step-desc">把文本变成可以计算"距离"的数字</span>
+    </div>
+    <div class="step-body">
+
+      <div class="explain">
+        LLM 不能直接比较两段文字"意思有多像"，但计算机可以计算两个向量的夹角。<br>
+        <strong>Embedding 就是把文本压缩成一个高维向量的过程</strong>——语义相近的文本，向量的方向会相近。<br>
+        <code style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-y)">text-embedding-3-small</code> 输出 1536 维向量，每个维度捕捉语言的某种特征。
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-filename">01_v1_最小RAG循环.py · embed() 函数</span>
+          <span class="code-lang">Python</span>
+        </div>
+<pre><code><span class="cmt"># 知识库：5 段文本（真实场景来自 PDF/Wiki/手册）</span>
+<span class="cls">DOCUMENTS</span> <span class="punc">=</span> <span class="punc">[</span>
+    <span class="str">"RAG 在生成前检索外部文档，让回答有据可查，有效减少幻觉。"</span><span class="punc">,</span>
+    <span class="str">"向量数据库通过余弦相似度找到语义最接近的文档块。"</span><span class="punc">,</span>
+    <span class="str">"LangChain 封装了文档加载、分块、检索、生成的完整流程。"</span><span class="punc">,</span>
+    <span class="str">"Transformer 的核心是注意力机制，让模型动态关注输入。"</span><span class="punc">,</span>
+    <span class="str">"RAG 的瓶颈在检索而非生成：垃圾进，垃圾出。"</span><span class="punc">,</span>
+<span class="punc">]</span>
+
+<span class="kw">def</span> <span class="fn">embed</span><span class="punc">(</span>text<span class="punc">:</span> <span class="cls">str</span><span class="punc">)</span> <span class="punc">-></span> np<span class="punc">.</span>ndarray<span class="punc">:</span>
+    <span class="cmt">"""
+    调用 OpenAI Embedding API。
+    为什么用 API 而不是本地模型？
+    → 快速验证概念。v4 会讨论模型选型和本地部署。
+    """</span>
+    response <span class="punc">=</span> client<span class="punc">.</span><span class="fn">embeddings</span><span class="punc">.</span><span class="fn">create</span><span class="punc">(</span>
+        input<span class="punc">=</span>text<span class="punc">,</span>
+        model<span class="punc">=</span><span class="str">"text-embedding-3-small"</span>  <span class="cmt"># 1536 维，中英文均可</span>
+    <span class="punc">)</span>
+    <span class="kw">return</span> np<span class="punc">.</span><span class="fn">array</span><span class="punc">(</span>response<span class="punc">.</span>data<span class="punc">[</span><span class="num">0</span><span class="punc">].</span>embedding<span class="punc">)</span>  <span class="cmt"># shape: (1536,)</span>
+
+<span class="cmt"># 为所有文档建立索引</span>
+doc_embeddings <span class="punc">=</span> np<span class="punc">.</span><span class="fn">array</span><span class="punc">([</span><span class="fn">embed</span><span class="punc">(</span>doc<span class="punc">)</span> <span class="kw">for</span> doc <span class="kw">in</span> <span class="cls">DOCUMENTS</span><span class="punc">])</span>
+<span class="cmt"># doc_embeddings.shape → (5, 1536)   [文档数 × 向量维度]</span>
+</code></pre>
+      </div>
+
+      <div class="output-wrap">
+        <div class="output-header">预期输出（节选）</div>
+        <div class="output-pre"><span class="out-head">STEP 1 ／ 为知识库建立 Embedding 索引</span>
+  模型: text-embedding-3-small  |  文档数: 5
+
+  Doc[0] RAG 在生成前检索外部文档，让回...
+         维度=<span class="out-num">1536</span>  示例(前4维)=[ <span class="out-num">0.02341</span> -<span class="out-num">0.01823</span>  <span class="out-num">0.04512</span> -<span class="out-num">0.00834</span>]
+  Doc[1] 向量数据库通过余弦相似度找到语...
+         维度=<span class="out-num">1536</span>  示例(前4维)=[ <span class="out-num">0.01902</span> -<span class="out-num">0.02341</span>  <span class="out-num">0.03819</span>  <span class="out-num">0.01023</span>]
+  ...
+
+  → 知识库矩阵形状: <span class="out-num">(5, 1536)</span>  [文档数 × 向量维度]</div>
+      </div>
+
+      <div class="insight">
+        <span class="insight-icon">🧠</span>
+        <span><strong>认知对齐：</strong>5 段文字现在变成了一个 5×1536 的数字矩阵。每行是一篇文档的"语义指纹"。这个矩阵就是索引——真实系统中它会被存进向量数据库（v3 实现持久化）。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step-block v1">
+    <div class="step-header">
+      <span class="step-num">STEP 02</span>
+      <span class="step-title">余弦相似度 + Top-K 检索</span>
+      <span class="step-desc">找到语义最相近的文档，不是字面匹配</span>
+    </div>
+    <div class="step-body">
+
+      <div class="formula-box">
+        <div class="formula-line">余弦相似度公式（衡量两向量的语义距离）：</div>
+        <div class="formula-main">  cos(θ) = (a · b) / (|a| × |b|)</div>
+        <div class="formula-line">值域：<span style="color:var(--accent-g)">1.0</span> = 完全相同方向（语义极相似）  |  <span style="color:var(--text-muted)">0.0</span> = 垂直（语义无关）  |  <span style="color:var(--accent-r)">-1.0</span> = 相反方向</div>
+        <div class="formula-line">RAG 实践中，得分 > 0.75 通常才算真正相关。</div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-filename">01_v1_最小RAG循环.py · cosine_sim() + retrieve()</span>
+          <span class="code-lang">Python</span>
+        </div>
+<pre><code><span class="kw">def</span> <span class="fn">cosine_sim</span><span class="punc">(</span>a<span class="punc">:</span> np<span class="punc">.</span>ndarray<span class="punc">,</span> b<span class="punc">:</span> np<span class="punc">.</span>ndarray<span class="punc">)</span> <span class="punc">-></span> <span class="cls">float</span><span class="punc">:</span>
+    <span class="kw">return</span> <span class="cls">float</span><span class="punc">(</span>
+        np<span class="punc">.</span><span class="fn">dot</span><span class="punc">(</span>a<span class="punc">,</span> b<span class="punc">)</span>                               <span class="cmt"># 点积</span>
+        <span class="punc">/</span> <span class="punc">(</span>np<span class="punc">.</span>linalg<span class="punc">.</span><span class="fn">norm</span><span class="punc">(</span>a<span class="punc">)</span> <span class="punc">*</span> np<span class="punc">.</span>linalg<span class="punc">.</span><span class="fn">norm</span><span class="punc">(</span>b<span class="punc">))</span>  <span class="cmt"># 除以两向量的模</span>
+    <span class="punc">)</span>
+
+<span class="kw">def</span> <span class="fn">retrieve</span><span class="punc">(</span>query<span class="punc">:</span> <span class="cls">str</span><span class="punc">,</span> doc_embeddings<span class="punc">:</span> np<span class="punc">.</span>ndarray<span class="punc">,</span> top_k<span class="punc">=</span><span class="num">2</span><span class="punc">)</span><span class="punc">:</span>
+    q_emb <span class="punc">=</span> <span class="fn">embed</span><span class="punc">(</span>query<span class="punc">)</span>                            <span class="cmt"># 问题也转成向量</span>
+    scores <span class="punc">=</span> <span class="punc">[</span><span class="fn">cosine_sim</span><span class="punc">(</span>q_emb<span class="punc">,</span> de<span class="punc">)</span> <span class="kw">for</span> de <span class="kw">in</span> doc_embeddings<span class="punc">]</span>
+    ranked <span class="punc">=</span> <span class="fn">sorted</span><span class="punc">(</span>
+        <span class="fn">enumerate</span><span class="punc">(</span>scores<span class="punc">),</span>
+        key<span class="punc">=</span><span class="kw">lambda</span> x<span class="punc">:</span> x<span class="punc">[</span><span class="num">1</span><span class="punc">],</span> reverse<span class="punc">=</span><span class="cls">True</span>
+    <span class="punc">)[:</span>top_k<span class="punc">]</span>                                      <span class="cmt"># 取最高的 K 个</span>
+    <span class="kw">return</span> <span class="punc">[{</span><span class="str">"text"</span><span class="punc">:</span> <span class="cls">DOCUMENTS</span><span class="punc">[</span>i<span class="punc">],</span> <span class="str">"score"</span><span class="punc">:</span> s<span class="punc">}</span> <span class="kw">for</span> i<span class="punc">,</span> s <span class="kw">in</span> ranked<span class="punc">]</span>
+</code></pre>
+      </div>
+
+      <div class="output-wrap">
+        <div class="output-header">预期输出</div>
+        <div class="output-pre"><span class="out-head">STEP 2 ／ 语义检索</span>
+  用户问题: RAG 系统里最关键的环节是什么？
+
+  全库相似度得分（热力条）：
+  [0] <span class="out-num">0.8234</span>  ████████████████████████████████
+       RAG 在生成前检索外部文档，让回答有据可查...
+  [1] <span class="out-num">0.7103</span>  ████████████████████████
+       向量数据库通过余弦相似度找到语义最接近的...
+  [2] <span class="out-num">0.6281</span>  ████████████████████
+       LangChain 封装了文档加载、分块、检索...
+  [3] <span class="out-num">0.5410</span>  █████████████████
+       Transformer 的核心是注意力机制...
+  [4] <span class="out-num">0.8567</span>  ██████████████████████████████████
+       RAG 的瓶颈在检索而非生成：垃圾进，垃圾出...
+
+  → Top-2 命中文档：
+     ✦ [<span class="out-num">0.8567</span>]  RAG 的瓶颈在检索而非生成：垃圾进，垃圾出。
+     ✦ [<span class="out-num">0.8234</span>]  RAG 在生成前检索外部文档，让回答有据可查...</div>
+      </div>
+
+      <div class="insight">
+        <span class="insight-icon">🧠</span>
+        <span><strong>认知对齐：</strong>注意 Doc[4]（垃圾进垃圾出）得分最高，因为它和"最关键的环节"语义最接近。Doc[3]（Transformer）得分最低。这是语义检索，不是关键词匹配——问题里没有"瓶颈"这个词，但语义一致。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step-block v1">
+    <div class="step-header">
+      <span class="step-num">STEP 03</span>
+      <span class="step-title">Prompt 注入上下文（RAG 的"增强"）</span>
+      <span class="step-desc">把检索结果塞进 Prompt，扩展 LLM 的视野</span>
+    </div>
+    <div class="step-body">
+
+      <div class="explain">
+        这里是 RAG 中 <strong>"A"（Augmented 增强）的字面含义</strong>：
+        把检索到的真实资料拼进 Prompt，让 LLM 不需要从训练数据"回忆"，
+        而是从当前上下文"阅读后回答"。<br><br>
+        关键提示词设计：<strong>明确要求 LLM 只用参考资料</strong>，不要猜测。
+        这不是银弹（LLM 仍可能忽视指令），但是控制幻觉的标准做法。
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-filename">01_v1_最小RAG循环.py · build_prompt()</span>
+          <span class="code-lang">Python</span>
+        </div>
+<pre><code><span class="kw">def</span> <span class="fn">build_prompt</span><span class="punc">(</span>query<span class="punc">:</span> <span class="cls">str</span><span class="punc">,</span> contexts<span class="punc">:</span> <span class="cls">list</span><span class="punc">)</span> <span class="punc">-></span> <span class="cls">str</span><span class="punc">:</span>
+    ctx <span class="punc">=</span> <span class="str">"\n"</span><span class="punc">.</span><span class="fn">join</span><span class="punc">(</span>
+        <span class="fn">f</span><span class="str">"  [{i+1}] {c['text']}"</span>
+        <span class="kw">for</span> i<span class="punc">,</span> c <span class="kw">in</span> <span class="fn">enumerate</span><span class="punc">(</span>contexts<span class="punc">)</span>
+    <span class="punc">)</span>
+    <span class="kw">return</span> <span class="fn">f</span><span class="str">"""你是一个严谨的知识助手。请仅根据以下参考资料回答问题。
+若参考资料中没有相关信息，请明确说"资料中未提及"，不要猜测。
+
+参考资料：
+{ctx}
+
+问题：{query}
+回答："""</span>
+
+<span class="cmt"># 构建后的 Prompt 长这样：</span>
+<span class="cmt"># ┌──────────────────────────────────────────────┐</span>
+<span class="cmt"># │ 你是一个严谨的知识助手...（系统指令）           │</span>
+<span class="cmt"># │ 参考资料：                                    │</span>
+<span class="cmt"># │   [1] RAG 的瓶颈在检索而非生成...             │  ← 检索结果注入</span>
+<span class="cmt"># │   [2] RAG 在生成前检索外部文档...             │  ← 检索结果注入</span>
+<span class="cmt"># │ 问题：RAG 系统里最关键的环节是什么？            │  ← 用户原问题</span>
+<span class="cmt"># └──────────────────────────────────────────────┘</span>
+</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step-block v1">
+    <div class="step-header">
+      <span class="step-num">STEP 04</span>
+      <span class="step-title">对比实验：有 RAG vs 无 RAG</span>
+      <span class="step-desc">这是最重要的一步——看见差异</span>
+    </div>
+    <div class="step-body">
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-filename">01_v1_最小RAG循环.py · 对比实验</span>
+          <span class="code-lang">Python</span>
+        </div>
+<pre><code><span class="cmt"># temperature=0：让输出稳定，便于对比，不是随机创作</span>
+<span class="kw">def</span> <span class="fn">chat</span><span class="punc">(</span>prompt<span class="punc">:</span> <span class="cls">str</span><span class="punc">)</span> <span class="punc">-></span> <span class="cls">str</span><span class="punc">:</span>
+    resp <span class="punc">=</span> client<span class="punc">.</span>chat<span class="punc">.</span>completions<span class="punc">.</span><span class="fn">create</span><span class="punc">(</span>
+        model<span class="punc">=</span><span class="str">"gpt-4o-mini"</span><span class="punc">,</span>
+        messages<span class="punc">=[{</span><span class="str">"role"</span><span class="punc">:</span> <span class="str">"user"</span><span class="punc">,</span> <span class="str">"content"</span><span class="punc">:</span> prompt<span class="punc">}],</span>
+        temperature<span class="punc">=</span><span class="num">0</span><span class="punc">,</span>
+    <span class="punc">)</span>
+    <span class="kw">return</span> resp<span class="punc">.</span>choices<span class="punc">[</span><span class="num">0</span><span class="punc">].</span>message<span class="punc">.</span>content<span class="punc">.</span><span class="fn">strip</span><span class="punc">()</span>
+
+<span class="cmt"># 对比实验</span>
+ans_raw <span class="punc">=</span> <span class="fn">chat</span><span class="punc">(</span>QUERY<span class="punc">)</span>              <span class="cmt"># ❌ 无 RAG，直接问</span>
+ans_rag <span class="punc">=</span> <span class="fn">chat</span><span class="punc">(</span>prompt_rag<span class="punc">)</span>         <span class="cmt"># ✅ 有 RAG，带上下文</span>
+</code></pre>
+      </div>
+
+      <div class="output-wrap">
+        <div class="output-header">预期输出对比</div>
+        <div class="output-pre"><span class="out-err">❌ 无 RAG（直接问 LLM）：</span>
+   RAG 系统中最关键的环节因不同视角而异。从数据质量来看，
+   知识库的构建质量至关重要；从系统设计来看，检索策略和
+   生成模型的协调同样关键；从用户体验来看...
+   （泛泛而谈，没有明确结论）
+
+<span class="out-ok">✅ 有 RAG（基于检索内容）：</span>
+   根据参考资料，RAG 系统中最关键的环节是<span class="out-hi">检索而非生成</span>。
+   资料明确指出"垃圾进，垃圾出"——即使生成能力再强，
+   如果召回了错误的文档，最终回答也无法保证质量。</div>
+      </div>
+
+      <div class="insight">
+        <span class="insight-icon">🧠</span>
+        <span><strong>认知对齐：</strong>没有 RAG 时，LLM 用训练时学到的"泛知识"回答，倾向于面面俱到却不具体。有 RAG 后，LLM 被约束在检索到的资料里回答，答案更具体、有出处、可溯源。这就是 RAG 的核心价值。</span>
+      </div>
+
+      <div class="flow-box"><span class="flow-y">V1 完整数据流</span>
+
+  知识库文档 × 5
+    <span class="flow-b">↓ embed() × 5（API 调用）</span>
+  向量矩阵 [5 × 1536]            <span class="flow-b">← 这是"索引"</span>
+           ↑
+  用户问题: "RAG 最关键的环节是什么？"
+    <span class="flow-b">↓ embed()（API 调用）</span>
+  query 向量 [1536]
+    <span class="flow-b">↓ cosine_sim() × 5 → 排序</span>
+  Top-2 文档 <span class="flow-g">✓</span>
+    <span class="flow-b">↓ build_prompt() 注入上下文</span>
+  增强 Prompt（问题 + 参考资料）
+    <span class="flow-b">↓ chat()（API 调用）</span>
+  <span class="flow-g">最终回答 ✓</span></div>
+
+    </div>
+  </div>
+</div>
+
+<div class="divider">V2 · 文档分块策略</div>
+
+<!-- ════════════════════════════════════════════
+     V2 · 文档分块
+════════════════════════════════════════════ -->
+<div id="v2">
+  <div class="section-header v2">
+    <div class="section-dot"></div>
+    <span class="section-label">v2</span>
+    <span class="section-title">文档加载与分块策略</span>
+    <span class="section-motto">"分块决定上限，垃圾进垃圾出"</span>
+  </div>
+
+  <div class="concepts-row">
+    <span class="concept-chip">chunk_size</span>
+    <span class="concept-chip">chunk_overlap</span>
+    <span class="concept-chip">固定大小分块</span>
+    <span class="concept-chip">句子感知分块</span>
+    <span class="concept-chip">边界信息保护</span>
+    <span class="concept-chip">分块对比实验</span>
+  </div>
+
+  <div class="explain" style="margin-bottom:24px; border-left-color:var(--accent-p)">
+    V1 的知识库只有 5 句话。真实场景：一份产品手册 100 页，一个 Wiki 几千篇，一个 PDF 几万字。<br>
+    <strong>你不能把整篇文档塞进 Prompt</strong>（Token 限制 + 注意力稀释）。<br>
+    解决方案：把长文档切成小块（Chunk），每块独立存入向量库，检索时只取相关的几块。<br><br>
+    <strong>分块是 RAG 的第一道工程决策，直接决定检索质量的上限。</strong>
+  </div>
+
+  <!-- 三种策略代码 -->
+  <div class="step-block v2">
+    <div class="step-header">
+      <span class="step-num">策略 A</span>
+      <span class="step-title">固定大小分块（无 overlap）</span>
+      <span class="step-desc">最简单，但边界信息会丢失</span>
+    </div>
+    <div class="step-body">
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-filename">02_v2_文档分块策略.py · chunk_fixed_no_overlap()</span>
+          <span class="code-lang">Python</span>
+        </div>
+<pre><code><span class="kw">def</span> <span class="fn">chunk_fixed_no_overlap</span><span class="punc">(</span>text<span class="punc">:</span> <span class="cls">str</span><span class="punc">,</span> chunk_size<span class="punc">:</span> <span class="cls">int</span> <span class="punc">=</span> <span class="num">150</span><span class="punc">)</span> <span class="punc">-></span> <span class="cls">list</span><span class="punc">[</span><span class="cls">str</span><span class="punc">]</span><span class="punc">:</span>
+    <span class="cmt">"""
+    按字符数切割，走到哪切到哪。
+    
+    问题：可能在句子中间切断。
+    例："推荐分块大小在 200 到 500 个字符之间，并设置重叠"
+    → 块 A：...推荐分块大小在 200 到 500
+    → 块 B：个字符之间，并设置重叠...
+    两个块都是残缺信息。
+    """</span>
+    text <span class="punc">=</span> text<span class="punc">.</span><span class="fn">strip</span><span class="punc">()</span>
+    chunks<span class="punc">,</span> start <span class="punc">=</span> <span class="punc">[],</span> <span class="num">0</span>
+    <span class="kw">while</span> start <span class="punc">&lt;</span> <span class="fn">len</span><span class="punc">(</span>text<span class="punc">)</span><span class="punc">:</span>
+        chunk <span class="punc">=</span> text<span class="punc">[</span>start <span class="punc">:</span> start <span class="punc">+</span> chunk_size<span class="punc">].</span><span class="fn">strip</span><span class="punc">()</span>
+        <span class="kw">if</span> chunk<span class="punc">:</span> chunks<span class="punc">.</span><span class="fn">append</span><span class="punc">(</span>chunk<span class="punc">)</span>
+        start <span class="punc">+=</span> chunk_size    <span class="cmt"># 每次直接跳 chunk_size，无回退</span>
+    <span class="kw">return</span> chunks
+</code></pre>
+      </div>
+
+      <div class="warning">⚠ 当 chunk_size=120，文档里"推荐分块大小在200到500个字符，设置10%~20%重叠"这句关键信息极有可能被切成两半，任何单块都拿不到完整的工程建议。</div>
+    </div>
+  </div>
+
+  <div class="step-block v2">
+    <div class="step-header">
+      <span class="step-num">策略 B</span>
+      <span class="step-title">固定大小 + Overlap（推荐生产基线）</span>
+      <span class="step-desc">overlap 是解决边界问题的最简单方案</span>
+    </div>
+    <div class="step-body">
+
+      <div class="explain">
+        <strong>Overlap 的核心机制：</strong>下一个块的起点 = 上一个块的终点 - overlap。<br>
+        即相邻两块有 overlap 个字符是重叠的。<br>
+        这保证了边界附近的信息一定会完整出现在某个块里。
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-filename">02_v2_文档分块策略.py · chunk_fixed_with_overlap()  ← 关键行高亮</span>
+          <span class="code-lang">Python</span>
+        </div>
+<pre><code><span class="kw">def</span> <span class="fn">chunk_fixed_with_overlap</span><span class="punc">(</span>text<span class="punc">:</span> <span class="cls">str</span><span class="punc">,</span> chunk_size<span class="punc">=</span><span class="num">200</span><span class="punc">,</span> overlap<span class="punc">=</span><span class="num">40</span><span class="punc">)</span><span class="punc">:</span>
+    text <span class="punc">=</span> text<span class="punc">.</span><span class="fn">strip</span><span class="punc">()</span>
+    chunks<span class="punc">,</span> start <span class="punc">=</span> <span class="punc">[],</span> <span class="num">0</span>
+    <span class="kw">while</span> start <span class="punc">&lt;</span> <span class="fn">len</span><span class="punc">(</span>text<span class="punc">)</span><span class="punc">:</span>
+        end <span class="punc">=</span> start <span class="punc">+</span> chunk_size
+        chunks<span class="punc">.</span><span class="fn">append</span><span class="punc">(</span>text<span class="punc">[</span>start<span class="punc">:</span>end<span class="punc">].</span><span class="fn">strip</span><span class="punc">())</span>
+        next_start <span class="punc">=</span> end <span class="punc">-</span> overlap    <span class="cmt"># ← 核心：回退 overlap 个字符再开始下一块</span>
+        <span class="kw">if</span> next_start <span class="punc">&lt;=</span> start<span class="punc">:</span> next_start <span class="punc">=</span> start <span class="punc">+</span> <span class="num">1</span>  <span class="cmt"># 防死循环</span>
+        start <span class="punc">=</span> next_start
+        <span class="kw">if</span> start <span class="punc">&gt;=</span> <span class="fn">len</span><span class="punc">(</span>text<span class="punc">)</span><span class="punc">:</span> <span class="kw">break</span>
+    <span class="kw">return</span> <span class="punc">[</span>c <span class="kw">for</span> c <span class="kw">in</span> chunks <span class="kw">if</span> <span class="fn">len</span><span class="punc">(</span>c<span class="punc">)</span> <span class="punc">&gt;</span> <span class="num">20</span><span class="punc">]</span>
+
+<span class="cmt"># 直觉理解 overlap=40 的效果：
+#
+#  位置:  0        200      360      520  ...
+#          ├────────┤         ├────────┤
+#  块 A:  [0      :200]
+#  块 B:          [160     :360]   ← 从 200-40=160 开始
+#  块 C:                  [320   :520]   ← 从 360-40=320 开始
+#
+#  160~200 这 40 个字符，同时出现在块 A 和块 B 里。
+#  任何跨越 200 这个边界的句子，都会完整保存在某个块中。</span>
+</code></pre>
+      </div>
+
+      <div class="output-wrap">
+        <div class="output-header">overlap 效果验证</div>
+        <div class="output-pre"><span class="out-head">STEP 2 ／ Overlap 的作用：保护边界信息</span>
+  目标关键句：「推荐分块大小在200到500个字符之间，并设置约10%到20%的重叠区域」
+
+  策略A（120字无overlap）：关键句完整存在？ <span class="out-err">❌ 被切断了</span>
+  策略B（200字有overlap）：关键句完整存在？ <span class="out-ok">✅ 是</span>
+  策略C（句子感知）：      关键句完整存在？ <span class="out-ok">✅ 是</span>
+
+  策略A中被切断的情况：
+  Chunk[X]: "...分块太大（如2000个字符）：召回的块包含太多无关内容，LLM在
+             长上下文中丢失焦点，答案精度降低。工程实践建议：推荐分块大小在200到500"
+  Chunk[X+1]: "个字符之间，并设置约10%到20%的重叠区域（overlap）防止边界信息..."
+
+  → 看到了吗？数字建议被切成两截，两块都是残缺信息。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-block v2">
+    <div class="step-header">
+      <span class="step-num">策略 C</span>
+      <span class="step-title">句子感知分块</span>
+      <span class="step-desc">先分句，再合并，不在句子中间切断</span>
+    </div>
+    <div class="step-body">
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <span class="code-filename">02_v2_文档分块策略.py · chunk_by_sentence()</span>
+          <span class="code-lang">Python</span>
+        </div>
+<pre><code><span class="kw">def</span> <span class="fn">chunk_by_sentence</span><span class="punc">(</span>text<span class="punc">:</span> <span class="cls">str</span><span class="punc">,</span> max_chars<span class="punc">:</span> <span class="cls">int</span> <span class="punc">=</span> <span class="num">300</span><span class="punc">)</span> <span class="punc">-></span> <span class="cls">list</span><span class="punc">[</span><span class="cls">str</span><span class="punc">]</span><span class="punc">:</span>
+    <span class="cmt"># 按中文标点分句，保留标点（lookahead 不消耗字符）</span>
+    sentences <span class="punc">=</span> re<span class="punc">.</span><span class="fn">split</span><span class="punc">(</span><span class="str">r'(?&lt;=[。！？；\n])'</span><span class="punc">,</span> text<span class="punc">)</span>
+    sentences <span class="punc">=</span> <span class="punc">[</span>s<span class="punc">.</span><span class="fn">strip</span><span class="punc">()</span> <span class="kw">for</span> s <span class="kw">in</span> sentences <span class="kw">if</span> s<span class="punc">.</span><span class="fn">strip</span><span class="punc">()</span> <span class="kw">and</span> <span class="fn">len</span><span class="punc">(</span>s<span class="punc">)</span> <span class="punc">&gt;</span> <span class="num">5</span><span class="punc">]</span>
+
+    chunks<span class="punc">,</span> current <span class="punc">=</span> <span class="punc">[],</span> <span class="str">""</span>
+    <span class="kw">for</span> sent <span class="kw">in</span> sentences<span class="punc">:</span>
+        <span class="kw">if</span> <span class="fn">len</span><span class="punc">(</span>current<span class="punc">)</span> <span class="punc">+</span> <span class="fn">len</span><span class="punc">(</span>sent<span class="punc">)</span> <span class="punc">&lt;=</span> max_chars<span class="punc">:</span>
+            current <span class="punc">+=</span> sent           <span class="cmt"># 累积句子，不超限就继续加</span>
+        <span class="kw">else</span><span class="punc">:</span>
+            <span class="kw">if</span> current<span class="punc">:</span> chunks<span class="punc">.</span><span class="fn">append</span><span class="punc">(</span>current<span class="punc">.</span><span class="fn">strip</span><span class="punc">())</span>
+            current <span class="punc">=</span> sent             <span class="cmt"># 超限，保存旧块，开新块</span>
+    <span class="kw">if</span> current<span class="punc">.</span><span class="fn">strip</span><span class="punc">():</span>
+        chunks<span class="punc">.</span><span class="fn">append</span><span class="punc">(</span>current<span class="punc">.</span><span class="fn">strip</span><span class="punc">())</span> <span class="cmt"># 最后一块别忘了</span>
+    <span class="kw">return</span> <span class="punc">[</span>c <span class="kw">for</span> c <span class="kw">in</span> chunks <span class="kw">if</span> <span class="fn">len</span><span class="punc">(</span>c<span class="punc">)</span> <span class="punc">&gt;</span> <span class="num">20</span><span class="punc">]</span>
+</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 对比实验 -->
+  <div class="step-block v2">
+    <div class="step-header">
+      <span class="step-num">关键实验</span>
+      <span class="step-title">分块策略 → 检索质量 → 回答质量因果链</span>
+      <span class="step-desc">这是 v2 最重要的实验</span>
+    </div>
+    <div class="step-body">
+
+      <div class="output-wrap">
+        <div class="output-header">三种策略对同一问题的回答对比</div>
+        <div class="output-pre"><span class="out-head">问题: RAG 的分块策略有哪些工程建议？推荐用多大的分块和 overlap？</span>
+
+<span class="out-err">── 策略 A｜固定 120 字，无 overlap（块太小）──</span>
+  [0.7821] "...推荐分块大小在200到500"      ← 句子被切断了
+  [0.7640] "个字符之间，并设置约10%到20%..."  ← 上一句的后半段
+
+  回答: 根据资料，分块大小建议在200到500...
+        （注意：两个残缺的块凑在一起，LLM 可能拼出答案，
+         但也可能混乱，且没有"overlap"建议的完整上下文）
+
+<span class="out-ok">── 策略 B｜固定 200 字 + 40 字 overlap──</span>
+  [0.8234] "...推荐分块大小在200到500个字符之间，
+             并设置约10%到20%的重叠区域（overlap）防止边界信息丢失。"
+
+  回答: <span class="out-hi">根据参考资料，RAG 的工程建议：分块大小推荐 200~500 字符，
+        并设置 chunk_size 10%~20% 的 overlap。</span>
+
+<span class="out-ok">── 策略 C｜句子感知，max=300──</span>
+  [0.8401] 完整的"分块策略"段落（句子完整，语义最好）
+
+  回答: <span class="out-hi">根据资料，分块建议：①大小 200-500 字符；
+        ②overlap 比例 10%-20%；③不同文档类型有不同最优策略。</span></div>
+      </div>
+
+      <div class="insight">
+        <span class="insight-icon">🧠</span>
+        <span><strong>认知对齐：</strong>分块太小，关键信息被切断，检索命中的是残缺内容；合理分块，关键信息完整保留，回答更准确。这就是"分块决定上限"——不管你的检索算法多好、Reranker 多精准，如果 chunk 里根本没有完整的答案，LLM 就算再聪明也无法凭空生成正确答案。</span>
+      </div>
+
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th>策略</th>
+            <th>chunk_size</th>
+            <th>overlap</th>
+            <th>语义完整性</th>
+            <th>块数量</th>
+            <th>推荐场景</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label">A 固定无重叠</td>
+            <td>任意</td>
+            <td>0</td>
+            <td class="warn">低（边界易断）</td>
+            <td>最少</td>
+            <td>快速原型</td>
+          </tr>
+          <tr>
+            <td class="label">B 固定+overlap</td>
+            <td>200~500</td>
+            <td>10%~20%</td>
+            <td class="mid">中（推荐基线）</td>
+            <td>略多</td>
+            <td>通用文档</td>
+          </tr>
+          <tr>
+            <td class="label">C 句子感知</td>
+            <td>max_chars</td>
+            <td>—</td>
+            <td class="ok">高（不切句子）</td>
+            <td>不固定</td>
+            <td>技术规范/手册</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- V2 局限与 V3 预告 -->
+  <div class="step-block v2">
+    <div class="step-header">
+      <span class="step-num">收尾</span>
+      <span class="step-title">V2 的边界在哪里 → V3 要解决什么</span>
+    </div>
+    <div class="step-body">
+      <div class="flow-box"><span class="flow-p">现在的问题（V2 的局限）</span>
+
+  chunks 只存在内存里
+    ↓ 程序退出 → 全部消失
+  每次运行都要重新计算所有 chunk 的 embedding
+    ↓ 100 块文档 = 100 次 API 调用（慢 + 贵）
+  没有持久化，不支持增量更新
+    ↓ 添加一篇新文档 = 重算所有文档（不可接受）
+
+<span class="flow-g">V3 要解决：把 chunks + embeddings 存入 ChromaDB</span>
+  新文档只算新文档的 embedding → 写入 → 不影响旧数据
+  程序重启 → 从磁盘加载 → 毫秒级恢复
+  支持 metadata 过滤：按来源、日期、部门筛选文档</div>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- /container -->
+<div class="container compact-bottom">
+  <section class="page-actions">
+    <div class="actions-kicker">下一步与回查</div>
+    <div class="actions-grid">
+      <article class="action-card">
+        <div class="action-card-title">回到概念</div>
+        <div class="action-card-body">如果你还在问“为什么文本能变成向量”，回到 <a href="01_概念手册_向量与检索.html">概念手册</a>。</div>
+      </article>
+      <article class="action-card">
+        <div class="action-card-title">进入评估</div>
+        <div class="action-card-body">如果你已经能比较分块策略，下一步去 <a href="03_工程方法论手册.html#experiment">工程手册 / 实验记录</a>，把观察变成指标。</div>
+      </article>
+      <article class="action-card">
+        <div class="action-card-title">快速回查</div>
+        <div class="action-card-body"><a href="ai-knowledge-hub.html">文档索引</a> · <a href="rag-knowledge-map.html">知识地图</a></div>
+      </article>
+    </div>
+  </section>
+</div>
+</body>
+</html>
