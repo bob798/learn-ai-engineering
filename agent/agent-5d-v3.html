@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent 知识体系 · 5D框架 v3</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  background: #f5f4f0; color: #1a1a18; min-height: 100vh; padding: 0 0 60px;
+}
+.container { max-width: 820px; margin: 0 auto; padding: 28px 16px 0; }
+
+.top-nav {
+  background: #0c0f14; padding: 9px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.top-nav-left { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #bbb; }
+.top-nav-dot { width: 7px; height: 7px; border-radius: 50%; background: #F26419; display: inline-block; }
+.top-nav-badge {
+  font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: #F26419; background: rgba(242,100,25,.15); padding: 2px 8px;
+  border-radius: 10px; border: 1px solid rgba(242,100,25,.3);
+}
+
+.header { margin-bottom: 24px; border-bottom: 0.5px solid #c8c7be; padding-bottom: 20px; }
+.header h1 { font-size: 24px; font-weight: 500; letter-spacing: -.3px; margin-bottom: 6px; }
+.header .tagline { font-size: 13px; color: #5f5e5a; line-height: 1.6; max-width: 620px; }
+.header .tagline strong { color: #F26419; }
+
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; }
+.tab {
+  padding: 6px 11px; font-size: 11px; border-radius: 6px; cursor: pointer;
+  color: #5f5e5a; border: 0.5px solid #c8c7be; background: #fff;
+  transition: all .15s; white-space: nowrap;
+}
+.tab.active { color: #fff; background: #F26419; border-color: #F26419; font-weight: 500; }
+.tab:hover:not(.active) { background: #ece9e2; }
+.tab.phi { border-color: #7c3aed; color: #7c3aed; }
+.tab.phi.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.tab.check { border-color: #059669; color: #059669; }
+.tab.check.active { background: #059669; border-color: #059669; color: #fff; }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.sl {
+  font-size: 10px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; color: #888780; margin: 16px 0 9px;
+}
+.sl:first-child { margin-top: 0; }
+
+.callout {
+  padding: 10px 14px; background: #fff; border-radius: 0 8px 8px 0;
+  margin: 10px 0; font-size: 13px; color: #444441; line-height: 1.7;
+  border: 0.5px solid #e8e3da; border-left: 3px solid #F26419;
+}
+.callout strong { color: #1a1a18; }
+.callout-blue {
+  border-left: 3px solid #3b8bd4; background: #e6f1fb;
+  border: 0.5px solid #b5d4f4; border-left: 3px solid #3b8bd4;
+  color: #042c53; padding: 10px 14px; border-radius: 0 8px 8px 0;
+  margin: 10px 0; font-size: 13px; line-height: 1.7;
+}
+.callout-blue strong { color: #0c447c; }
+.callout-purple {
+  border-left: 3px solid #9f7aea; background: #f5f3ff;
+  border: 0.5px solid #c4b5fd; border-left: 3px solid #9f7aea;
+  color: #2e1065; padding: 10px 14px; border-radius: 0 8px 8px 0;
+  margin: 10px 0; font-size: 13px; line-height: 1.7;
+}
+.callout-purple strong { color: #5b21b6; }
+.callout-green {
+  border-left: 3px solid #059669; background: #ecfdf5;
+  border: 0.5px solid #6ee7b7; border-left: 3px solid #059669;
+  color: #064e3b; padding: 10px 14px; border-radius: 0 8px 8px 0;
+  margin: 10px 0; font-size: 13px; line-height: 1.7;
+}
+.callout-green strong { color: #065f46; }
+
+.mbox {
+  background: linear-gradient(135deg, #fff8f4 0%, #fff 100%);
+  border: 1px solid #f5c5a0; border-radius: 10px; padding: 14px 16px; margin: 12px 0;
+}
+.mbox-label { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #F26419; margin-bottom: 5px; }
+.mbox-title { font-size: 14px; font-weight: 500; color: #1a1a18; margin-bottom: 6px; }
+.mbox-body { font-size: 12px; color: #5f5e5a; line-height: 1.75; }
+
+.card {
+  background: #fff; border-radius: 10px; padding: 14px 16px;
+  margin-bottom: 10px; border: 0.5px solid #dedad4;
+}
+.card-t { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 5px; }
+.card-b { font-size: 12px; color: #5f5e5a; line-height: 1.75; }
+
+pre {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px; background: #f1efe8;
+  border-radius: 7px; padding: 12px 14px;
+  border: 0.5px solid #c8c7be; margin: 8px 0; line-height: 1.9;
+  overflow-x: auto; white-space: pre; color: #2c2c2a;
+}
+code { font-family: "SF Mono", monospace; font-size: 11px; background: #e8e6df; padding: 1px 5px; border-radius: 3px; color: #2c2c2a; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 10px 0; }
+@media (max-width: 580px) { .row,.row3 { grid-template-columns: 1fr; } }
+
+.gbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #97c459; background: #eaf3de; color: #173404; }
+.rbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #f09595; background: #fcebeb; color: #501313; }
+.obox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #EF9F27; background: #faeeda; color: #412402; }
+
+.step { display: flex; gap: 10px; margin-bottom: 9px; align-items: flex-start; }
+.sn {
+  width: 24px; height: 24px; border-radius: 50%; background: #F26419;
+  color: #fff; font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+.sb { flex: 1; font-size: 13px; color: #444441; line-height: 1.65; }
+.sb strong { color: #1a1a18; }
+
+.sep { border: none; border-top: 0.5px solid #dedad4; margin: 16px 0; }
+
+.d-card {
+  background: #fff; border-radius: 12px; padding: 16px;
+  border: 0.5px solid #dedad4; margin-bottom: 10px;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.d-icon {
+  width: 40px; height: 40px; border-radius: 8px; background: #fef0e7;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.d-body { flex: 1; }
+.d-title { font-size: 14px; font-weight: 500; color: #1a1a18; margin-bottom: 3px; }
+.d-sub { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+
+.example { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: #f1efe8; color: #888780; margin: 2px 3px 2px 0; border: 0.5px solid #c8c7be; }
+
+.tl { border-left: 2px solid #c8c7be; padding: 0 0 14px 16px; position: relative; margin-left: 8px; }
+.tl:last-child { padding-bottom: 0; }
+.tld { width: 10px; height: 10px; border-radius: 50%; background: #F26419; position: absolute; left: -6px; top: 2px; }
+.tly { font-size: 10px; font-weight: 500; color: #F26419; margin-bottom: 2px; }
+.tlt { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 3px; }
+.tlb { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+
+.hl {
+  background: #fef0e7; border-left: 3px solid #F26419;
+  padding: 8px 12px; border-radius: 0 6px 6px 0;
+  font-size: 12px; color: #633806; margin: 8px 0; line-height: 1.6;
+}
+
+table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+th { background: #f5f4f0; padding: 8px 10px; text-align: left; font-weight: 500; border: 0.5px solid #dedad4; color: #1a1a18; }
+td { padding: 8px 10px; border: 0.5px solid #dedad4; color: #5f5e5a; line-height: 1.5; vertical-align: top; }
+td strong { color: #1a1a18; }
+
+.qa-block { margin-bottom: 14px; }
+.qa-q {
+  font-size: 13px; font-weight: 500; color: #1a1a18;
+  padding: 10px 14px; background: #fef0e7;
+  border-radius: 8px 8px 0 0; border: 0.5px solid #f5c5a0;
+  display: flex; gap: 8px; align-items: flex-start;
+}
+.qa-qn { color: #F26419; font-size: 12px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+.qa-a {
+  font-size: 12px; color: #444441; line-height: 1.75;
+  padding: 10px 14px; background: #fff;
+  border-radius: 0 0 8px 8px; border: 0.5px solid #dedad4; border-top: none;
+}
+.qa-a strong { color: #1a1a18; }
+
+.pq-wrap { border-radius: 8px; overflow: hidden; margin: 12px 0; border: 0.5px solid #dedad4; }
+.pq-q { background: #f1efe8; padding: 9px 14px; font-size: 12px; color: #444441; line-height: 1.7; border-bottom: 0.5px solid #dedad4; }
+.pq-a { background: #fff; padding: 9px 14px; font-size: 12px; color: #5f5e5a; line-height: 1.75; }
+.pq-a strong { color: #1a1a18; }
+.pq-tag { display: inline-block; font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #F26419; background: rgba(242,100,25,.12); padding: 1px 6px; border-radius: 3px; margin-right: 6px; }
+
+/* Interview cards */
+.iv-card {
+  background: #fff; border-radius: 10px; margin-bottom: 10px;
+  border: 0.5px solid #dedad4; overflow: hidden;
+}
+.iv-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  background: #fff; transition: background .15s;
+}
+.iv-head:hover { background: #f5f4f0; }
+.iv-badge {
+  font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 4px; flex-shrink: 0;
+}
+.iv-badge.easy { background: #eaf3de; color: #3b6d11; }
+.iv-badge.mid { background: #faeeda; color: #854d0e; }
+.iv-badge.hard { background: #fcebeb; color: #991b1b; }
+.iv-qtext { font-size: 13px; font-weight: 500; color: #1a1a18; flex: 1; }
+.iv-arrow { font-size: 10px; color: #888780; transition: transform .2s; }
+.iv-body {
+  padding: 0 14px; max-height: 0; overflow: hidden;
+  transition: max-height .3s ease, padding .3s;
+  font-size: 12px; color: #5f5e5a; line-height: 1.75;
+  border-top: 0.5px solid transparent;
+}
+.iv-body.open {
+  max-height: 600px; padding: 10px 14px;
+  border-top-color: #dedad4;
+}
+.iv-body strong { color: #1a1a18; }
+
+/* Resource cards */
+.res-card {
+  background: #fff; border-radius: 10px; padding: 12px 14px;
+  margin-bottom: 8px; border: 0.5px solid #dedad4;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.res-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.res-body { flex: 1; }
+.res-title { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 3px; }
+.res-sub { font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+.res-tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 4px; background: #f1efe8; color: #888780; border: 0.5px solid #c8c7be; margin-right: 4px; }
+
+/* Quiz */
+.quiz-q { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; border: 0.5px solid #dedad4; }
+.quiz-qtext { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 10px; }
+.quiz-opts { display: flex; flex-direction: column; gap: 6px; }
+.quiz-opt {
+  padding: 8px 12px; border-radius: 7px; cursor: pointer;
+  font-size: 12px; color: #444441; border: 0.5px solid #dedad4;
+  background: #f5f4f0; transition: all .15s; line-height: 1.5;
+}
+.quiz-opt:hover { background: #ece9e2; }
+.quiz-opt.correct { background: #eaf3de; border-color: #97c459; color: #173404; }
+.quiz-opt.wrong { background: #fcebeb; border-color: #f09595; color: #501313; }
+.quiz-exp { font-size: 12px; color: #5f5e5a; margin-top: 8px; padding: 8px 12px; background: #f5f4f0; border-radius: 6px; display: none; line-height: 1.65; }
+.quiz-exp.show { display: block; }
+.quiz-score { font-size: 20px; font-weight: 500; color: #F26419; }
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <div class="top-nav-left">
+    <span class="top-nav-dot"></span>
+    <span>AI Agent 知识体系 · 5D框架</span>
+  </div>
+  <span class="top-nav-badge">v3.0</span>
+</div>
+
+<div class="container">
+
+<div class="header">
+  <h1>AI Agent 知识体系</h1>
+  <p class="tagline">
+    <strong>5D 框架 v3</strong>——新增 LLM哲学、演化历史、学习资料三个专题章节；
+    重写面试题库；整合 Harness 工程视角；全面回应 9 个深度问题。
+  </p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="show(0)">🗺 总框架</button>
+  <button class="tab" onclick="show(1)">① 分层</button>
+  <button class="tab" onclick="show(2)">② 对比</button>
+  <button class="tab" onclick="show(3)">③ 类比</button>
+  <button class="tab" onclick="show(4)">④ 误解</button>
+  <button class="tab" onclick="show(5)">⑤ 实战</button>
+  <button class="tab" onclick="show(6)">🔄 模式</button>
+  <button class="tab phi" onclick="show(7)">🧠 LLM哲学</button>
+  <button class="tab" onclick="show(8)">📈 演化史</button>
+  <button class="tab" onclick="show(9)">💬 提问+答</button>
+  <button class="tab" onclick="show(10)">🎓 面试题</button>
+  <button class="tab" onclick="show(11)">📚 学习资料</button>
+  <button class="tab check" onclick="show(12)">✅ 验证</button>
+</div>
+
+<!-- ══════════════════════ P0 总框架 ══════════════════════ -->
+<div class="panel active" id="p0">
+
+  <div class="mbox">
+    <div class="mbox-label">来自 README 的最重要洞见</div>
+    <div class="mbox-title">Agent 是模型，不是框架——这是这个领域最被误解的一句话</div>
+    <div class="mbox-body">
+      "Agent 永远是模型本身。那个智能、那个决策者，永远是模型。Harness（工具+知识+观察+动作+权限）因领域而变，Agent 跨领域泛化。<strong>你写的代码是 Harness，不是 Agent。</strong>"
+      <br><br>
+      对工程师的实际意义：你在搭载具，不在训练驾驶员。你的工作是让模型"看得清楚、行动得精准"，而不是通过堆叠 if-else 来模拟智能。
+    </div>
+  </div>
+
+  <div class="sl">Agent 一句话定义</div>
+  <div class="callout-blue">
+    <strong>Agent = 能感知环境 + 自主规划 + 调用工具 + 循环执行 直到目标达成的 AI 系统</strong><br><br>
+    · <strong>感知</strong>：接收用户输入、工具返回结果、外部状态（Observation）<br>
+    · <strong>规划</strong>：由 LLM 决定"下一步做什么"，非代码硬编码（Thought/Reasoning）<br>
+    · <strong>工具</strong>：能操作外部系统——文件、Shell、网络、数据库、其他 Agent<br>
+    · <strong>循环</strong>：多轮 Think → Act → Observe 直到 stop_reason = end_turn
+  </div>
+
+  <div class="sl">Harness 框架（工程师真正在做的事）</div>
+  <pre>
+Harness = Tools + Knowledge + Observation + Action Interfaces + Permissions
+
+    Tools:       文件读写、Shell、网络、数据库、浏览器
+    Knowledge:   产品文档、领域资料、API 规范（RAG + 长期记忆）
+    Observation: git diff、错误日志、浏览器状态、工具返回结果
+    Action:      CLI 命令、API 调用、UI 交互、子 Agent 调用
+    Permissions: 沙箱隔离、审批流程、最小权限、Human-in-the-loop
+  </pre>
+
+  <div class="sl">5D 框架全景</div>
+  <div class="d-card"><div class="d-icon">🔩</div><div class="d-body"><div class="d-title">D1 · Decompose 分层解构</div><div class="d-sub">认知层（LLM推理）/ 执行层（工具调用）/ 编排层（循环控制）<br><span class="example">ReAct / Plan-and-Execute</span><span class="example">单 vs 多 Agent</span></div></div></div>
+  <div class="d-card"><div class="d-icon">⚖️</div><div class="d-body"><div class="d-title">D2 · Distinguish 对比辨析</div><div class="d-sub">Agent vs LLM / RAG vs 长期记忆 / Copilot vs Agent / 有 vs 无 Human-in-the-loop<br><span class="example">1M = 100万 tokens ≈ 65-75万汉字</span></div></div></div>
+  <div class="d-card"><div class="d-icon">🌉</div><div class="d-body"><div class="d-title">D3 · Draw Analogy 类比迁移</div><div class="d-sub">Agent ≈ 项目经理 / 多 Agent ≈ 工业分工 / Memory ≈ 人类记忆系统<br><span class="example">工具 ≈ 各职能部门</span><span class="example">N×M→N+M</span></div></div></div>
+  <div class="d-card"><div class="d-icon">🎯</div><div class="d-body"><div class="d-title">D4 · Debug 错误雷达</div><div class="d-sub">Agent≠框架 / Thought≠意识 / 工具越多越好 / RAG=Agent 等高频误解</div></div></div>
+  <div class="d-card"><div class="d-icon">🔧</div><div class="d-body"><div class="d-title">D5 · Deploy 实战锚定</div><div class="d-sub">自主性 vs 可靠性工程实践（8种）/ 框架选型 / 置信度门控实现<br><span class="example">验证层 Agent 方案</span></div></div></div>
+
+  <div class="sep"></div>
+  <div class="sl">知识掌握的 5 个深度层次</div>
+  <div class="card"><div class="card-b">
+    <table>
+      <tr><th style="width:18%">层次</th><th style="width:35%">特征</th><th style="width:47%">测试方法</th></tr>
+      <tr><td><strong>L1 记忆</strong></td><td>能复述 Agent 定义</td><td>"什么是 AI Agent？"</td></tr>
+      <tr><td><strong>L2 结构</strong></td><td>能描述 ReAct 循环各步骤</td><td>"一次完整执行经历哪些阶段？"</td></tr>
+      <tr><td><strong>L3 迁移</strong></td><td>能类比到其他领域</td><td>"多 Agent 和工业分工有什么共同逻辑？"</td></tr>
+      <tr><td><strong>L4 批判</strong></td><td>能指出适用边界和失败模式</td><td>"什么情况下不该用 Agent？Harness 和 Agent 的区别？"</td></tr>
+      <tr><td><strong>L5 创造</strong></td><td>能为新场景设计 Agent 架构</td><td>"为医疗场景设计多 Agent Harness"</td></tr>
+    </table>
+  </div></div>
+</div>
+
+<!-- ══════════════════════ P1 分层解构 ══════════════════════ -->
+<div class="panel" id="p1">
+  <div class="sl">D1 核心原则</div>
+  <div class="callout"><strong>Agent 的混乱感来自把三层结构混在一起讲。</strong>认知层负责"想什么"，执行层负责"做什么"，编排层负责"循环控制和记忆管理"。</div>
+
+  <div class="card">
+    <div class="card-t">🧠 认知层 — LLM 推理核心（Agent 本体）</div>
+    <div class="card-b">
+      模型本身，就是 Agent 本身。接受目标，负责规划、推理、工具选择。<br><br>
+      · <strong>规划</strong>：把目标拆解为子任务序列<br>
+      · <strong>推理</strong>：CoT / ReAct / Extended Thinking<br>
+      · <strong>工具选择</strong>：生成工具调用意图（格式化文本，不是执行）<br>
+      · <strong>关键限制</strong>：只负责生成 token，不直接执行任何操作
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-t">🔧 执行层 — 工具与 Harness（Harness 的主体）</div>
+    <div class="card-b">
+      接收编排层解析的工具调用，实际与外部世界交互。工具本身不含智能。<br><br>
+      · 读取：Web 搜索、数据库查询、文件读取<br>
+      · 写入：发邮件、写数据库、创建文件（写操作必须加确认）<br>
+      · 执行：代码执行器、浏览器操作、Shell 命令<br>
+      · 子 Agent：将任务委托给专门 Subagent
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-t">🔄 编排层 — 循环控制（Harness 的骨架）</div>
+    <div class="card-b">
+      管理 Agent 循环、上下文、终止条件、记忆。这是你写的代码。<br><br>
+      · 循环控制：Think → Act → Observe 执行逻辑<br>
+      · 工具调用解析：从 LLM 输出提取工具名+参数，调用实际函数<br>
+      · Short-term Memory：messages 数组（context window 内）<br>
+      · Long-term Memory：向量数据库 + 用户个性化记忆<br>
+      · 终止判断：stop_reason=end_turn / max_steps / 错误
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">最小 Agent 循环（一切架构的本质）</div>
+  <pre>
+# 来自 README：这是最小循环，每个 AI Agent 都需要它
+# 模型决定何时调用工具、何时停止。代码只是执行模型的要求。
+
+def agent_loop(messages):
+    while True:
+        response = llm.call(model, tools, messages)
+        messages.append(assistant_msg(response))   # ← 记录 LLM 输出
+
+        if response.stop_reason != "tool_use":     # ← 无工具调用，任务完成
+            return response.text
+
+        results = []
+        for block in response.content:
+            if block.type == "tool_use":
+                output = TOOL_HANDLERS[block.name](**block.input)  # ← Harness执行
+                results.append(tool_result(block.id, output))
+
+        messages.append(user_msg(results))         # ← 工具结果追加，下轮参考
+  </pre>
+</div>
+
+<!-- ══════════════════════ P2 对比辨析 ══════════════════════ -->
+<div class="panel" id="p2">
+  <div class="sl">RAG vs Agent 长期记忆（高频混淆，重要）</div>
+  <div class="card"><div class="card-b">
+    <table>
+      <tr><th></th><th>RAG（检索增强生成）</th><th>Agent 长期记忆</th></tr>
+      <tr><td><strong>本质</strong></td><td>查外部知识库</td><td>记住这个用户</td></tr>
+      <tr><td><strong>内容</strong></td><td>产品文档、FAQ（与用户无关）</td><td>用户偏好、历史操作（高度个性化）</td></tr>
+      <tr><td><strong>读写</strong></td><td>只读，工程师预建</td><td>读写，随对话积累更新</td></tr>
+      <tr><td><strong>共享</strong></td><td>所有用户共享</td><td>每用户独立空间</td></tr>
+      <tr><td><strong>失效</strong></td><td>文档过时，知识库陈旧</td><td>记忆累积错误，偏好变化</td></tr>
+      <tr><td><strong>类比</strong></td><td>公司内网知识库</td><td>你的私人笔记本</td></tr>
+    </table>
+    <br>
+    <strong>协同例子：</strong>"我之前买的蓝色耳机有保修吗？" → RAG 查保修政策（通用知识）+ 长期记忆 查你买了什么型号（个人历史）→ 精准个性化回答
+  </div></div>
+
+  <div class="sl">1M tokens 是多少汉字？</div>
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">数字</span>1M = 1,000,000 还是 1,048,576？</div>
+    <div class="qa-a">
+      <strong>计算机中有两个"M"：</strong><br>
+      · <strong>SI（公制）：</strong>1M = 1,000,000（十进制百万）<br>
+      · <strong>二进制：</strong>1 MiB = 1,048,576（2²⁰）<br><br>
+      <strong>LLM 语境中，"1M tokens"用的是 SI 制 = 1,000,000 tokens。</strong><br>
+      Anthropic/OpenAI 的 API 文档、定价、上下文窗口描述全部用十进制。"200K context"= 200,000 tokens，"1M context" = 1,000,000 tokens。<br><br>
+      <strong>换算汉字：</strong>常见汉字约 1.3-1.5 tokens/字（BPE 分词器特性）<br>
+      1,000,000 ÷ 1.3 ≈ 77 万字 / 1,000,000 ÷ 1.5 ≈ 65 万字<br>
+      → <strong>1M tokens ≈ 65-75 万汉字</strong>（约一部大型长篇小说）<br><br>
+      <strong>直觉参照：</strong><br>
+      · 《红楼梦》≈ 96万字 → 约 1.2-1.4M tokens<br>
+      · 《三体》三部曲 ≈ 88万字 → 约 1.1-1.3M tokens<br>
+      · 1K tokens ≈ 700 汉字（记住这一条）
+    </div>
+  </div>
+
+  <div class="sl">Chatbot / Copilot / Agent 三级分类</div>
+  <div class="card"><div class="card-b">
+    <table>
+      <tr><th>类型</th><th>控制权</th><th>工具调用</th><th>自主性</th><th>典型产品</th></tr>
+      <tr><td><strong>Chatbot</strong></td><td>全人工</td><td>无</td><td>零：纯回答</td><td>FAQ 机器人</td></tr>
+      <tr><td><strong>Copilot</strong></td><td>人主导、AI辅助</td><td>有限读取</td><td>低：建议，人决策</td><td>GitHub Copilot</td></tr>
+      <tr><td><strong>Agent</strong></td><td>AI主导、人监督</td><td>完整读写执行</td><td>高：自主规划执行</td><td>Devin、Claude Code</td></tr>
+    </table>
+  </div></div>
+
+  <div class="sl">Agent vs RPA</div>
+  <div class="row">
+    <div class="rbox"><strong>RPA（规则驱动）</strong><br><br>· 步骤硬编码，流程固定<br>· 遇异常就失败<br>· 只处理结构化输入<br>· 流程变化需重新开发<br><em>适合：高度标准化重复操作</em></div>
+    <div class="gbox"><strong>Agent（智能自动化）</strong><br><br>· 步骤由 LLM 动态规划<br>· 遇异常可推理或求助<br>· 处理自然语言等非结构化<br>· 任务变化不需改代码<br><em>适合：半结构化、需判断的复杂任务</em></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ P3 类比迁移 ══════════════════════ -->
+<div class="panel" id="p3">
+  <div class="sl">类比 1：多 Agent ≈ 工业革命分工（工业时代人类分工更细化）</div>
+  <div class="callout-blue">
+    <strong>这个类比非常深刻。</strong>亚当·斯密在《国富论》中描述的"针工厂"：一个工人完成所有工序 vs 18人分工可以生产 4800 倍的针。多 Agent 架构是同一个思想的数字版：<br><br>
+    · <strong>单 Agent</strong>：一个"通才"处理所有子任务 → context 压力大、容易混淆<br>
+    · <strong>多 Agent</strong>：每个 Agent 专注一个领域 → 专精度高、并行执行、错误隔离<br><br>
+    <strong>关键共同结构：</strong>分工的价值不只是"并行"，而是<em>专精带来质量提升</em>。搜索 Agent 只有 5 个搜索工具，不需要在 50 个工具里选；写作 Agent 的上下文全是写作相关内容，不被无关工具描述稀释。<br><br>
+    <strong>类比的边界：</strong>工厂分工是线性流水线，多 Agent 可以是网状并行。Orchestrator 不是"工厂主"，它自己也是一个模型，可以动态调整任务分配。
+  </div>
+
+  <div class="sl">类比 2：Agent ≈ 项目经理</div>
+  <div class="card"><div class="card-b">
+    <table>
+      <tr><th>Agent 概念</th><th>项目经理类比</th><th>同构结构</th></tr>
+      <tr><td><strong>Agent 本体</strong></td><td>项目经理（PM）</td><td>接受目标，负责规划协调，不亲自执行</td></tr>
+      <tr><td><strong>工具（Tools）</strong></td><td>各职能部门/承包商</td><td>有明确能力边界，通过标准接口委托</td></tr>
+      <tr><td><strong>Observation</strong></td><td>进度汇报/工作反馈</td><td>执行结果反馈给规划者，用于调整计划</td></tr>
+      <tr><td><strong>Long-term Memory</strong></td><td>项目档案库</td><td>跨项目可查询的历史知识</td></tr>
+      <tr><td><strong>Orchestrator</strong></td><td>PMO</td><td>协调多个PM，跨项目资源分配</td></tr>
+    </table>
+  </div></div>
+
+  <div class="sl">类比 3：工具标准化 = N×M → N+M（货币/USB/HTTP 同构）</div>
+  <div class="callout">
+    <strong>没有标准化（MCP）：</strong>10 Agent × 20 工具 = 200 个定制化对接，每对组合需要独立开发<br>
+    <strong>有标准化后：</strong>10 + 20 = 30 个对接，工具一次写成，所有 Agent 复用<br><br>
+    同一结构还出现在：货币发明（以物易物→货币中间层）/ USB（每款设备各自驱动→统一接口）/ HTTP（各种自定义协议→统一 Web 通信层）。<strong>引入标准中间层消除笛卡尔积复杂度。</strong>
+  </div>
+</div>
+
+<!-- ══════════════════════ P4 错误雷达 ══════════════════════ -->
+<div class="panel" id="p4">
+  <div class="callout"><strong>Agent 是 AI 领域误解密度最高的主题。</strong>流行词、营销宣传和真实能力之间差距巨大。见 🧠 LLM哲学 Tab 获取 Thought/推理/意识的深度展开。</div>
+
+  <div class="sl">⚠ 误解 1：Agent = 框架/工作流（最根本的误解）</div>
+  <div class="row">
+    <div class="rbox"><strong>❌ 误解</strong><br><br>"用 LangChain 把 LLM API 调用串起来就是构建 Agent"<br><br>来源：大量营销材料把工作流编排称为"Agent 开发"</div>
+    <div class="gbox"><strong>✅ 正确</strong><br><br>Agent 永远是模型本身。你写的代码是 Harness（载具），不是 Agent（驾驶员）。框架是为模型构建工作环境，不是制造智能。"你不可能通过工程手段编码出 agency。Agency 是学出来的，不是编出来的。"</div>
+  </div>
+
+  <div class="sl">⚠ 误解 2：Agent = 自动化 = 不需要人</div>
+  <div class="row">
+    <div class="rbox"><strong>❌ 误解</strong><br>"部署后就不用管了"</div>
+    <div class="gbox"><strong>✅ 正确</strong><br>自主性 ≠ 可靠性。生产环境关键决策必须有 Human-in-the-loop。每步 95% 准确率，10步后成功率仅 59%。</div>
+  </div>
+
+  <div class="sl">⚠ 误解 3：工具越多 = Agent 越强</div>
+  <div class="row">
+    <div class="rbox"><strong>❌ 误解</strong><br>接入所有工具能力最强</div>
+    <div class="gbox"><strong>✅ 正确</strong><br>工具描述占用 context，过多导致 LLM 选择困难。每 Agent 配 5-10 个精准工具，多 Agent 处理多领域。</div>
+  </div>
+
+  <div class="sl">⚠ 误解 4：Thought = 意识（见 🧠 LLM哲学 深度展开）</div>
+  <div class="row">
+    <div class="rbox"><strong>❌ 误解</strong><br>Thought 说明模型在真正"思考"，有意识</div>
+    <div class="gbox"><strong>✅ 正确</strong><br>Thought 是格式约束下的结构化文本输出。推理能力真实存在，但主观意识无法证明。详见 🧠 LLM哲学 Tab。</div>
+  </div>
+
+  <div class="sl">⚠ 误解 5："Agent 调用了工具"（主语不精确）</div>
+  <div class="callout-blue">
+    <strong>精确说法：</strong>LLM 输出了工具调用意图（格式化文本），Harness 代码解析并执行了工具。<br><br>
+    这意味着：错误处理、重试、权限控制必须在 Harness 实现，不能依赖 LLM 自己发现；不可逆操作（发邮件、删文件）必须在 Harness 层加确认逻辑。
+  </div>
+</div>
+
+<!-- ══════════════════════ P5 实战锚定 ══════════════════════ -->
+<div class="panel" id="p5">
+  <div class="sl">何时用 Agent？（同时满足才用）</div>
+  <div class="card"><div class="card-b">
+    <div class="step"><div class="sn">1</div><div class="sb"><strong>多步骤且步骤之间有依赖</strong>——先搜索再总结再发邮件</div></div>
+    <div class="step"><div class="sn">2</div><div class="sb"><strong>步骤无法预知</strong>——需 LLM 根据中间结果决定下一步</div></div>
+    <div class="step"><div class="sn">3</div><div class="sb"><strong>需要与外部系统交互</strong>——读取数据或执行操作</div></div>
+    <div class="step"><div class="sn">4</div><div class="sb"><strong>复杂度值得承担额外成本</strong>——多轮 API 贵 3-10 倍，延迟增加 3-10 秒</div></div>
+    <br>
+    <strong>不用 Agent 的场景：</strong>纯文本生成 → 单次 LLM；步骤固定 → Function Calling；极低延迟需求 → 不用 Agent。
+  </div></div>
+
+  <div class="sl">框架选型</div>
+  <div class="card"><div class="card-b">
+    <table>
+      <tr><th>框架</th><th>适合场景</th><th>核心特点</th></tr>
+      <tr><td><strong>原生 API</strong></td><td>学习、最小依赖</td><td>最小循环，手写 Harness，最清晰</td></tr>
+      <tr><td><strong>LangGraph</strong></td><td>需精确控制流程</td><td>图状态机，节点+边，可调试</td></tr>
+      <tr><td><strong>AutoGen</strong></td><td>多 Agent 对话协作</td><td>Agent 通过消息通信，支持人机混合</td></tr>
+      <tr><td><strong>CrewAI</strong></td><td>角色分工明确</td><td>角色/目标/工具，类似团队协作</td></tr>
+    </table>
+  </div></div>
+
+  <div class="sl">面试一句话版本</div>
+  <div class="card"><div class="card-b">
+    <em>"Agent 的本质是模型本身——一个通过训练学会感知、推理、行动的神经网络。工程师写的代码是 Harness，不是 Agent：Harness 给模型提供工具、知识、上下文管理和权限边界，然后让开。核心架构是 while+stop_reason 的最小循环：LLM 决定何时调用工具、何时停止，Harness 执行工具并传回结果。最大挑战是自主性和可靠性的张力——每步错误会在长链任务中累积。"</em>
+  </div></div>
+</div>
+
+<!-- ══════════════════════ P6 核心模式 + 可靠性工程 ══════════════════════ -->
+<div class="panel" id="p6">
+  <div class="sl">5 种核心架构模式</div>
+  <div class="card"><div class="card-t">1. ReAct Agent（最通用）</div><div class="card-b">Think→Act→Observe 单循环。步骤数不定，根据结果调整。</div></div>
+  <div class="card"><div class="card-t">2. Plan-and-Execute</div><div class="card-b">先规划完整步骤→逐步执行。优势：计划可被 review，减少"执行到一半发现方向错了"。</div></div>
+  <div class="card"><div class="card-t">3. Multi-Agent Orchestration</div><div class="card-b">Orchestrator 拆解→分发专门 Subagent→汇总。适合：大型任务、可并行、工业分工模型。</div></div>
+  <div class="card"><div class="card-t">4. Reflection Agent（自我改进）</div><div class="card-b">Actor 生成→Critic 评估→Actor 修改→循环。适合：高质量输出要求（代码、报告）。</div></div>
+  <div class="card"><div class="card-t">5. Memory Agent</div><div class="card-b">Agent + 向量数据库长期记忆。每次对话：检索相关历史→执行→更新记忆。适合：个人助手。</div></div>
+
+  <div class="sep"></div>
+  <div class="sl">置信度门控 — 如何实现？</div>
+  <div class="callout-purple">
+    <strong>核心问题：LLM 没有原生的"置信度分数"输出。</strong>需要通过工程手段来构建置信度感知能力。
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">方法1</span>Prompt 指令法（最简单，推荐先用这个）</div>
+    <div class="qa-a">
+      在 system prompt 中明确指令："如果你不确定应该做什么，请输出 <code>NEED_CLARIFICATION: [具体问题]</code>，而不是猜测执行"。<br><br>
+      <strong>增强版：</strong>要求模型在 Thought 中显式评估不确定性：<br>
+      <code>"Confidence: HIGH/MEDIUM/LOW, 原因: ..."</code><br>
+      编排层解析这个置信度标签，LOW 时暂停请求确认。<br><br>
+      <strong>局限：</strong>模型有时"过度自信"——它生成高置信度文本但实际上是错的（幻觉）。
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">方法2</span>Token 概率法（需要 API 支持 logprobs）</div>
+    <div class="qa-a">
+      对于支持 logprobs 输出的 API（部分 OpenAI 接口），可以获取关键决策 token 的概率分布。<br>
+      如果模型在工具名选择上的概率分布很扁平（多个工具概率相近），说明选择不确定。<br><br>
+      <strong>局限：</strong>Anthropic API 目前不直接暴露 logprobs；Token 概率不等于"语义正确性"的置信度。
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">方法3</span>多次采样 + 一致性检验（Ensemble）</div>
+    <div class="qa-a">
+      同一个输入运行 N 次（temperature &gt; 0），检查输出是否一致。一致性高 → 置信度高；输出差异大 → 置信度低，需要人工确认。<br><br>
+      <strong>成本权衡：</strong>N 次调用 = N 倍成本，适合高风险决策（不可逆操作），不适合常规操作。<br>
+      <strong>实际应用：</strong>法律、医疗、财务类 Agent 用这个方法验证关键判断。
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">方法4</span>场景规则法（生产环境最实用）</div>
+    <div class="qa-a">
+      不依赖模型的自我报告，而是通过<strong>操作类型判断风险</strong>：<br>
+      · 读操作：完全自主<br>
+      · 创建操作：低风险，可自主执行<br>
+      · 修改操作：中风险，关键资源需确认<br>
+      · 删除/发送/支付操作：高风险，必须确认<br><br>
+      这是当前生产环境最可靠的"置信度"实现——不信任模型的自我评估，通过操作类型白名单管理风险。
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">验证层 Agent — 是否合理？成熟方案是什么？</div>
+  <div class="callout-green">
+    <strong>✅ 验证层 Agent 是合理且有成熟方案的设计。</strong>学术名称：LLM-as-Judge / Constitutional AI / Self-Refinement。不是新思路，已在生产环境大规模验证。
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">方案1</span>LLM-as-Judge（最广泛使用）</div>
+    <div class="qa-a">
+      用一个独立的 LLM（可以是同款模型）评估另一个 LLM 的输出质量。LMSys 的 Chatbot Arena 用这个方法大规模评估模型。<br><br>
+      <strong>工程实现：</strong>
+      <pre style="margin:4px 0">
+judge_prompt = """
+你是一个评估 Agent 的批评者。
+以下是 Agent 计划执行的操作：{action}
+以下是理由：{reasoning}
+
+评估维度：
+1. 操作是否符合用户意图？
+2. 是否有更好的替代方案？
+3. 是否有潜在的负面后果？
+
+输出格式：APPROVE / REVISE / REJECT，理由：...
+"""
+      </pre>
+      <strong>已知局限：</strong>Judge 和 Actor 使用同一款模型时，会有"自我确认偏见"——评估者会倾向于认可与自己训练分布相似的输出。解决：用不同提供商的模型做 Judge。
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">方案2</span>Constitutional AI（Anthropic 的生产方案）</div>
+    <div class="qa-a">
+      Anthropic 在训练 Claude 时使用的方法：给模型一组"宪法"（价值准则），先让模型生成批评，再根据批评修改。<br><br>
+      在 Agent 应用层的类比：在 system prompt 中给 Agent 一组行动准则（"不得删除用户数据，除非用户明确三次确认"），让模型在执行前对照准则自我检查。<br><br>
+      <strong>与 LLM-as-Judge 的区别：</strong>不需要独立模型，在同一次调用内通过 prompt 完成自我批评。成本更低，但准确性也相对低。
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">方案3</span>G-Eval / MT-Bench（可量化评估框架）</div>
+    <div class="qa-a">
+      学术界提出的标准化评估框架，用 LLM 对输出进行多维度打分（流畅性、相关性、一致性、有用性）。<br><br>
+      <strong>工程落地：</strong>在 Agent 的关键输出节点加一个评估层，对输出打分，低于阈值则触发重新生成或人工审批。<br><br>
+      <strong>开源工具：</strong>langfuse evaluation, RAGAS（专门用于 RAG 评估），DeepEval（通用 LLM 评估框架）。
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">⚖ 自主性 vs 可靠性：8 种工程实践</div>
+  <div class="callout"><strong>每步 95% 准确率 × 10步 = 59% 成功率。</strong>分层权限：低风险完全自主，高风险加确认，不可逆必须审批。</div>
+  <div class="card"><div class="card-b">
+    <table>
+      <tr><th>#</th><th>实践</th><th>核心做法</th><th>权衡</th></tr>
+      <tr><td>①</td><td><strong>渐进式权限</strong></td><td>先只读，再开写，逐步扩展</td><td>速度换安全</td></tr>
+      <tr><td>②</td><td><strong>置信度门控</strong></td><td>低置信 → 暂停请确认</td><td>需定义触发条件</td></tr>
+      <tr><td>③</td><td><strong>最大步数上限</strong></td><td>max_steps=20，到限通知用户</td><td>可能截断合理长任务</td></tr>
+      <tr><td>④</td><td><strong>检查点机制</strong></td><td>每N步保存状态，失败从检查点恢复</td><td>存储开销</td></tr>
+      <tr><td>⑤</td><td><strong>可逆优先设计</strong></td><td>软删除、草稿箱、confirm=True</td><td>增加工具设计复杂度</td></tr>
+      <tr><td>⑥</td><td><strong>验证层 Agent</strong></td><td>Critic 独立评估高风险操作</td><td>成本翻倍，适合关键路径</td></tr>
+      <tr><td>⑦</td><td><strong>完整可观测性</strong></td><td>每步 Thought/Action/Observation 写入 Trace</td><td>存储成本，调试必须</td></tr>
+      <tr><td>⑧</td><td><strong>工具最小权限</strong></td><td>read_file 不暴露 exec_command</td><td>更多工具覆盖用例，但更安全</td></tr>
+    </table>
+  </div></div>
+</div>
+
+<!-- ══════════════════════ P7 LLM哲学（独立篇章）══════════════════════ -->
+<div class="panel" id="p7">
+  <div class="callout-purple">
+    <strong>这是一个独立的哲学章节，处理 LLM 最反常识、最容易产生歧义的概念。</strong>这些问题没有完全确定的答案，但有更精确的工程理解方式。
+  </div>
+
+  <div class="sl">第一问：究竟什么是 Thought？</div>
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">1.1</span>"Thought 是格式化输出"——这个反常识的说法准确吗？</div>
+    <div class="qa-a">
+      <strong>准确，但需要精确理解"格式化"的含义。</strong><br><br>
+      当 ReAct prompt 要求输出 <code>[THOUGHT] ... [ACTION] ...</code> 格式时，模型在生成 <code>[THOUGHT]</code> 这段文本是因为格式约束要求它生成，而不是"想了之后才写出来"。<br><br>
+      <strong>用另一个角度说清楚：</strong>如果你把 prompt 改成不要求 [THOUGHT]，模型仍然能直接输出合理的行动——推理是持续发生的，Thought 只是让推理"外化可见"的工程手段。<br><br>
+      <strong>真正的价值：</strong>外化的 Thought 作为 context 进入后续生成，让后续 token 能"参考"前面的推导步骤。这是 CoT 真实有效的原因——不是"打开了思维"，而是"增加了有效 context"。<br><br>
+      <strong>类比：</strong>你做数学题时写草稿，不是因为写草稿"让你变聪明"，而是草稿帮助你记录中间步骤、不遗漏、下一步有参考。模型的 Thought 是同样功能——只是以更快的速度发生。
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">1.2</span>模型到底有没有"Thought"？这个问题有答案吗？</div>
+    <div class="qa-a">
+      <strong>需要区分三个不同的问题：</strong><br><br>
+      <table>
+        <tr><th>问题</th><th>答案</th><th>工程含义</th></tr>
+        <tr><td>模型有推理能力吗？</td><td><strong>有</strong>——真实存在，可测量</td><td>CoT/ReAct 确实有效</td></tr>
+        <tr><td>模型有内部"思维过程"吗？</td><td><strong>部分有</strong>——注意力机制等内部计算可以被解释，但不等于"思维"</td><td>Mechanistic Interpretability 研究方向</td></tr>
+        <tr><td>模型有主观意识体验吗？</td><td><strong>未知</strong>——哲学上无法证伪</td><td>工程师不需要回答这个问题</td></tr>
+      </table>
+      <br>
+      <strong>工程师的实用立场：</strong>"这个 Thought 文本是否帮助提升了后续输出质量？"——答案是肯定的。这就够了，不需要解决意识问题。
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">1.3</span>Thought vs 推理（Reasoning）有什么区别？o1/o3 的 Extended Thinking 改变了结论吗？</div>
+    <div class="qa-a">
+      <strong>三个概念的精确定义：</strong><br><br>
+      · <strong>Reasoning（推理）</strong>：从前提得出结论的能力。这是一种<em>功能</em>，可以不依赖显式文本存在（即使没有 Thought 标记，模型也在做某种推理）。<br>
+      · <strong>Thought（CoT/ReAct 中）</strong>：prompt 约束下外化的推理过程文本。是推理的"可见记录"，不是推理本身。<br>
+      · <strong>Extended Thinking（o1/o3）</strong>：在给出最终答案前，模型生成大量隐藏的"思考 token"，用户通常只看到摘要。这是<em>增加推理计算预算</em>的技术——花更多 token 来推理，换取更高质量的答案。<br><br>
+      <strong>结论：</strong>o1/o3 没有改变本质，只是放大了 Thought 的量和质。Agency 仍然来自模型的训练，Extended Thinking 是在推理时增加计算投入，不是"开启了意识"。
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">第二问：LLM 如何实现"认知"和"意图识别"？</div>
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">2.1</span>LLM 的"认知"到底是怎么发生的？它和人类认知有什么本质区别？</div>
+    <div class="qa-a">
+      <strong>LLM 的认知机制（工程视角）：</strong><br><br>
+      LLM 通过在海量文本上预测"下一个 token"来学习，这个看似简单的目标迫使模型在权重中编码了大量关于世界的结构性知识——语法、逻辑关系、因果推理、常识、领域知识。<br><br>
+      <strong>Transformer 注意力机制 = "选择性认知"的工程实现：</strong><br>
+      自注意力让模型在生成每个 token 时"关注"输入序列中最相关的部分——这是一种信息权重分配，在功能上类似人类"注意力"，但机制完全不同（矩阵乘法，非神经化学）。<br><br>
+      <strong>与人类认知的本质区别：</strong><br>
+      · 人类认知是在线更新的：实时学习，感知和行动同步发生<br>
+      · LLM 是冻结权重推理：训练好后权重固定，每次对话从零开始（无长期学习）<br>
+      · 人类有具身体验（身体、感知、情绪），LLM 只有文本<br>
+      · 人类的记忆是分布式的、有遗忘的；LLM 的"记忆"是权重（长期）+ context window（短期）
+    </div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q"><span class="qa-qn">2.2</span>LLM 如何做"意图识别"？为什么有时候理解得很好，有时候又会误解？</div>
+    <div class="qa-a">
+      <strong>意图识别的工程机制：</strong><br><br>
+      LLM 并没有一个专门的"意图识别模块"。它通过 token 序列的统计模式来推断"这个输入最可能想要什么样的后续"——这是在训练数据中见过大量 (输入→意图→合理回应) 的模式之后，泛化到新输入的能力。<br><br>
+      <strong>为什么有时误解：</strong><br>
+      · <strong>歧义消解失败</strong>：输入有多种合理解释时，模型选择了非预期的那种<br>
+      · <strong>上下文截断</strong>：关键信息超出了 context window 或注意力权重不足<br>
+      · <strong>分布外输入</strong>：训练数据中没有类似的 (输入→意图) 对，泛化不到<br>
+      · <strong>提示词设计问题</strong>：ambiguous prompt → ambiguous intent recognition<br><br>
+      <strong>工程对策（Harness 层面）：</strong><br>
+      · 精确的 system prompt 定义任务边界<br>
+      · few-shot 示例展示"这类输入应该如何理解"<br>
+      · 结构化输入格式（JSON / 明确标签）减少歧义<br>
+      · 让模型先确认理解再执行（"我理解你的需求是X，对吗？"）
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">来自 README 的哲学立场：Agency 是学出来的，不是编出来的</div>
+  <div class="callout-purple">
+    <strong>"你不可能通过工程手段编码出 agency。Agency 是学出来的，不是编出来的。"</strong><br><br>
+    这句话有深刻的认识论含义：<br>
+    · 把 LLM API 调用用 if-else 串联不是 Agent，是"鲁布·戈德堡机械"<br>
+    · 真正的 Agent 能力来自模型在数十亿次梯度更新中学会的感知-推理-行动模式<br>
+    · Harness 工程师的正确心智模型：我在构建<em>让智能表达自己的环境</em>，不是在<em>制造智能</em><br><br>
+    <strong>对照 DQN/AlphaGo/LLM 的历史：</strong>每一个里程碑 Agent 的核心突破都在模型/训练上，而不在框架/编排上。框架可以让模型工作得更好，但不能让不智能的系统变得智能。
+  </div>
+</div>
+
+<!-- ══════════════════════ P8 演化史 ══════════════════════ -->
+<div class="panel" id="p8">
+  <div class="callout"><strong>Agent 不是 LLM 时代的新发明。</strong>AI 领域从诞生之日起，"agent"就是"学会了行动的模型"——LLM 只是让这个概念变得更通用、更易用。</div>
+
+  <div class="sl">第一阶段：强化学习 Agent（2013-2022）</div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2013</div>
+    <div class="tlt">DeepMind DQN — 第一个真正的神经网络 Agent</div>
+    <div class="tlb">一个神经网络只接收原始像素和游戏分数，学会了 49 款 Atari 游戏——超越人类专家。没有硬编码规则，没有决策树。<strong>模型本身就是 Agent。</strong>这是"Agent = 学会行动的模型"的第一个大规模验证。</div>
+  </div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2019</div>
+    <div class="tlt">OpenAI Five / AlphaStar / 绝悟 — 多 Agent 协作的里程碑</div>
+    <div class="tlb">OpenAI Five 通过 45,000 年自我对弈击败 Dota 2 世界冠军。AlphaStar 在星际争霸 II 达到宗师段位（前 0.15%）。腾讯绝悟以 5v5 击败 KPL 职业选手。没有脚本化策略，纯粹的学习。Agent 是模型，这一点无可置疑。</div>
+  </div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2017-2022</div>
+    <div class="tlt">Transformer + GPT 时代 — 通用推理 Agent 的前夜</div>
+    <div class="tlb">Transformer 架构（2017）→ GPT 系列→ InstructGPT（2022，RLHF 使 LLM 听指令）。LLM 从"语言模型"变成了能够理解指令、进行推理的基础。这是 LLM Agent 的技术前提。</div>
+  </div>
+
+  <div class="sl">第二阶段：LLM + 工具 = Agent Harness 时代（2022-2024）</div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2022</div>
+    <div class="tlt">ReAct 论文 + ChatGPT — LLM Agent 概念确立</div>
+    <div class="tlb">ReAct 论文（Yao et al.）提出 Thought-Action-Observation 框架，第一次系统描述了 LLM 作为 Agent 的循环模式。同期 ChatGPT 引爆公众认知，LLM 的推理能力引发广泛关注。Prompt Engineering 时代正式开始。</div>
+  </div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2023</div>
+    <div class="tlt">Function Calling + Agent 框架爆炸</div>
+    <div class="tlb">OpenAI 推出 Function Calling，LLM 能结构化输出工具调用意图。LangChain / AutoGPT / BabyAGI / AutoGen 涌现，"每周新框架"时代。多 Agent 协作概念开始流行。GPT-4 发布，推理质量大幅提升。</div>
+  </div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2024 上半年</div>
+    <div class="tlt">框架成熟 + 生产化尝试</div>
+    <div class="tlb">LangGraph（有状态 Agent）、CrewAI（角色分工）、Microsoft AutoGen 成熟化。Devin 发布引发软件工程 Agent 讨论。可靠性、成本、Human-in-the-loop 成为核心议题——企业真实部署遇到"长链任务累积错误"问题。</div>
+  </div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2024 下半年</div>
+    <div class="tlt">MCP 标准化 + Claude Code + Computer Use</div>
+    <div class="tlb">Anthropic 发布 MCP（Model Context Protocol），工具接入开始标准化，N×M→N+M。Claude Code 作为 Harness 工程最优实现被深度分析。Computer Use 扩展 Agent 感知能力（操作桌面应用）。o1 发布，Extended Thinking 改变推理能力上限。</div>
+  </div>
+  <div class="tl">
+    <div class="tld"></div>
+    <div class="tly">2025-今</div>
+    <div class="tlt">Harness 工程专业化 + 可靠性成核心</div>
+    <div class="tlb">从"能不能跑"到"能不能可靠地跑"的转变。Observability 工具（LangSmith、Langfuse）成熟。"Harness 工程师"作为专业角色出现。多 Agent 异步协作（邮箱模型、Worktree 隔离）成为复杂任务标准架构。Agent 从 demo 走向生产。</div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">演化的核心规律（D3 类比迁移视角）</div>
+  <div class="callout-blue">
+    <strong>规律1：Agency 永远来自模型，不来自框架。</strong>每个里程碑的突破都在训练和架构（Transformer、RLHF、Extended Thinking），框架只是让模型工作得更好的载具。<br><br>
+    <strong>规律2：从专用到通用。</strong>DQN→单游戏；AlphaGo→单棋类；LLM Agent→任意领域。通用性的提升来自训练数据的广度，不来自 Harness 的复杂度。<br><br>
+    <strong>规律3：框架先爆炸再收敛。</strong>每次新能力出现（Function Calling、Multi-Agent）都经历"百团大战"→"几个主流框架胜出"→"标准化协议"的过程。MCP 就是工具接入的标准化收敛结果。
+  </div>
+</div>
+
+<!-- ══════════════════════ P9 提问+答案 ══════════════════════ -->
+<div class="panel" id="p9">
+  <div class="callout"><strong>按 D1-D5 分类的完整提问模板，每题配参考答案和目标层次。</strong></div>
+
+  <div class="sl">D1 分层解构</div>
+  <div class="pq-wrap">
+    <div class="pq-q"><span class="pq-tag">D1/L2</span>"从认知层/执行层/编排层拆解 Agent，层间如何传递信息？"</div>
+    <div class="pq-a"><strong>参考答案：</strong>认知层（LLM）生成 Thought 和工具调用意图；编排层解析意图并触发执行层；执行层（工具/Harness）返回 Observation；编排层把 Observation 追加到 messages，开始下一轮。核心传递介质是不断增长的 messages 数组——这是整个循环的"血液"。</div>
+  </div>
+  <div class="pq-wrap">
+    <div class="pq-q"><span class="pq-tag">D1/L3</span>"Agent 和 Harness 的区别是什么？这个区别为什么重要？"</div>
+    <div class="pq-a"><strong>参考答案：</strong>Agent 是模型本身（那个学会了行动的神经网络）；Harness 是工程师写的代码（工具+知识+观察+权限的环境）。这个区别重要是因为：它决定了工程师的正确心智模型——你在构建让智能表达自己的环境，不是制造智能。Agency 学出来，不是编出来。</div>
+  </div>
+
+  <div class="sl">D2 对比辨析</div>
+  <div class="pq-wrap">
+    <div class="pq-q"><span class="pq-tag">D2/L2</span>"RAG 和长期记忆的根本区别？"</div>
+    <div class="pq-a"><strong>参考答案：</strong>RAG 是只读的通用知识库（所有用户共享，工程师预建，查资料）；长期记忆是读写的个性化用户信息（每用户独立，随对话积累，记住你）。两者可以共存：RAG 处理产品知识，长期记忆处理用户偏好。</div>
+  </div>
+  <div class="pq-wrap">
+    <div class="pq-q"><span class="pq-tag">D2/L2</span>"1M tokens 是多少汉字？1M = 1024×1024 吗？"</div>
+    <div class="pq-a"><strong>参考答案：</strong>LLM 语境中 1M tokens = 1,000,000（SI 十进制，不是 1,048,576）。1,000,000 tokens ÷ 1.3 ≈ 75 万汉字，一部大型长篇小说。记忆：1K tokens ≈ 700 汉字。</div>
+  </div>
+
+  <div class="sl">D3 类比迁移</div>
+  <div class="pq-wrap">
+    <div class="pq-q"><span class="pq-tag">D3/L3</span>"多 Agent 架构和工业分工有什么共同逻辑？类比的边界在哪里？"</div>
+    <div class="pq-a"><strong>参考答案：</strong>同构：分工带来专精度提升、并行执行、错误隔离——亚当·斯密针工厂的数字版。边界：工厂是线性流水线，多 Agent 可以是网状并行；Orchestrator 不是固定的"管理者"，它自己也是一个可以动态调整的模型。</div>
+  </div>
+
+  <div class="sl">D4 错误雷达</div>
+  <div class="pq-wrap">
+    <div class="pq-q"><span class="pq-tag">D4/L4</span>"置信度门控是怎么实现的？LLM 有原生的置信度吗？"</div>
+    <div class="pq-a"><strong>参考答案：</strong>LLM 没有原生置信度分数。工程实现：① prompt 指令法（最简单）；② logprobs 概率分布（需 API 支持）；③ 多次采样一致性检验（最准确，成本高）；④ 操作类型风险判断（生产最实用）。最可靠的是第4种：不信任模型自我报告，通过操作类型白名单管理风险。</div>
+  </div>
+
+  <div class="sl">D5 实战锚定</div>
+  <div class="pq-wrap">
+    <div class="pq-q"><span class="pq-tag">D5/L5</span>"验证层 Agent 设计是否合理？有哪些成熟方案？"</div>
+    <div class="pq-a"><strong>参考答案：</strong>合理且有成熟方案。① LLM-as-Judge（最广泛，LMSys 大规模验证，注意同模型自我确认偏见）；② Constitutional AI（Anthropic 方案，准则自我检查）；③ G-Eval/DeepEval（可量化评估框架，开源工具）。核心局限：Judge 和 Actor 用同款模型时有偏见，建议用不同提供商的模型做 Judge。</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ P10 面试题库（重写）══════════════════════ -->
+<div class="panel" id="p10">
+  <div class="callout"><strong>15 道高质量面试题，无重复，按难度分层，覆盖概念/设计/工程/哲学四个维度。</strong>点击展开答案。</div>
+
+  <div class="sl">🟢 基础层（概念理解）</div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge easy">基础</span>
+      <span class="iv-qtext">什么是 Agent Harness？和 Agent 本身有什么区别？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>参考答案：</strong>Agent 是模型本身——那个通过训练学会感知、推理、行动的神经网络（Claude、GPT 等）。Harness 是工程师写的代码，为模型提供工作环境：工具（文件/Shell/API）、知识（RAG/文档）、上下文管理（压缩/记忆）、权限控制（沙箱/审批）。<br><br>
+      <strong>核心区别：</strong>Agency 是学出来的，不是编出来的。Harness 改变模型能做什么，但不改变模型的智能程度。最好的 Agent 产品，出自明白自己工作是 Harness 而非 Intelligence 的工程师。
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge easy">基础</span>
+      <span class="iv-qtext">解释 ReAct 框架的工作原理，谁是主语？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>参考答案：</strong>每轮循环：① LLM 生成 Thought（推理状态文本）和 Action（工具调用意图）；② Harness 代码解析 Action，调用实际工具；③ 工具返回 Observation；④ Observation 追加到 messages，下一轮 LLM 可以参考。<br><br>
+      <strong>主语精确版：</strong>LLM "输出了"工具调用意图（文本），Harness 代码"执行了"工具。常见错误说法"Agent 调用了工具"模糊了这个区别，导致错误处理、权限控制被遗漏。
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge easy">基础</span>
+      <span class="iv-qtext">RAG 和 Agent 长期记忆是同一回事吗？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>参考答案：</strong>不是。RAG 是只读的通用知识库（产品文档、FAQ，所有用户共享，工程师预建）；长期记忆是读写的个性化用户信息（偏好、历史，每用户独立，随对话积累）。RAG 是"查资料"，长期记忆是"记住你"。两者都可以用向量数据库实现，这是混淆的原因。实际系统两者共存：AI 客服既用 RAG 查保修政策，又用长期记忆记住你买过什么。
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge easy">基础</span>
+      <span class="iv-qtext">什么情况下不应该用 Agent？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>四种不用的场景：</strong><br>
+      ① 任务只需文本生成（翻译、摘要、改写）→ 单次 LLM 调用更快更便宜<br>
+      ② 流程完全固定、步骤可预知 → Function Calling + 硬编码逻辑更可靠<br>
+      ③ 响应时间要求极低（&lt;1秒）→ Agent 多轮调用增加 3-10 秒<br>
+      ④ 错误代价高且 Human-in-the-loop 机制未建立 → 先建可靠性再引入 Agent<br><br>
+      <strong>判断标准：</strong>如果你能预先写出完整的 if-else 决策树，就不需要 Agent。Agent 的价值在于"步骤无法预知"。
+    </div>
+  </div>
+
+  <div class="sl">🟡 中级层（设计理解）</div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge mid">中级</span>
+      <span class="iv-qtext">单 Agent 和多 Agent 架构各适合什么场景？核心权衡是什么？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>单 Agent：</strong>简单、步骤少（&lt;10步）、工具集单一。Context 压力小，调试简单，成本低。<br><br>
+      <strong>多 Agent：</strong>大型复杂任务、可并行子任务、需要专精度。每个 Agent 工具集精简（5-10个）、上下文清晰，避免"工具混淆"。支持并行执行，速度更快。错误隔离——一个 Subagent 失败不影响其他。<br><br>
+      <strong>核心权衡：</strong>多 Agent 的工程复杂度显著高于单 Agent（通信协议、任务分发、结果汇总）。亚当·斯密分工的代价是"协调成本"——Orchestrator 本身的开销。建议：先用单 Agent 原型验证可行性，复杂度超阈值再拆分。
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge mid">中级</span>
+      <span class="iv-qtext">如何设计工具（Tool）使 Agent 能准确选择和使用？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>工具设计的三个核心属性：</strong><br>
+      · <strong>name</strong>：动词+名词，意图清晰（<code>search_web</code> 比 <code>tool1</code> 好）<br>
+      · <strong>description</strong>：LLM 选择工具的唯一依据。必须包含"什么时候用"和"什么时候不用"，用一句话区分相似工具<br>
+      · <strong>input_schema</strong>：严格定义参数类型，减少格式错误<br><br>
+      <strong>常见问题：</strong>两个工具功能相似时，description 必须明确区分（"用于实时信息" vs "用于历史文档"）。工具数量超过 15 个时考虑拆分为多 Agent。<br><br>
+      <strong>原则：</strong>工具要原子化、可组合——做好一件事，让 LLM 决定如何组合。
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge mid">中级</span>
+      <span class="iv-qtext">如何处理 Agent 在长链任务中的错误累积问题？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>数学视角：</strong>每步 95% 准确率 × 10步 = 59% 成功率。降低步数、提升每步准确率都有效。<br><br>
+      <strong>工程实践（5种）：</strong><br>
+      ① 精确工具 description → 减少误选<br>
+      ② 检查点机制 → 失败从检查点恢复，不从头重来<br>
+      ③ max_steps 上限 → 防止死循环，到限通知用户<br>
+      ④ Reflection/Critic Agent → 高风险步骤独立验证<br>
+      ⑤ 完整 Trace 日志 → 定位错误发生在哪一步<br><br>
+      <strong>根本解决：</strong>好的工具设计减少一阶错误；好的 Harness 设计让错误可恢复，而不是灾难性的。
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge mid">中级</span>
+      <span class="iv-qtext">LLM 的"置信度"如何实现？模型有原生的置信度输出吗？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>直接回答：</strong>LLM 没有原生的"置信度"接口，需要工程构建。<br><br>
+      <strong>4种实现方法：</strong><br>
+      ① Prompt 指令："不确定时输出 NEED_CLARIFICATION"（最简单）<br>
+      ② logprobs 概率分布（需 API 支持，有一定指示意义）<br>
+      ③ 多次采样一致性检验（最准确，成本 N 倍）<br>
+      ④ 操作类型风险规则（生产最可靠，不信任模型自我报告）<br><br>
+      <strong>根本局限：</strong>LLM 的"过度自信"问题——它可以用高置信度的语气输出错误内容（幻觉）。没有一种方法能完全解决这个问题，这也是 Human-in-the-loop 重要的原因。
+    </div>
+  </div>
+
+  <div class="sl">🔴 高级层（工程与哲学）</div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge hard">高级</span>
+      <span class="iv-qtext">为一个医疗辅助诊断系统设计 Agent 架构。要求：查询病历、搜索文献、生成建议、输出可追溯。</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>参考架构（多 Agent + 强 Human-in-the-loop）：</strong><br><br>
+      <strong>Orchestrator Agent：</strong>接收主诉，拆解诊断任务<br>
+      <strong>Record Agent：</strong>工具：patient_db_query, medical_history_read（只读）<br>
+      <strong>Research Agent：</strong>工具：pubmed_search, clinical_guideline_lookup, drug_interaction_check<br>
+      <strong>Analysis Agent：</strong>汇总以上输出，生成初步建议，附置信度说明<br>
+      <strong>Critic Agent（必须）：</strong>独立评估分析结果，检查逻辑一致性和安全禁忌<br><br>
+      <strong>关键设计原则：</strong><br>
+      · 所有诊断建议必须经医生确认（Human-in-the-loop 不可绕过）<br>
+      · 每步推理记录到 Trace，支持事后审计（可追溯性）<br>
+      · 工具全部只读，没有直接修改病历或开具处方的工具<br>
+      · 完整的不确定性说明——Agent 不应给出"确诊"，只给"建议进一步检查"
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge hard">高级</span>
+      <span class="iv-qtext">验证层 Agent（LLM-as-Judge）的主要局限是什么？如何缓解？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>核心局限：自我确认偏见。</strong>Judge 和 Actor 使用同一款模型时，Judge 会倾向于认可与自己训练分布相似的输出——包括同样的错误模式和幻觉类型。<br><br>
+      <strong>缓解方案：</strong><br>
+      ① 使用不同提供商的模型做 Judge（Anthropic Actor + OpenAI Judge）<br>
+      ② 给 Judge 明确的评估维度和打分标准，减少主观性<br>
+      ③ 多个 Judge 取多数票（Ensemble），减少单个模型偏见<br>
+      ④ 对 Judge 本身建立评估基准——用人工标注的案例测试 Judge 的判断准确率<br><br>
+      <strong>何时用：</strong>适合高风险、不可逆操作的验证；不适合所有操作（成本翻倍，增加延迟）。
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge hard">高级</span>
+      <span class="iv-qtext">Thought 是"格式化输出"还是"真实推理"？这个区别对工程实践有什么影响？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>正确立场：</strong>推理能力真实存在；Thought 是让推理可见的工程手段，不是推理本身的全部；主观意识无法证明，工程师不需要解决这个问题。<br><br>
+      <strong>工程影响：</strong><br>
+      · Thought 的价值是工程性的：丰富 context、提升输出质量、提供调试线索<br>
+      · 不要假设"Thought 说了A，模型就理解了A"——模型可能输出正确 Thought 但执行错误 Action（推理和行动之间仍有gap）<br>
+      · Extended Thinking（o1/o3）是增加推理计算预算的技术，适合需要深度推理的任务，但成本更高<br>
+      · Mechanistic Interpretability 研究正在尝试理解模型内部的"真实推理过程"，但目前仍不成熟
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge hard">高级</span>
+      <span class="iv-qtext">解释 Agent 演化史中"框架爆炸→收敛→标准化"的规律，并预测下一个收敛点。</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>规律描述：</strong>每次新能力出现 → 百团大战（LangChain/AutoGPT/BabyAGI）→ 几个主流框架胜出（LangGraph/AutoGen/CrewAI）→ 标准协议（MCP）。这是技术生态的普遍规律，类似 Web 框架（各种框架→Express/Django→REST标准）。<br><br>
+      <strong>下一个收敛点预测：</strong><br>
+      · <strong>Agent 间通信协议</strong>：多 Agent 之间如何传递任务、协商结果，目前仍无统一标准（README 中的 JSONL 邮箱协议是教学实现）<br>
+      · <strong>Agent 记忆标准</strong>：长期记忆的存取格式、隐私管理、跨 Agent 共享规范<br>
+      · <strong>Agent 评估标准</strong>：如何定量评估 Agent 在实际任务中的可靠性（超越 benchmark 的真实世界评估）
+    </div>
+  </div>
+
+  <div class="iv-card">
+    <div class="iv-head" onclick="toggleIv(this)">
+      <span class="iv-badge hard">高级</span>
+      <span class="iv-qtext">如果你负责把一个 Agent 系统从 PoC 推进到生产，最重要的三个工程决策是什么？</span>
+      <span class="iv-arrow">▼</span>
+    </div>
+    <div class="iv-body">
+      <strong>决策1：可观测性优先。</strong>在任何其他优化之前，先建立完整的 Trace 日志（每步 Thought/Action/Observation + 工具调用耗时 + 错误信息）。没有 Trace，你无法知道为什么失败，无法改进。<br><br>
+      <strong>决策2：不可逆操作的 Human-in-the-loop 机制。</strong>识别所有写操作（发邮件、修改数据库、部署代码），设计 dry-run + 审批流程。生产事故几乎都来自不可逆的写操作被错误执行。<br><br>
+      <strong>决策3：明确失败边界。</strong>定义"什么情况下 Agent 应该停止并通知人"，而不是继续猜测执行：max_steps 上限、工具失败处理策略、置信度低于阈值的处理。"优雅降级"比"崩溃"好，"承认不确定"比"继续猜测"好。
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ P11 学习资料 ══════════════════════ -->
+<div class="panel" id="p11">
+  <div class="callout"><strong>经过质量验证的 Agent 学习资料清单。</strong>按类型分类，标注难度和推荐阅读顺序。</div>
+
+  <div class="sl">📄 必读论文（奠基性）</div>
+
+  <div class="res-card">
+    <div class="res-icon">📄</div>
+    <div class="res-body">
+      <div class="res-title">ReAct: Synergizing Reasoning and Acting in Language Models（2022）</div>
+      <div class="res-sub">Yao et al. 提出 Thought-Action-Observation 框架，奠定 LLM Agent 循环模式的基础。读完能理解为什么 Thought 是工程手段而非意识。<br><span class="res-tag">基础必读</span><span class="res-tag">Arxiv</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">📄</div>
+    <div class="res-body">
+      <div class="res-title">Chain-of-Thought Prompting Elicits Reasoning in LLMs（2022）</div>
+      <div class="res-sub">Wei et al. 证明 CoT 有效性。解释了为什么写出中间步骤能提升推理质量——"丰富 context"视角。<br><span class="res-tag">基础必读</span><span class="res-tag">NeurIPS 2022</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">📄</div>
+    <div class="res-body">
+      <div class="res-title">A Survey on Large Language Model based Autonomous Agents（2023）</div>
+      <div class="res-sub">Comprehensive survey，覆盖 Agent 的架构、工具、记忆、规划、应用。建立全局视图最好的一篇 survey。<br><span class="res-tag">进阶</span><span class="res-tag">Arxiv 2308.11432</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">📄</div>
+    <div class="res-body">
+      <div class="res-title">Constitutional AI: Harmlessness from AI Feedback（2022）</div>
+      <div class="res-sub">Anthropic 论文，描述 Critic Agent 的正式版本——用 AI 自我批评+修改来对齐价值观。是"验证层 Agent"概念的学术来源。<br><span class="res-tag">进阶</span><span class="res-tag">Anthropic</span></div>
+    </div>
+  </div>
+
+  <div class="sl">🏗 实践代码仓库（动手学）</div>
+
+  <div class="res-card">
+    <div class="res-icon">🏗</div>
+    <div class="res-body">
+      <div class="res-title">learn-claude-code（shareAI-lab）</div>
+      <div class="res-sub">本次 README 来源。12个递进课程从最小 Agent 循环到 Worktree 隔离。<strong>最推荐的动手实践资源</strong>，心智模型优先，每课程一句格言。适合理解 Harness 工程。<br><span class="res-tag">中文</span><span class="res-tag">Python</span><span class="res-tag">强烈推荐</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">🏗</div>
+    <div class="res-body">
+      <div class="res-title">Anthropic Cookbook</div>
+      <div class="res-sub">Anthropic 官方代码示例，包含 Tool Use、Multi-agent、Memory 等完整示例。直接用 Anthropic API 实现，无额外框架依赖，代码最简洁。<br><span class="res-tag">英文</span><span class="res-tag">Python</span><span class="res-tag">官方</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">🏗</div>
+    <div class="res-body">
+      <div class="res-title">LangGraph 官方文档 + Tutorials</div>
+      <div class="res-sub">图状态机 Agent 框架，有完整的 Multi-agent、Human-in-the-loop、Checkpointing 示例。适合学习生产级 Agent 编排的工程模式。<br><span class="res-tag">英文</span><span class="res-tag">Python</span><span class="res-tag">生产框架</span></div>
+    </div>
+  </div>
+
+  <div class="sl">📖 深度理解（哲学与原理）</div>
+
+  <div class="res-card">
+    <div class="res-icon">📖</div>
+    <div class="res-body">
+      <div class="res-title">Attention Is All You Need（2017）</div>
+      <div class="res-sub">Transformer 原论文。理解 LLM"认知"机制的基础——注意力机制如何让模型"关注"相关信息。不需要看所有数学，理解直觉即可。<br><span class="res-tag">基础理论</span><span class="res-tag">NeurIPS 2017</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">📖</div>
+    <div class="res-body">
+      <div class="res-title">Mechanistic Interpretability（Anthropic 研究方向）</div>
+      <div class="res-sub">尝试理解 LLM 内部的"真实推理过程"。"Superposition"等概念解释了为什么 LLM 能同时处理多种概念。想深入理解"模型里面发生了什么"必读。<br><span class="res-tag">高级理论</span><span class="res-tag">Anthropic Blog</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">📖</div>
+    <div class="res-body">
+      <div class="res-title">Scaling Laws for Neural Language Models（2020）</div>
+      <div class="res-sub">OpenAI 论文，描述模型性能随参数量/数据/算力的规律。理解为什么"更大的模型 = 更强的 Agent"的底层原因，以及 Scaling 的边界。<br><span class="res-tag">进阶理论</span><span class="res-tag">OpenAI</span></div>
+    </div>
+  </div>
+
+  <div class="sl">📰 持续关注（保持更新）</div>
+
+  <div class="res-card">
+    <div class="res-icon">📰</div>
+    <div class="res-body">
+      <div class="res-title">Anthropic Model Card + System Prompt 研究</div>
+      <div class="res-sub">Anthropic 定期更新的 Claude 使用指南和 Model Card。理解 Claude 的"设计意图"——为什么某些行为方式被优化，对 Harness 设计有直接指导意义。<br><span class="res-tag">实用</span><span class="res-tag">定期更新</span></div>
+    </div>
+  </div>
+
+  <div class="res-card">
+    <div class="res-icon">📰</div>
+    <div class="res-body">
+      <div class="res-title">AI Alignment Forum + LessWrong（Agent 安全视角）</div>
+      <div class="res-sub">包含大量关于 Agent 可靠性、对齐、Human-in-the-loop 的深度讨论。批判性视角，帮助理解"什么情况下 Agent 会失控"以及工程对策。<br><span class="res-tag">批判视角</span><span class="res-tag">英文</span></div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <div class="sl">来自 README 的核心参考意见</div>
+  <div class="callout-green">
+    <strong>README 带来的最重要视角修正：</strong><br><br>
+    1. <strong>Agent = Model，这是这个领域最被误解的一句话。</strong>大多数"Agent 教程"教的是 Harness 工程，但用了 Agent 这个词，导致认知混乱。<br><br>
+    2. <strong>Harness 工程师的自我定位：</strong>"你不是在编写智能，你是在构建智能栖居的世界"。这个心智模型决定了你设计工具、管理权限、构建知识库的方式。<br><br>
+    3. <strong>最小循环就是全部：</strong>while + stop_reason + tool_dispatch。所有复杂性都是在这个循环之上叠加的 Harness 机制，循环本身永远不变。<br><br>
+    4. <strong>收集任务过程数据的战略价值：</strong>Agent 在 Harness 中执行的每一条行动序列都是训练信号。好的 Harness 不只是让当前模型工作，它还在为下一代模型积累数据。
+  </div>
+</div>
+
+<!-- ══════════════════════ P12 理解验证 ══════════════════════ -->
+<div class="panel" id="p12">
+  <div class="callout"><strong>10 道题，覆盖 v3 新增内容和核心概念。</strong>点击选项即时获得答案。</div>
+
+  <div id="quiz-score-area" style="margin-bottom:14px;display:none">
+    <div class="callout-blue">得分：<span class="quiz-score" id="quiz-score">0</span> / 10 &nbsp;&nbsp;<span id="quiz-level"></span></div>
+  </div>
+
+  <div class="quiz-q" id="qq1">
+    <div class="quiz-qtext">1. 以下哪句话最准确地描述了 Agent 和 Harness 的关系？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(1,'a')">A. Agent 是框架，Harness 是模型</div>
+      <div class="quiz-opt" onclick="ans(1,'b')">B. Agent 是模型本身（那个学会了行动的神经网络），Harness 是工程师构建的工作环境</div>
+      <div class="quiz-opt" onclick="ans(1,'c')">C. Agent 和 Harness 是同一回事，都指 LangChain 这类编排框架</div>
+      <div class="quiz-opt" onclick="ans(1,'d')">D. Harness 是 Agent 的子集，Agent 包含 Harness</div>
+    </div>
+    <div class="quiz-exp" id="qe1">B 正确。Agent 永远是模型本身（Claude、GPT 等训练好的神经网络）。Harness 是工具+知识+观察+动作接口+权限的工作环境。"Agency 是学出来的，不是编出来的。"</div>
+  </div>
+
+  <div class="quiz-q" id="qq2">
+    <div class="quiz-qtext">2. 在 LLM 语境中，"1M tokens" 等于多少？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(2,'a')">A. 1,048,576（2²⁰，计算机二进制 MiB）</div>
+      <div class="quiz-opt" onclick="ans(2,'b')">B. 1,000,000（SI 十进制，API 定价和文档的标准）</div>
+      <div class="quiz-opt" onclick="ans(2,'c')">C. 100,000（10 万）</div>
+      <div class="quiz-opt" onclick="ans(2,'d')">D. 视模型而定，没有统一标准</div>
+    </div>
+    <div class="quiz-exp" id="qe2">B 正确。Anthropic/OpenAI 的 API 定价和文档全部用 SI 十进制：1M = 1,000,000。1M tokens ≈ 65-75 万汉字（约一部大型长篇小说）。</div>
+  </div>
+
+  <div class="quiz-q" id="qq3">
+    <div class="quiz-qtext">3. "多 Agent 架构 ≈ 工业分工"这个类比，最核心的同构是？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(3,'a')">A. 两者都需要一个"老板"来管理其他人</div>
+      <div class="quiz-opt" onclick="ans(3,'b')">B. 分工带来专精度提升、并行执行、错误隔离，Orchestrator 类似 PMO</div>
+      <div class="quiz-opt" onclick="ans(3,'c')">C. 多 Agent 和工厂流水线一样，都是严格线性的顺序执行</div>
+      <div class="quiz-opt" onclick="ans(3,'d')">D. 两者都通过增加"工人"数量来提升速度</div>
+    </div>
+    <div class="quiz-exp" id="qe3">B 正确。分工的核心价值是专精（减少工具混淆、上下文清晰）+ 并行 + 错误隔离，不只是"速度"。类比边界：工厂是线性流水线，多 Agent 可以是网状并行；Orchestrator 自己也是可以动态调整的模型。</div>
+  </div>
+
+  <div class="quiz-q" id="qq4">
+    <div class="quiz-qtext">4. 实现"置信度门控"最适合生产环境的方法是？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(4,'a')">A. 让模型输出 0-1 之间的置信度分数</div>
+      <div class="quiz-opt" onclick="ans(4,'b')">B. 获取所有输出 token 的 logprobs，计算平均概率</div>
+      <div class="quiz-opt" onclick="ans(4,'c')">C. 通过操作类型风险规则：读操作自主，写操作确认，不可逆操作必须审批</div>
+      <div class="quiz-opt" onclick="ans(4,'d')">D. 运行 100 次取众数</div>
+    </div>
+    <div class="quiz-exp" id="qe4">C 正确。操作类型风险规则是生产最可靠的方案——不信任模型的自我报告（幻觉问题），通过操作类型白名单管理风险。其他方法（logprobs、多次采样）有价值但有局限。</div>
+  </div>
+
+  <div class="quiz-q" id="qq5">
+    <div class="quiz-qtext">5. LLM-as-Judge（验证层 Agent）最主要的已知局限是？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(5,'a')">A. 太慢了，无法用于生产环境</div>
+      <div class="quiz-opt" onclick="ans(5,'b')">B. Judge 和 Actor 用同一款模型时，会有自我确认偏见——倾向于认可与自己训练分布相似的输出</div>
+      <div class="quiz-opt" onclick="ans(5,'c')">C. 只能评估代码质量，不能评估文本</div>
+      <div class="quiz-opt" onclick="ans(5,'d')">D. 这是 Anthropic 专有技术，开源模型无法使用</div>
+    </div>
+    <div class="quiz-exp" id="qe5">B 正确。自我确认偏见是 LLM-as-Judge 的核心局限。缓解方案：使用不同提供商的模型做 Judge；多 Judge 取多数票；用人工标注案例测试 Judge 本身的准确率。</div>
+  </div>
+
+  <div class="quiz-q" id="qq6">
+    <div class="quiz-qtext">6. Thought（CoT 中）和 Reasoning（推理能力）的区别是？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(6,'a')">A. 两者完全相同，都指 LLM 的主观意识流</div>
+      <div class="quiz-opt" onclick="ans(6,'b')">B. Thought 是外化的可见推理记录文本，Reasoning 是从前提得出结论的能力（可以不依赖显式文本）</div>
+      <div class="quiz-opt" onclick="ans(6,'c')">C. Reasoning 只存在于 o1/o3，普通模型只有 Thought</div>
+      <div class="quiz-opt" onclick="ans(6,'d')">D. Thought 是高质量的，Reasoning 是低质量的</div>
+    </div>
+    <div class="quiz-exp" id="qe6">B 正确。Reasoning 是能力（功能），可以不依赖显式 Thought 标记存在。Thought 是让 Reasoning 外化可见的工程手段。Extended Thinking 是增加 Reasoning 计算预算，本质上是更多的 Thought token。</div>
+  </div>
+
+  <div class="quiz-q" id="qq7">
+    <div class="quiz-qtext">7. 关于 Agent 演化史，以下哪个说法最准确？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(7,'a')">A. Agent 是 2022 年 ChatGPT 发布后才出现的新概念</div>
+      <div class="quiz-opt" onclick="ans(7,'b')">B. Agent 的概念随 LLM 框架（LangChain 等）一起出现</div>
+      <div class="quiz-opt" onclick="ans(7,'c')">C. Agent 从 AI 领域诞生就存在，2013 年 DQN 等强化学习模型已经是完整的 Agent</div>
+      <div class="quiz-opt" onclick="ans(7,'d')">D. Agent 是 Anthropic 提出的新概念</div>
+    </div>
+    <div class="quiz-exp" id="qe7">C 正确。DeepMind DQN（2013）、OpenAI Five（2019）、AlphaStar（2019）都是完整的 Agent——学会了感知、推理、行动的神经网络模型。LLM 只是让 Agent 的能力变得更通用，不是发明了 Agent 这个概念。</div>
+  </div>
+
+  <div class="quiz-q" id="qq8">
+    <div class="quiz-qtext">8. LLM 的"意图识别"是通过哪种机制实现的？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(8,'a')">A. 一个专门的意图识别神经网络模块</div>
+      <div class="quiz-opt" onclick="ans(8,'b')">B. 硬编码的规则匹配系统</div>
+      <div class="quiz-opt" onclick="ans(8,'c')">C. 通过在海量 (输入→意图→合理回应) 数据上训练，学会了 token 序列的统计模式，泛化到新输入</div>
+      <div class="quiz-opt" onclick="ans(8,'d')">D. 实时的互联网搜索来理解用户意图</div>
+    </div>
+    <div class="quiz-exp" id="qe8">C 正确。LLM 没有专门的"意图识别模块"——它通过预测"下一个 token"学会了大量语义模式，在推理时泛化到新输入。这也解释了为什么模糊 prompt 会导致意图识别失败（训练数据中没有类似的模式）。</div>
+  </div>
+
+  <div class="quiz-q" id="qq9">
+    <div class="quiz-qtext">9. 从 PoC 推进到生产的 Agent 系统，最重要的第一步是？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(9,'a')">A. 换用更强大的模型</div>
+      <div class="quiz-opt" onclick="ans(9,'b')">B. 建立完整的可观测性系统（每步 Trace 日志）</div>
+      <div class="quiz-opt" onclick="ans(9,'c')">C. 增加更多工具</div>
+      <div class="quiz-opt" onclick="ans(9,'d')">D. 把单 Agent 改成多 Agent 架构</div>
+    </div>
+    <div class="quiz-exp" id="qe9">B 正确。没有完整的 Trace，你无法知道为什么失败，无法定位错误，无法改进。可观测性是所有其他优化的前提。换模型、增工具、改架构都需要基于观测数据做决策。</div>
+  </div>
+
+  <div class="quiz-q" id="qq10">
+    <div class="quiz-qtext">10. README 中"造好 Harness，Agent 会完成剩下的"这句话，对工程师最重要的启示是？</div>
+    <div class="quiz-opts">
+      <div class="quiz-opt" onclick="ans(10,'a')">A. 只需要好的 Harness，不需要好的模型</div>
+      <div class="quiz-opt" onclick="ans(10,'b')">B. Harness 是万能的，任何任务都能通过 Harness 工程解决</div>
+      <div class="quiz-opt" onclick="ans(10,'c')">C. 工程师的职责是构建让智能表达自己的环境（工具、知识、权限），而不是通过堆叠 if-else 来模拟智能</div>
+      <div class="quiz-opt" onclick="ans(10,'d')">D. Agent 可以完全自主运行，不需要人的参与</div>
+    </div>
+    <div class="quiz-exp" id="qe10">C 正确。最好的 Agent 产品，出自明白"自己的工作是 Harness 而非 Intelligence"的工程师。给模型提供清晰的工具、精准的知识、合理的权限边界——然后让开，让模型做决策。试图用代码模拟智能（GOFAI 路线）是死路。</div>
+  </div>
+
+  <button onclick="resetQuiz()" style="margin-top:8px;padding:7px 18px;border-radius:7px;background:#F26419;color:#fff;border:none;cursor:pointer;font-size:12px">重置测验</button>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// Tab switching
+var panels = document.querySelectorAll('.panel');
+var tabs = document.querySelectorAll('.tab');
+function show(i) {
+  panels.forEach(function(p,j){ p.classList.toggle('active', i===j); });
+  tabs.forEach(function(t,j){ t.classList.toggle('active', i===j); });
+  window.scrollTo(0, 0);
+}
+
+// Interview card toggle
+function toggleIv(head) {
+  var body = head.nextElementSibling;
+  var arrow = head.querySelector('.iv-arrow');
+  body.classList.toggle('open');
+  arrow.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+// Quiz
+var correct = {1:'b',2:'b',3:'b',4:'c',5:'b',6:'b',7:'c',8:'c',9:'b',10:'c'};
+var done = {}, score = 0;
+
+function ans(q, c) {
+  if (done[q]) return;
+  done[q] = c;
+  var opts = document.querySelectorAll('#qq'+q+' .quiz-opt');
+  opts.forEach(function(o,i){
+    var l = ['a','b','c','d'][i];
+    if (l===correct[q]) o.classList.add('correct');
+    else if (l===c && c!==correct[q]) o.classList.add('wrong');
+  });
+  document.getElementById('qe'+q).classList.add('show');
+  if (c===correct[q]) score++;
+  if (Object.keys(done).length===10) {
+    document.getElementById('quiz-score-area').style.display='block';
+    document.getElementById('quiz-score').textContent=score;
+    document.getElementById('quiz-level').textContent=
+      score>=9?'🎉 L4-L5，理解扎实':score>=7?'🙂 L3，核心概念掌握':'📖 建议再读一遍';
+  }
+}
+
+function resetQuiz() {
+  done={}; score=0;
+  document.getElementById('quiz-score-area').style.display='none';
+  for(var i=1;i<=10;i++){
+    document.querySelectorAll('#qq'+i+' .quiz-opt').forEach(function(o){o.classList.remove('correct','wrong');});
+    document.getElementById('qe'+i).classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>

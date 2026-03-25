@@ -1,0 +1,2556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning & Reasoning · AI Agent 架构 · 5D 框架</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  background: #f5f4f0; color: #1a1a18; min-height: 100vh;
+}
+
+/* ── Top Nav ── */
+.top-nav {
+  background: #0c0f14; padding: 9px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.top-nav-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; color: #e8e6de; letter-spacing: .04em;
+}
+.nav-dot { width: 7px; height: 7px; border-radius: 50%; background: #F26419; }
+.top-nav-right { display: flex; gap: 6px; align-items: center; }
+.badge {
+  font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: #F26419; background: rgba(242,100,25,.12);
+  padding: 2px 9px; border-radius: 10px; border: 1px solid rgba(242,100,25,.3);
+}
+.prereq {
+  font-size: 10px; color: #666460; background: #1c1a17;
+  border: 1px solid #2a2825; padding: 2px 8px; border-radius: 3px;
+}
+
+/* ── Tabs ── */
+.tabs {
+  background: #fff; border-bottom: 0.5px solid #e0dcd4;
+  display: flex; padding: 0 16px; gap: 2px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 11px 14px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; background: none;
+  color: #888780; white-space: nowrap;
+  border-bottom: 2.5px solid transparent; transition: all .18s;
+}
+.tab.active { color: #F26419; border-bottom-color: #F26419; }
+.tab:hover:not(.active) { color: #3a3a38; }
+.tab.verify { color: #7c6ad1; }
+.tab.verify.active { color: #7c6ad1; border-bottom-color: #7c6ad1; }
+.tab.why { color: #2a9d8f; }
+.tab.why.active { color: #2a9d8f; border-bottom-color: #2a9d8f; }
+.tab.newbie { color: #e76f51; }
+.tab.newbie.active { color: #e76f51; border-bottom-color: #e76f51; }
+.tab.history { color: #6b7fd4; }
+.tab.history.active { color: #6b7fd4; border-bottom-color: #6b7fd4; }
+.tab.prod { color: #d4826b; }
+.tab.prod.active { color: #d4826b; border-bottom-color: #d4826b; }
+.tab.interview { color: #4a9e6b; }
+.tab.interview.active { color: #4a9e6b; border-bottom-color: #4a9e6b; }
+
+/* ── Timeline ── */
+.timeline { position: relative; padding-left: 24px; margin: 16px 0; }
+.timeline::before { content:''; position:absolute; left:7px; top:0; bottom:0; width:2px; background:linear-gradient(to bottom,#F26419,rgba(242,100,25,.1)); }
+.tl-item { position:relative; margin-bottom:20px; }
+.tl-dot { position:absolute; left:-21px; top:4px; width:14px; height:14px; border-radius:50%; background:#F26419; border:2px solid #fff; box-shadow:0 0 0 2px #F26419; }
+.tl-dot.minor { background:#e8e4dc; box-shadow:0 0 0 2px #d0ccc4; }
+.tl-year { font-size:10px; font-weight:800; color:#F26419; letter-spacing:.08em; margin-bottom:3px; }
+.tl-title { font-size:13.5px; font-weight:700; color:#1a1a18; margin-bottom:4px; }
+.tl-body { font-size:12.5px; color:#555550; line-height:1.7; }
+.tl-body strong { color:#1a1a18; }
+.tl-paper { display:inline-flex; align-items:center; gap:4px; background:#fff; border:1px solid #e0dcd4; border-radius:4px; padding:2px 8px; font-size:10px; color:#555550; margin-top:4px; }
+.tl-insight { background:#fff5ee; border:1px solid #f5d5bb; border-radius:6px; padding:8px 12px; margin-top:8px; font-size:12px; color:#C0430A; }
+.tl-big { background:#0c0f14; border-radius:8px; padding:12px 14px; margin-top:8px; }
+.tl-big-title { font-size:12px; font-weight:700; color:#F26419; margin-bottom:4px; }
+.tl-big-body { font-size:12px; color:#888780; line-height:1.6; }
+
+/* ── Mode Origin Cards ── */
+.origin-card { background:#fff; border:1px solid #e8e4dc; border-radius:12px; margin-bottom:16px; overflow:hidden; }
+.origin-head { padding:14px 16px; display:flex; align-items:flex-start; gap:12px; }
+.origin-year-badge { background:#0c0f14; color:#F26419; font-size:9px; font-weight:800; letter-spacing:.08em; padding:3px 8px; border-radius:4px; white-space:nowrap; margin-top:2px; flex-shrink:0; }
+.origin-name { font-size:15px; font-weight:800; color:#1a1a18; margin-bottom:3px; }
+.origin-subtitle { font-size:11px; color:#888780; }
+.origin-body { padding:0 16px 16px; }
+.origin-section { margin-bottom:10px; }
+.origin-section-label { font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#888780; margin-bottom:4px; }
+.origin-section p { font-size:12.5px; }
+.origin-problem { background:#fff5f5; border:1px solid #ffc5b0; border-radius:6px; padding:8px 12px; font-size:12px; color:#b8432a; margin-bottom:8px; }
+.origin-problem::before { content:"⚠️ 解决的问题："; font-weight:700; }
+.origin-solution { background:#f5fff8; border:1px solid #b8e8c8; border-radius:6px; padding:8px 12px; font-size:12px; color:#1a4d2a; }
+.origin-solution::before { content:"✓ 核心贡献："; font-weight:700; }
+.deep-cmp { background:#0c0f14; border-radius:12px; padding:16px; margin:16px 0; }
+.deep-cmp-title { font-size:11px; font-weight:700; color:#F26419; letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px; }
+.deep-cmp-row { display:grid; grid-template-columns:120px 1fr 1fr 1fr; gap:8px; margin-bottom:8px; align-items:start; }
+.deep-cmp-row.header { margin-bottom:4px; }
+.deep-cmp-label { font-size:10px; color:#555550; }
+.deep-cmp-head { font-size:11px; font-weight:700; color:#F26419; text-align:center; }
+.deep-cmp-cell { font-size:11px; color:#888780; line-height:1.5; text-align:center; padding:6px 4px; background:rgba(255,255,255,.04); border-radius:4px; }
+.deep-cmp-cell.best { color:#7eb8a4; font-weight:600; }
+.deep-cmp-cell.worst { color:#e05a3a; }
+
+/* ── Problem-Solution ── */
+.prob-item { background:#fff; border:1px solid #e8e4dc; border-radius:12px; margin-bottom:14px; overflow:hidden; }
+.prob-head { background:#faf9f7; padding:12px 16px; display:flex; align-items:center; gap:10px; border-bottom:0.5px solid #e8e4dc; }
+.prob-severity { font-size:9px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border-radius:3px; white-space:nowrap; }
+.sev-high { background:#fee2e2; color:#b91c1c; }
+.sev-mid { background:#fef3c7; color:#92400e; }
+.sev-low { background:#d1fae5; color:#065f46; }
+.prob-title { font-size:13px; font-weight:700; color:#1a1a18; flex:1; }
+.prob-body { padding:14px 16px; }
+.prob-scene { font-size:12.5px; color:#555550; line-height:1.6; margin-bottom:10px; }
+.prob-scene::before { content:"场景："; font-weight:700; color:#888780; }
+.solutions { display:flex; flex-direction:column; gap:8px; }
+.solution-item { background:#f5f4f0; border-radius:8px; padding:10px 12px; }
+.solution-label { font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#2a9d8f; margin-bottom:4px; }
+.solution-title { font-size:12.5px; font-weight:700; color:#1a1a18; margin-bottom:3px; }
+.solution-body { font-size:12px; color:#555550; line-height:1.6; }
+.code-inline { background:#0c0f14; color:#c9a95a; padding:1px 5px; border-radius:3px; font-size:10.5px; font-family:"JetBrains Mono","Fira Code",monospace; }
+
+/* ── Interview ── */
+.itvw-item { background:#fff; border:1px solid #e8e4dc; border-radius:12px; margin-bottom:14px; overflow:hidden; }
+.itvw-head { padding:12px 16px; cursor:pointer; display:flex; align-items:flex-start; gap:10px; }
+.itvw-level { font-size:9px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border-radius:3px; white-space:nowrap; margin-top:2px; flex-shrink:0; }
+.lv-basic { background:#dbeafe; color:#1e40af; }
+.lv-mid { background:#fef3c7; color:#92400e; }
+.lv-hard { background:#fee2e2; color:#b91c1c; }
+.lv-arch { background:#ede9fe; color:#4c1d95; }
+.itvw-q { font-size:13px; font-weight:600; color:#1a1a18; flex:1; line-height:1.5; }
+.itvw-toggle { color:#888780; font-size:14px; transition:transform .2s; flex-shrink:0; margin-top:2px; }
+.itvw-toggle.open { transform:rotate(180deg); }
+.itvw-body { display:none; padding:0 16px 16px; border-top:0.5px solid #f0ece6; }
+.itvw-body.open { display:block; }
+.itvw-framework { margin-top:12px; }
+.itvw-framework-label { font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#4a9e6b; margin-bottom:6px; }
+.answer-point { display:flex; gap:8px; margin-bottom:8px; align-items:flex-start; }
+.answer-num { width:18px; height:18px; border-radius:50%; background:#4a9e6b; color:#fff; font-size:8px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+.answer-text { font-size:12.5px; color:#3a3a36; line-height:1.6; flex:1; }
+.itvw-trap { background:#fff9f5; border:1px solid #f5d5bb; border-radius:6px; padding:8px 12px; margin-top:8px; font-size:12px; color:#C0430A; line-height:1.6; }
+.itvw-trap::before { content:"⚡ 常见失误："; font-weight:700; }
+.callout-purple {
+  background:linear-gradient(135deg,#faf5ff,#f3e8ff);
+  border:1px solid #d8b4fe; border-left:4px solid #7c3aed;
+  border-radius:8px; padding:14px 16px;
+  font-size:13.5px; line-height:1.7; color:#2e1065; margin-bottom:20px;
+}
+.callout-purple strong { color:#5b21b6; }
+
+/* ── Layout ── */
+.layout { max-width: 820px; margin: 0 auto; padding: 24px 16px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Common ── */
+.callout {
+  background: linear-gradient(135deg, #fff9f5 0%, #fff5ee 100%);
+  border: 1px solid #f5d5bb; border-left: 4px solid #F26419;
+  border-radius: 8px; padding: 14px 16px;
+  font-size: 13.5px; line-height: 1.7; color: #3a2a1a; margin-bottom: 20px;
+}
+.callout strong { color: #C0430A; }
+
+.callout-teal {
+  background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%);
+  border: 1px solid #b2dfdb; border-left: 4px solid #2a9d8f;
+  border-radius: 8px; padding: 14px 16px;
+  font-size: 13.5px; line-height: 1.7; color: #1a3a38; margin-bottom: 20px;
+}
+.callout-teal strong { color: #1d6b63; }
+
+.callout-coral {
+  background: linear-gradient(135deg, #fff8f5 0%, #fff0ec 100%);
+  border: 1px solid #ffc5b0; border-left: 4px solid #e76f51;
+  border-radius: 8px; padding: 14px 16px;
+  font-size: 13.5px; line-height: 1.7; color: #3a1a10; margin-bottom: 20px;
+}
+.callout-coral strong { color: #b8432a; }
+
+.section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #F26419; margin: 24px 0 10px;
+}
+.section-label:first-child { margin-top: 0; }
+
+h3 { font-size: 15px; font-weight: 600; color: #1a1a18; margin-bottom: 6px; }
+p { font-size: 13.5px; line-height: 1.8; color: #3a3a36; margin-bottom: 10px; }
+p:last-child { margin-bottom: 0; }
+
+/* ── Flow ── */
+.flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 14px 0 20px; }
+.flow-node {
+  background: #fff; border: 1px solid #e8e4dc;
+  border-radius: 10px; padding: 10px 14px; text-align: center; min-width: 90px;
+}
+.fn-title { font-size: 12px; font-weight: 600; color: #1a1a18; }
+.fn-sub { font-size: 10px; color: #888780; margin-top: 2px; }
+.fn-highlight { background: #fff5ee; border-color: #F26419; }
+.fn-highlight .fn-title { color: #C0430A; }
+.flow-arrow { font-size: 16px; color: #C0430A; font-weight: 700; }
+
+/* ── Cards ── */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+@media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+.card { background: #fff; border: 1px solid #e8e4dc; border-radius: 10px; padding: 14px 16px; }
+.card-title { font-size: 12px; font-weight: 700; color: #1a1a18; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.card-icon { font-size: 16px; }
+.card p { font-size: 12.5px; }
+
+/* ── Table ── */
+.cmp-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 14px 0; }
+.cmp-table th {
+  background: #0c0f14; color: #e8e6de; padding: 9px 12px; text-align: left;
+  font-size: 11px; font-weight: 600; letter-spacing: .05em;
+}
+.cmp-table th:first-child { border-radius: 8px 0 0 0; }
+.cmp-table th:last-child { border-radius: 0 8px 0 0; }
+.cmp-table td { padding: 9px 12px; border-bottom: 0.5px solid #e8e4dc; vertical-align: top; }
+.cmp-table tr:nth-child(even) td { background: #faf9f7; }
+.cmp-table tr:last-child td { border-bottom: none; }
+.cmp-table .hl { color: #C0430A; font-weight: 600; }
+
+/* ── Analogy ── */
+.analogy-box { background: #fff; border: 1px solid #e8e4dc; border-radius: 12px; overflow: hidden; margin: 14px 0; }
+.analogy-left { padding: 16px; background: #0c0f14; color: #e8e6de; }
+.analogy-right { padding: 16px; }
+.analogy-tag { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #F26419; margin-bottom: 6px; }
+.analogy-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.analogy-body { font-size: 12.5px; line-height: 1.7; color: #888780; }
+.analogy-right .analogy-body { color: #3a3a36; }
+.analogy-divider {
+  display: flex; align-items: center; justify-content: center;
+  background: #f5f4f0; padding: 8px;
+  font-size: 11px; font-weight: 700; color: #F26419; letter-spacing: .1em; text-transform: uppercase;
+}
+
+/* ── Error Items ── */
+.error-item {
+  background: #fff; border: 1px solid #e8e4dc; border-left: 4px solid #e05a3a;
+  border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;
+}
+.error-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #e05a3a; margin-bottom: 5px; }
+.error-title { font-size: 13.5px; font-weight: 700; color: #1a1a18; margin-bottom: 6px; }
+.error-fix {
+  background: #f5fff8; border: 0.5px solid #b8e8c8; border-radius: 6px; padding: 8px 12px;
+  font-size: 12px; color: #1a4d2a; margin-top: 8px;
+}
+.error-fix::before { content: "✓ 修正方案："; font-weight: 700; }
+
+/* ── Scenario ── */
+.scenario { background: #fff; border: 1px solid #e8e4dc; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+.scenario-head { background: #0c0f14; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.scenario-num {
+  width: 24px; height: 24px; background: #F26419; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.scenario-title { font-size: 13px; font-weight: 600; color: #e8e6de; }
+.scenario-body { padding: 14px 16px; }
+.step-flow { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; margin: 10px 0; }
+.step { background: #f5f4f0; border: 1px solid #e0dcd4; border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #3a3a36; }
+.step.active-step { background: #fff5ee; border-color: #F26419; color: #C0430A; font-weight: 600; }
+.step-arrow { color: #C0430A; font-size: 14px; margin-top: 4px; }
+
+/* ── Code Block ── */
+.code-block {
+  background: #0c0f14; border-radius: 8px; padding: 14px 16px;
+  font-family: "JetBrains Mono","Fira Code",monospace;
+  font-size: 11.5px; line-height: 1.7; color: #c8c4bc; margin: 10px 0; overflow-x: auto;
+}
+.code-comment { color: #555550; }
+.code-key { color: #F26419; }
+.code-val { color: #7eb8a4; }
+.code-str { color: #c9a95a; }
+
+/* ── Quiz ── */
+.quiz-item { background: #fff; border: 1px solid #e8e4dc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.quiz-q { font-size: 13.5px; font-weight: 600; color: #1a1a18; margin-bottom: 12px; line-height: 1.6; }
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt {
+  padding: 10px 14px; border: 1px solid #e0dcd4; border-radius: 8px;
+  cursor: pointer; display: flex; align-items: center; gap: 10px;
+  transition: all .18s; font-size: 13px; color: #3a3a36;
+}
+.quiz-opt:hover:not(.revealed) { border-color: #F26419; background: #fff9f6; }
+.quiz-opt.correct { background: #f0fff4; border-color: #48bb78; color: #276749; }
+.quiz-opt.wrong { background: #fff5f5; border-color: #fc8181; color: #c53030; }
+.quiz-opt-label {
+  width: 22px; height: 22px; border: 1.5px solid #d0ccc4; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0; color: #888780;
+}
+.quiz-opt.correct .quiz-opt-label { border-color: #48bb78; background: #48bb78; color: #fff; }
+.quiz-opt.wrong .quiz-opt-label { border-color: #fc8181; background: #fc8181; color: #fff; }
+.quiz-explain { display: none; margin-top: 10px; padding: 10px 12px; background: #faf9f7; border-radius: 6px; font-size: 12px; color: #555550; line-height: 1.6; }
+.quiz-explain.show { display: block; }
+.quiz-score { display: none; margin-top: 20px; background: linear-gradient(135deg, #fff9f5, #fff5ee); border: 1px solid #f5d5bb; border-radius: 12px; padding: 20px; text-align: center; }
+.quiz-score-num { font-size: 36px; font-weight: 800; color: #F26419; }
+.quiz-score-msg { font-size: 14px; color: #3a3a36; margin-top: 6px; }
+
+/* ── Method Box ── */
+.method-box { background: #0c0f14; border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
+.method-label { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #F26419; margin-bottom: 6px; }
+.method-title { font-size: 16px; font-weight: 700; color: #e8e6de; margin-bottom: 10px; }
+.method-body { font-size: 13px; line-height: 1.8; color: #888780; }
+.method-body strong { color: #c8c4bc; }
+
+/* ── 3 Whys ── */
+.why-chain { margin: 20px 0; }
+.why-block {
+  position: relative; margin-left: 0;
+  transition: all .2s;
+}
+.why-connector {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 4px 0;
+}
+.why-num {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800; letter-spacing: .04em;
+}
+.why-num.w1 { background: #2a9d8f; color: #fff; }
+.why-num.w2 { background: rgba(42,157,143,.6); color: #fff; }
+.why-num.w3 { background: rgba(42,157,143,.3); color: #1d6b63; }
+.why-line {
+  width: 2px; background: linear-gradient(to bottom, #2a9d8f, rgba(42,157,143,.15));
+  margin: 0 0 0 13px; height: 24px; flex-shrink: 0;
+}
+.why-content {
+  flex: 1; background: #fff; border: 1px solid #e8e4dc;
+  border-radius: 10px; padding: 12px 14px;
+}
+.why-content.d1 { border-left: 3px solid #2a9d8f; }
+.why-content.d2 { border-left: 3px solid rgba(42,157,143,.6); margin-left: 20px; }
+.why-content.d3 { border-left: 3px solid rgba(42,157,143,.3); margin-left: 40px; }
+.why-q { font-size: 11px; font-weight: 700; color: #888780; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 4px; }
+.why-a { font-size: 13px; line-height: 1.7; color: #1a1a18; font-weight: 600; }
+.why-detail { font-size: 12px; line-height: 1.6; color: #555550; margin-top: 5px; }
+.why-insight {
+  background: linear-gradient(135deg, #f0fdfa, #e6fffa);
+  border: 1px solid #b2dfdb; border-radius: 8px;
+  padding: 10px 14px; margin-top: 14px;
+  font-size: 12.5px; color: #1d6b63; line-height: 1.6;
+}
+.why-insight::before { content: "💡 底层洞察："; font-weight: 700; }
+
+.why-section-title {
+  font-size: 14px; font-weight: 700; color: #1a1a18;
+  padding: 14px 16px; background: #fff;
+  border: 1px solid #e8e4dc; border-radius: 10px 10px 0 0;
+  border-bottom: none; margin-bottom: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.why-section-body { border: 1px solid #e8e4dc; border-top: none; border-radius: 0 0 10px 10px; padding: 16px; background: #fafaf8; margin-bottom: 24px; }
+.why-tag { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: #e6fffa; color: #1d6b63; border: 1px solid #b2dfdb; padding: 2px 8px; border-radius: 4px; }
+
+/* ── Newbie Map ── */
+.mind-card {
+  background: #fff; border: 1px solid #e8e4dc; border-radius: 12px; margin-bottom: 14px; overflow: hidden;
+}
+.mind-head {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  cursor: pointer; user-select: none;
+}
+.mind-head-wrong { flex: 1; }
+.mind-wrong-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #e76f51; margin-bottom: 3px; }
+.mind-wrong-text { font-size: 13px; font-weight: 600; color: #1a1a18; }
+.mind-toggle { font-size: 16px; color: #888780; transition: transform .2s; }
+.mind-toggle.open { transform: rotate(180deg); }
+.mind-body { display: none; padding: 0 16px 16px; border-top: 0.5px solid #f0ece6; }
+.mind-body.open { display: block; }
+.mind-right-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #2a9d8f; margin: 12px 0 5px; }
+.mind-right-text { font-size: 13px; color: #1a1a18; font-weight: 600; line-height: 1.6; }
+.mind-why { font-size: 12.5px; color: #555550; line-height: 1.7; margin-top: 8px; }
+.mind-example {
+  background: #f5f4f0; border-radius: 6px; padding: 10px 12px;
+  font-size: 12px; color: #3a3a36; line-height: 1.6; margin-top: 10px;
+}
+.mind-example::before { content: "📌 具体例子："; font-weight: 700; color: #555550; }
+
+/* ── Concept (clickable) ── */
+.concept {
+  border-bottom: 1.5px dashed #F26419; font-size: inherit;
+  color: #C0430A; cursor: pointer; transition: opacity .15s;
+}
+.concept:hover { opacity: .7; }
+
+/* ── Side Panel ── */
+.side-panel {
+  position: fixed; top: 0; right: -420px; width: 400px; height: 100vh;
+  background: #fff; box-shadow: -4px 0 30px rgba(0,0,0,.15);
+  z-index: 100; transition: right .28s ease; display: flex; flex-direction: column;
+}
+@media (max-width: 460px) { .side-panel { width: 100%; right: -100%; } }
+.side-panel.open { right: 0; }
+.sp-header { background: #0c0f14; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+.sp-title { font-size: 14px; font-weight: 700; color: #e8e6de; }
+.sp-close { width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #888780; font-size: 16px; border-radius: 4px; }
+.sp-close:hover { background: #1c1a17; color: #e8e6de; }
+.sp-body { padding: 16px; overflow-y: auto; flex: 1; }
+.sp-section { margin-bottom: 16px; }
+.sp-section-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #F26419; margin-bottom: 6px; }
+.sp-section p { font-size: 12.5px; line-height: 1.7; }
+.sp-section code { background: #0c0f14; color: #c9a95a; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+.sp-why {
+  background: #f5f4f0; border-radius: 8px; padding: 10px 12px;
+  margin-top: 8px; font-size: 12px; color: #555550; line-height: 1.6;
+}
+.sp-why-chain { margin-top: 10px; }
+.sp-why-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start; }
+.sp-why-dot {
+  width: 18px; height: 18px; border-radius: 50%; background: #F26419;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 800; color: #fff; flex-shrink: 0; margin-top: 2px;
+}
+.sp-why-text { font-size: 12px; color: #3a3a36; line-height: 1.6; flex: 1; }
+.sp-speakeasy { background: #fff9f5; border: 1px solid #f5d5bb; border-radius: 6px; padding: 10px 12px; margin-top: 8px; font-size: 12px; color: #3a2a1a; line-height: 1.6; }
+.sp-speakeasy::before { content: "🎯 Speakeasy 里的例子："; font-weight: 700; color: #C0430A; display: block; margin-bottom: 4px; }
+
+/* ── Overlay ── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 99; }
+.overlay.show { display: block; }
+
+/* ── Speakeasy Tag ── */
+.speakeasy-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(242,100,25,.1); border: 1px solid rgba(242,100,25,.3);
+  border-radius: 4px; padding: 1px 8px;
+  font-size: 10px; font-weight: 600; color: #C0430A; letter-spacing: .04em; margin-left: 6px;
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav-title">
+    <div class="nav-dot"></div>
+    Planning & Reasoning · AI Agent 架构设计
+  </div>
+  <div class="top-nav-right">
+    <span class="badge">AI Agent 系列</span>
+    <span class="prereq">LLM 基础</span>
+    <span class="prereq">Prompt</span>
+  </div>
+</nav>
+
+<div class="tabs">
+  <button class="tab active"  onclick="show(0)">🗺 总览</button>
+  <button class="tab"         onclick="show(1)">① 分层解构</button>
+  <button class="tab"         onclick="show(2)">② 对比辨析</button>
+  <button class="tab"         onclick="show(3)">③ 类比迁移</button>
+  <button class="tab"         onclick="show(4)">④ 错误雷达</button>
+  <button class="tab"         onclick="show(5)">⑤ 实战场景</button>
+  <button class="tab why"     onclick="show(6)">🔍 三问深挖</button>
+  <button class="tab newbie"  onclick="show(7)">🧭 新手认知地图</button>
+  <button class="tab verify"   onclick="show(8)">✅ 理解验证</button>
+  <button class="tab history"  onclick="show(9)">📜 模式溯源</button>
+  <button class="tab history"  onclick="show(10)">🧬 推理演化史</button>
+  <button class="tab prod"     onclick="show(11)">🔧 生产实战</button>
+  <button class="tab interview" onclick="show(12)">🎯 面试题库</button>
+  <button class="tab" style="color:#8b5cf6" onclick="show(13)">🧩 任务路由</button>
+  <button class="tab" style="color:#0891b2" onclick="show(14)">💻 完整案例</button>
+  <button class="tab" style="color:#b45309" onclick="show(15)">🏗️ 框架全景</button>
+  <button class="tab" style="color:#be185d" onclick="show(16)">🔬 底层原理</button>
+</div>
+
+<div class="layout">
+
+<!-- ══ P0 总览 ══ -->
+<div class="panel active" id="p0">
+  <div class="callout">
+    <strong>一句话版本：</strong>Planning & Reasoning 是让 AI Agent 从"接受指令执行"升级为"主动拆解目标、制定计划、边做边想、遇障碍能调整"的核心能力框架。
+  </div>
+  <div class="method-box">
+    <div class="method-label">普世方法论</div>
+    <div class="method-title">从"反射弧"到"前额叶"的范式转移</div>
+    <div class="method-body">
+      普通的 <span class="concept" onclick="openConcept('llm_call')">LLM 调用</span>像<strong>脊髓反射</strong>——刺激进来，立即输出响应，没有中间状态。<br><br>
+      带 Planning & Reasoning 的 Agent 像<strong>人类前额叶皮质</strong>——接到目标后，先在脑内推演多步，构建执行计划，执行中持续监控，遇到障碍重新规划。这就是为什么说 Agent 架构是「有意识地在执行」，而不是「有问必答」。
+    </div>
+  </div>
+
+  <div class="section-label">完整流程（一眼看懂）</div>
+  <div class="flow">
+    <div class="flow-node"><div class="fn-title">用户目标</div><div class="fn-sub">模糊 / 复杂</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node fn-highlight"><div class="fn-title"><span class="concept" onclick="openConcept('planning')">Planning</span></div><div class="fn-sub">拆解 · 排序 · 分配</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node fn-highlight"><div class="fn-title"><span class="concept" onclick="openConcept('reasoning')">Reasoning</span></div><div class="fn-sub">推断 · 验证 · 决策</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-title"><span class="concept" onclick="openConcept('tooluse')">Tool Use</span></div><div class="fn-sub">执行子任务</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-title">Observation</div><div class="fn-sub">观察结果</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node fn-highlight"><div class="fn-title"><span class="concept" onclick="openConcept('replan')">Re-Plan</span></div><div class="fn-sub">动态调整</div></div>
+  </div>
+
+  <div class="section-label">三个核心概念</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🧭</span> Planning（规划）</div>
+      <p>把大目标拆成有序的<span class="concept" onclick="openConcept('decomp')">子任务序列</span>。决定先做什么、后做什么、哪些可以并行。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🧠</span> Reasoning（推理）</div>
+      <p>在每一步执行前后进行判断：这一步做对了吗？下一步该怎么走？遇到<span class="concept" onclick="openConcept('conflict')">矛盾信息</span>如何取舍？</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔄</span> Loop Detection</div>
+      <p>发现 Agent 陷入重复执行同一步骤的无效循环，及时中断并重新规划。这是<span class="concept" onclick="openConcept('mobile_constraint')">移动端</span>尤其关键的能力。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">📡</span> Context Window</div>
+      <p><span class="concept" onclick="openConcept('context_window')">上下文窗口</span>是 LLM 每次调用能"看到"的信息上限。Planning 的很多设计决策都是为了不超出这个限制。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ P1 分层解构 ══ -->
+<div class="panel" id="p1">
+  <div class="callout">
+    Planning & Reasoning 不是一个单一模块，而是分布在整个 Agent 生命周期里的能力层。下面从<strong>三个层次</strong>拆解它的工作机制。
+  </div>
+
+  <div class="section-label">第一层：目标理解与任务分解（Goal Decomposition）</div>
+  <h3>用户说的话 ≠ Agent 要做的事</h3>
+  <p>用户说"帮我把本周学习计划写进日历"，但 Agent 实际需要做的是：解析日期范围 → 查询已有日历事件 → 根据空闲时间生成计划 → 格式化为日历条目 → 调用日历 API 写入。</p>
+  <p>这个"翻译过程"就是 <span class="concept" onclick="openConcept('decomp')">Task Decomposition</span>，是 Planning 的第一步。</p>
+  <div class="code-block">
+<span class="code-comment">// 目标分解的数据结构（简化）</span>
+{
+  <span class="code-key">"goal"</span>: <span class="code-str">"把本周学习计划写进日历"</span>,
+  <span class="code-key">"subtasks"</span>: [
+    { <span class="code-key">"id"</span>: 1, <span class="code-key">"action"</span>: <span class="code-str">"解析本周日期范围"</span>,   <span class="code-key">"depends_on"</span>: <span class="code-val">[]</span>  },
+    { <span class="code-key">"id"</span>: 2, <span class="code-key">"action"</span>: <span class="code-str">"查询已有日历事件"</span>,   <span class="code-key">"depends_on"</span>: <span class="code-val">[1]</span> },
+    { <span class="code-key">"id"</span>: 3, <span class="code-key">"action"</span>: <span class="code-str">"生成学习计划条目"</span>,   <span class="code-key">"depends_on"</span>: <span class="code-val">[2]</span> },
+    { <span class="code-key">"id"</span>: 4, <span class="code-key">"action"</span>: <span class="code-str">"写入日历 API"</span>,        <span class="code-key">"depends_on"</span>: <span class="code-val">[3]</span>, <span class="code-key">"fallback"</span>: <span class="code-str">"generate_pdf"</span> }
+  ]
+}
+  </div>
+
+  <div class="section-label">第二层：执行中推理（In-context Reasoning）</div>
+  <h3>每一步执行后都要"想一想"</h3>
+  <p>Reasoning 不是一次性的前置动作，而是穿插在每个子任务之间的<strong>持续判断</strong>。标准的 <span class="concept" onclick="openConcept('react')">ReAct</span> 模式就是这样工作的：</p>
+  <div class="flow">
+    <div class="flow-node fn-highlight"><div class="fn-title">Thought</div><div class="fn-sub">我现在该做什么</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-title">Action</div><div class="fn-sub">调用工具</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-title">Observation</div><div class="fn-sub">看到结果</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node fn-highlight"><div class="fn-title">Thought</div><div class="fn-sub">这步成功了吗？</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-title">…</div></div>
+  </div>
+  <p>关键：每次 Thought 不只是"下一步做什么"，还包括"之前的结果是否符合预期、是否需要修正计划"。这就是 <span class="concept" onclick="openConcept('belief_update')">Belief Update</span>。</p>
+
+  <div class="section-label">第三层：异常处理与 Loop Detection</div>
+  <h3>Agent 最怕两种情况：卡死 和 死转</h3>
+  <div class="cards">
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🚫</span> 卡死（Deadlock）</div>
+      <p>子任务 A 等待 B 的结果，B 又依赖 A 的输出。Agent 会一直等待，永远无法推进。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔁</span> 死转（Infinite Loop）</div>
+      <p>Agent 反复执行相同的操作，每次都以为自己在进步，但实际上原地打转。例如：反复查询同一个空结果。</p>
+    </div>
+  </div>
+  <p><span class="concept" onclick="openConcept('loop_detection')">Loop Detection</span> 的实现方式：记录每一步的 action + input <span class="concept" onclick="openConcept('fingerprint')">指纹</span>，如果在窗口期内出现 N 次重复，强制终止并触发 Re-Plan。</p>
+</div>
+
+<!-- ══ P2 对比辨析 ══ -->
+<div class="panel" id="p2">
+  <div class="callout">
+    这个岗位要求懂 <strong>ReAct、Plan-and-Execute、Multi-Agent</strong> 三种模式。它们都是 Planning & Reasoning 的不同架构实现，但适用场景和权衡完全不同。
+  </div>
+
+  <div class="section-label">三种模式核心对比</div>
+  <table class="cmp-table">
+    <thead>
+      <tr><th>模式</th><th>规划时机</th><th>适合场景</th><th>最大风险</th><th>典型框架</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="hl"><span class="concept" onclick="openConcept('react')">ReAct</span></td>
+        <td>每步实时推理，边做边想</td>
+        <td>短任务、交互式、需要动态响应</td>
+        <td>容易陷入局部最优，看不到全局</td>
+        <td>LangChain Agent</td>
+      </tr>
+      <tr>
+        <td class="hl"><span class="concept" onclick="openConcept('plan_execute')">Plan-and-Execute</span></td>
+        <td>先完整规划，再按序执行</td>
+        <td>长任务、步骤已知、需要整体一致性</td>
+        <td>前期规划错了，后面全部跑偏</td>
+        <td><span class="concept" onclick="openConcept('langgraph')">LangGraph</span></td>
+      </tr>
+      <tr>
+        <td class="hl"><span class="concept" onclick="openConcept('multiagent')">Multi-Agent</span></td>
+        <td>多个 Agent 各自规划各自负责域</td>
+        <td>复杂大任务、专业分工、并行执行</td>
+        <td>协调成本高，Agent 间信息不同步</td>
+        <td>CrewAI / AutoGen</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">移动端的特殊约束</div>
+  <table class="cmp-table">
+    <thead>
+      <tr><th>约束</th><th>对 Planning 的影响</th><th>解决思路</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>网络不稳定</td><td>工具调用可能中途失败</td><td>每个子任务设置超时和 <span class="concept" onclick="openConcept('fallback')">Fallback</span> 策略</td></tr>
+      <tr><td>算力受限</td><td>不能跑复杂的多步推理</td><td>端侧小模型做简单规划，复杂推理路由到<span class="concept" onclick="openConcept('cloud_routing')">云端</span></td></tr>
+      <tr><td>用户打断</td><td>任务执行中用户改变意图</td><td>支持 Plan 的暂停和修改，而不是全部重来</td></tr>
+      <tr><td>电量/内存</td><td>长链规划消耗资源</td><td>设置最大步数上限，超出后压缩计划</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ P3 类比迁移 ══ -->
+<div class="panel" id="p3">
+  <div class="callout">三个生活化类比，让你真正理解 Planning & Reasoning 的本质，而不只是记住名词。</div>
+
+  <div class="section-label">类比一：外卖骑手 vs 高德导航</div>
+  <div class="analogy-box">
+    <div class="analogy-left">
+      <div class="analogy-tag">ReAct 模式</div>
+      <div class="analogy-title">老司机骑手</div>
+      <div class="analogy-body">凭经验在路口临时决策——这条路堵了就走旁边那条。每一步都是当下的最优判断，不需要提前规划全程。</div>
+    </div>
+    <div class="analogy-divider">↕ 对比</div>
+    <div class="analogy-right">
+      <div class="analogy-tag">Plan-and-Execute 模式</div>
+      <div class="analogy-title">高德导航规划路线</div>
+      <div class="analogy-body">出发前先计算完整路径，包括预计到达每个路口的时间。中途如果检测到拥堵，会触发"重新规划"——这就是 Re-Plan 机制。</div>
+    </div>
+  </div>
+
+  <div class="section-label">类比二：医生诊断 = Reasoning 过程</div>
+  <div class="analogy-box">
+    <div class="analogy-left">
+      <div class="analogy-tag">Agent Reasoning</div>
+      <div class="analogy-title">病人描述症状</div>
+      <div class="analogy-body">咳嗽 + 发烧 + 喉咙痛<br><br>
+      Thought: 可能是流感或细菌感染<br>
+      Action: 做个血常规检查（Tool Use）<br>
+      Observation: 白细胞数量正常<br>
+      Thought: 应该是病毒感染，不是细菌<br>
+      Action: 开抗病毒药</div>
+    </div>
+    <div class="analogy-divider">= ReAct 的工作方式</div>
+    <div class="analogy-right">
+      <div class="analogy-tag">关键对应</div>
+      <div class="analogy-title">每个 Thought 都在排除可能性</div>
+      <div class="analogy-body">Reasoning 的本质是<strong>基于证据缩小可能性空间</strong>。每次工具调用（检查）之后，Agent 根据结果更新自己对"当前情况"的判断，这叫 <span class="concept" onclick="openConcept('belief_update')">Belief Update</span>。<br><br>如果血常规结果丢失（工具调用失败），医生会选择重新检查或换一种检测方式——这就是 <span class="concept" onclick="openConcept('error_recovery')">Error Recovery</span>。</div>
+    </div>
+  </div>
+
+  <div class="section-label">类比三：厨师 vs 流水线工人</div>
+  <div class="analogy-box">
+    <div class="analogy-left">
+      <div class="analogy-tag">粗粒度规划</div>
+      <div class="analogy-title">大厨做复杂菜</div>
+      <div class="analogy-body">脑里有整道菜的画面，知道"炖汤要 2 小时、炒菜只要 5 分钟"，所以先下锅炖汤，同时准备其他食材。这是<strong>并行规划</strong>——有依赖关系意识。</div>
+    </div>
+    <div class="analogy-divider">↕ 对比</div>
+    <div class="analogy-right">
+      <div class="analogy-tag">细粒度规划</div>
+      <div class="analogy-title">流水线工人</div>
+      <div class="analogy-body">每次只执行分配的一个动作，不需要知道整体流程，执行速度快但没有全局意识。对应 Agent 里的<strong>单步 ReAct</strong>——快速但缺乏并行优化。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ P4 错误雷达 ══ -->
+<div class="panel" id="p4">
+  <div class="callout">初学者和面试候选人最常犯的 5 个认知错误。这些错误在面试中很容易暴露，提前知道就是优势。</div>
+
+  <div class="error-item">
+    <div class="error-label">🔴 高频错误 #1</div>
+    <div class="error-title">把 Planning 和 Prompt Engineering 混淆</div>
+    <p>以为写一个很长的 System Prompt 把步骤全列出来就是 Planning。但这只是"把计划硬编码进 Prompt"，无法在运行时动态调整。</p>
+    <div class="error-fix">真正的 Planning 是运行时生成的结构化<span class="concept" onclick="openConcept('task_graph')">任务图</span>，能根据执行结果动态修改子任务的顺序和内容。</div>
+  </div>
+
+  <div class="error-item">
+    <div class="error-label">🔴 高频错误 #2</div>
+    <div class="error-title">认为 Reasoning 只发生在"想"的阶段</div>
+    <p>以为 Reasoning 就是 <span class="concept" onclick="openConcept('cot')">Chain-of-Thought</span>，只是在生成答案时让模型"一步步思考"。忽略了 Reasoning 贯穿整个执行周期——包括对工具返回结果的解读和异常处理。</p>
+    <div class="error-fix">Observation → Thought 这个环节是最容易被忽视也是最重要的 Reasoning 节点，它决定了 Agent 是否能从错误中恢复。</div>
+  </div>
+
+  <div class="error-item">
+    <div class="error-label">🟡 中频错误 #3</div>
+    <div class="error-title">Loop Detection 只检查"相同输出"</div>
+    <p>只比较 Agent 输出的文字是否重复，而不检查行为是否重复。比如每次输出的文字稍有不同，但都在调用同一个工具查同一个数据——这是语义上的死循环，字面检查检测不到。</p>
+    <div class="error-fix">需要对 (action_type, normalized_input) 做<span class="concept" onclick="openConcept('fingerprint')">哈希指纹</span>比较，而不是对原始文本做字符串匹配。</div>
+  </div>
+
+  <div class="error-item">
+    <div class="error-label">🟡 中频错误 #4</div>
+    <div class="error-title">把 Multi-Agent 当作 Planning 的升级版</div>
+    <p>认为"任务复杂了就上 Multi-Agent"，但实际上 <span class="concept" onclick="openConcept('multiagent')">Multi-Agent</span> 主要解决的是专业分工问题，而不是规划复杂度问题。</p>
+    <div class="error-fix">先问"这个任务需要真正的专业分工吗？"——如果不需要，单 Agent 配合 Plan-and-Execute 就足够。</div>
+  </div>
+
+  <div class="error-item">
+    <div class="error-label">🟢 偶发错误 #5</div>
+    <div class="error-title">认为 Re-Plan 越频繁越好</div>
+    <p>以为"发现问题就重新规划"是最可靠的策略。但每次 Re-Plan 都意味着上下文重建和 LLM 调用，在移动端成本极高。</p>
+    <div class="error-fix">Re-Plan 应该设置触发阈值：只有执行失败率超过阈值、或遇到计划外的重大变化时，才触发全局 Re-Plan。小偏差用局部修复。</div>
+  </div>
+</div>
+
+<!-- ══ P5 实战场景 ══ -->
+<div class="panel" id="p5">
+  <div class="callout">用 <strong>Speakeasy 语言学习 App</strong> 作为主战场，把三种模式落地到真实需求里。<span class="speakeasy-tag">Speakeasy 项目</span></div>
+
+  <div class="scenario">
+    <div class="scenario-head">
+      <div class="scenario-num">1</div>
+      <div class="scenario-title">场景：用户说"帮我解释一下刚才这句话哪里语法错了"</div>
+    </div>
+    <div class="scenario-body">
+      <p>这是一个<strong>短交互任务</strong>，推荐用 <span class="concept" onclick="openConcept('react')">ReAct</span> 模式。</p>
+      <div class="step-flow">
+        <div class="step active-step">Thought: 需要识别语法错误</div>
+        <div class="step-arrow">→</div>
+        <div class="step">Action: 调用语法分析工具</div>
+        <div class="step-arrow">→</div>
+        <div class="step">Observation: 返回错误位置</div>
+        <div class="step-arrow">→</div>
+        <div class="step active-step">Thought: 如何解释最易懂？</div>
+        <div class="step-arrow">→</div>
+        <div class="step">Action: 生成解释 + 例句</div>
+      </div>
+      <p>整个流程 2-3 步，无需复杂规划。关键是 Reasoning 质量——"如何解释最易懂"这个判断需要结合用户的历史学习记录。</p>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-head">
+      <div class="scenario-num">2</div>
+      <div class="scenario-title">场景：用户说"帮我制定一个月的英语学习计划，写进我的日历"</div>
+    </div>
+    <div class="scenario-body">
+      <p>这是一个<strong>长任务</strong>，推荐用 <span class="concept" onclick="openConcept('plan_execute')">Plan-and-Execute</span> 模式。</p>
+      <div class="step-flow">
+        <div class="step active-step">Plan: 拆解为 5 个子任务</div>
+        <div class="step-arrow">→</div>
+        <div class="step">查询当前词汇水平</div>
+        <div class="step-arrow">→</div>
+        <div class="step">查询本月空闲时间段</div>
+        <div class="step-arrow">→</div>
+        <div class="step">生成个性化计划</div>
+        <div class="step-arrow">→</div>
+        <div class="step">写入日历 API</div>
+        <div class="step-arrow">→</div>
+        <div class="step active-step">验证写入结果</div>
+      </div>
+      <div class="code-block">
+<span class="code-comment">// Plan-and-Execute 的任务图结构</span>
+{
+  <span class="code-key">"plan_id"</span>: <span class="code-str">"speakeasy_monthly_plan_001"</span>,
+  <span class="code-key">"status"</span>: <span class="code-str">"executing"</span>,
+  <span class="code-key">"tasks"</span>: [
+    { <span class="code-key">"id"</span>: 1, <span class="code-key">"status"</span>: <span class="code-str">"done"</span>,    <span class="code-key">"result"</span>: <span class="code-str">"B2 level"</span>          },
+    { <span class="code-key">"id"</span>: 2, <span class="code-key">"status"</span>: <span class="code-str">"done"</span>,    <span class="code-key">"result"</span>: <span class="code-str">"17 available slots"</span> },
+    { <span class="code-key">"id"</span>: 3, <span class="code-key">"status"</span>: <span class="code-str">"running"</span>                                    },
+    { <span class="code-key">"id"</span>: 4, <span class="code-key">"status"</span>: <span class="code-str">"pending"</span>,  <span class="code-key">"fallback"</span>: <span class="code-str">"generate_pdf"</span>  }
+  ]
+}
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario">
+    <div class="scenario-head">
+      <div class="scenario-num">3</div>
+      <div class="scenario-title">Loop Detection 实际触发案例</div>
+    </div>
+    <div class="scenario-body">
+      <p>用户说"帮我找到我上周没完成的练习"，但用户上周根本没做过任何练习。</p>
+      <div class="step-flow">
+        <div class="step">查询上周练习记录</div>
+        <div class="step-arrow">→</div>
+        <div class="step">Observation: 空结果</div>
+        <div class="step-arrow">→</div>
+        <div class="step active-step">Thought: 也许是查询条件问题</div>
+        <div class="step-arrow">→</div>
+        <div class="step">扩大时间范围再查</div>
+        <div class="step-arrow">→</div>
+        <div class="step">仍然空</div>
+        <div class="step-arrow">→</div>
+        <div class="step active-step">⚠️ Loop Detected！</div>
+      </div>
+      <div class="code-block">
+<span class="code-comment">// Loop Detection 实现思路</span>
+<span class="code-key">function</span> detectLoop(actionHistory, windowSize = <span class="code-val">3</span>) {
+  <span class="code-key">const</span> recent = actionHistory.slice(-windowSize);
+  <span class="code-key">const</span> fingerprints = recent.map(a =>
+    <span class="code-str">`${a.tool}:${JSON.stringify(a.normalized_input)}`</span>
+  );
+  <span class="code-comment">// 检查是否有相同的工具+输入组合出现 ≥2 次</span>
+  <span class="code-key">return</span> fingerprints.some((f, i) => fingerprints.indexOf(f) !== i);
+}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ P6 三问深挖 ══ -->
+<div class="panel" id="p6">
+  <div class="callout-teal">
+    <strong>用法：</strong>三问深挖是最快建立"真理解"的方式。每次看到一个概念，连续问三次"为什么"，直到触底——触底的地方就是你真正需要记住的核心原理。
+  </div>
+
+  <!-- WHY 1 -->
+  <div class="why-section-title">
+    <span>为什么 Agent 需要 Planning？</span>
+    <span class="why-tag">概念基础</span>
+  </div>
+  <div class="why-section-body">
+    <div class="why-chain">
+      <div class="why-connector">
+        <div class="why-num w1">W1</div>
+        <div class="why-content d1">
+          <div class="why-q">为什么需要 Planning？</div>
+          <div class="why-a">因为复杂任务无法在一次 LLM 调用中完成</div>
+          <div class="why-detail">用户的很多真实需求需要 5-10 个步骤：查询数据 → 处理数据 → 调用外部 API → 验证结果 → 格式化输出。单次调用只能生成文字，无法真正执行这些操作。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w2">W2</div>
+        <div class="why-content d2">
+          <div class="why-q">为什么不能把所有步骤写进一个 Prompt 让模型一次完成？</div>
+          <div class="why-a">因为每个步骤的输入依赖上一步骤的<em>运行时结果</em>，而这些结果在 Prompt 写作时是未知的</div>
+          <div class="why-detail">你无法在写 Prompt 时就知道"日历查询会返回什么空闲时间段"——这是一个运行时才能知道的值。所以必须把执行拆成有状态的多步，每步等待真实结果再决定下一步。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w3">W3</div>
+        <div class="why-content d3">
+          <div class="why-q">为什么 LLM 不能自己记住上一步的结果？</div>
+          <div class="why-a">因为 LLM 本质上是无状态的——每次调用都是全新的，它没有跨调用的持久内存</div>
+          <div class="why-detail">LLM 不是一个持续运行的程序，它是一个每次接收完整上下文、输出一段文字的函数。"记忆"这件事必须由调用方（Agent 框架）维护，把每步结果手动拼进下一次调用的 Context 里。这就是为什么 Agent 框架要管理状态。</div>
+        </div>
+      </div>
+    </div>
+    <div class="why-insight">Planning 存在的根本原因是：LLM 无状态 + 任务有状态 → 必须由外部框架在多次调用之间维护状态和协调顺序。Planning 就是这个协调机制的设计。</div>
+  </div>
+
+  <!-- WHY 2 -->
+  <div class="why-section-title">
+    <span>为什么 ReAct 比直接调用 LLM 效果好？</span>
+    <span class="why-tag">模式理解</span>
+  </div>
+  <div class="why-section-body">
+    <div class="why-chain">
+      <div class="why-connector">
+        <div class="why-num w1">W1</div>
+        <div class="why-content d1">
+          <div class="why-q">为什么 ReAct 效果更好？</div>
+          <div class="why-a">因为它让模型能根据工具的真实返回结果来修正自己的行为</div>
+          <div class="why-detail">直接调用 LLM 时，模型只能基于训练数据"猜"答案。ReAct 让模型先行动、再观察、再推理，用真实世界的反馈来纠正错误方向。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w2">W2</div>
+        <div class="why-content d2">
+          <div class="why-q">为什么模型不能一次就预测出正确的行动序列？</div>
+          <div class="why-a">因为现实环境是不确定的——工具可能失败、数据可能不存在、外部状态随时在变</div>
+          <div class="why-detail">就算模型训练时见过类似任务，它也无法预知"用户的日历里具体有哪些事件"、"今天的天气"、"某个 API 是否可用"。这些都是只有在运行时才能知道的信息。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w3">W3</div>
+        <div class="why-content d3">
+          <div class="why-q">为什么 LLM 的训练数据无法覆盖运行时的真实情况？</div>
+          <div class="why-a">因为训练数据是过去的静态快照，而现实世界是实时动态变化的</div>
+          <div class="why-detail">LLM 的训练截止日期意味着它对之后发生的任何事情一无所知。更根本的是，即便是训练时包含的信息，也是"世界的一般规律"，而不是"你个人账户里今天有什么"。ReAct 通过工具调用把 LLM 的通用能力和运行时的私有/实时数据连接起来，这才是它真正的价值。</div>
+        </div>
+      </div>
+    </div>
+    <div class="why-insight">ReAct 本质上解决的不是"让模型更聪明"的问题，而是"让模型能接触到自己不知道的信息"的问题。工具调用是 LLM 与真实世界之间的接口。</div>
+  </div>
+
+  <!-- WHY 3 -->
+  <div class="why-section-title">
+    <span>为什么 Loop Detection 在移动端特别关键？</span>
+    <span class="why-tag">移动端专题</span>
+  </div>
+  <div class="why-section-body">
+    <div class="why-chain">
+      <div class="why-connector">
+        <div class="why-num w1">W1</div>
+        <div class="why-content d1">
+          <div class="why-q">为什么 Loop Detection 在移动端格外重要？</div>
+          <div class="why-a">因为移动端的工具调用失败率远高于服务器端，失败本身就是死循环的主要触发器</div>
+          <div class="why-detail">网络抖动、API 超时、权限不足……这些在服务器端很少见的情况，在移动端是家常便饭。每次工具调用失败，Agent 都会"以为自己还没完成任务"而继续重试，极易陷入重试死循环。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w2">W2</div>
+        <div class="why-content d2">
+          <div class="why-q">为什么工具调用失败会导致 Agent 重试而不是报错退出？</div>
+          <div class="why-a">因为 Agent 的 Reasoning 逻辑会把"工具返回空/错误"解读为"任务尚未完成"，而不是"环境出了问题"</div>
+          <div class="why-detail">Agent 没有"这是网络问题"的概念，它看到的只是"我想查的数据没拿到"。它的 Reasoning 会产生"可能是查询条件不对，换一种方式试试"的 Thought，这在有数据时是正确行为，但在数据根本不存在时就会无限循环。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w3">W3</div>
+        <div class="why-content d3">
+          <div class="why-q">为什么 Agent 不能区分"数据不存在"和"网络出了问题"？</div>
+          <div class="why-a">因为从 Agent 的视角，两者都表现为"工具返回了空结果或错误码"——Agent 看不到底层的网络层</div>
+          <div class="why-detail">Agent 工作在语义层（我想查日历数据），网络错误发生在传输层（TCP 超时）。工具调用的封装把底层错误翻译成了语义层的"查询失败"，Agent 无法区分是"真没数据"还是"网络挂了"。解决方案是在工具层加上结构化的错误码（ERR_NETWORK vs ERR_NOT_FOUND），让 Reasoning 层能做出不同的决策。</div>
+        </div>
+      </div>
+    </div>
+    <div class="why-insight">Loop Detection 的底层问题是：Agent 的 Reasoning 缺乏对"环境层错误"的感知。长期解决方案不只是检测死循环，而是给工具调用加入丰富的错误语义，让 Agent 能做出更准确的 Belief Update。</div>
+  </div>
+
+  <!-- WHY 4 -->
+  <div class="why-section-title" style="margin-top:20px">
+    <span>为什么 Belief Update 是 Reasoning 最核心的机制？</span>
+    <span class="why-tag">推理本质</span>
+  </div>
+  <div class="why-section-body">
+    <div class="why-chain">
+      <div class="why-connector">
+        <div class="why-num w1">W1</div>
+        <div class="why-content d1">
+          <div class="why-q">为什么说 Belief Update 是核心？</div>
+          <div class="why-a">因为 Reasoning 的所有决策都建立在"当前 Belief"之上——Belief 错了，后续所有推理都会跑偏</div>
+          <div class="why-detail">Agent 的每一个 Thought（"下一步应该做什么"）本质上是：基于我对当前世界的理解（Belief），选择最优行动。如果 Belief 不准确，这个推理过程再严密也没用——垃圾进垃圾出（Garbage in, Garbage out）在 Agent 里的体现就是 Belief 错误。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w2">W2</div>
+        <div class="why-content d2">
+          <div class="why-q">为什么 Belief 容易出错？</div>
+          <div class="why-a">因为工具返回的数据是"原始的"，需要 Agent 自己解读——而解读过程正是幻觉产生的地方</div>
+          <div class="why-detail">工具返回 <code>{"duration": 60}</code>，Agent 需要判断这是60秒还是60分钟。工具返回空数组，Agent 需要判断这是"数据不存在"还是"查询条件有问题"。每次解读都可能出错。LLM 的天性是"合理推断"而不是"谨慎确认"，在不确定时容易填充错误的 Belief。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w3">W3</div>
+        <div class="why-content d3">
+          <div class="why-q">为什么 LLM 会"合理推断"而不是"谨慎确认"？</div>
+          <div class="why-a">因为 LLM 是在"预测最可能的下一个 token"——而不是在"确认事实真相"；它的训练目标是流畅合理，不是精确准确</div>
+          <div class="why-detail">训练 LLM 的目标函数是"预测下一个 token 的概率分布"——让输出看起来自然、合理。这和"确保每个事实都有来源"是完全不同的目标。在歧义情况下，LLM 自然倾向于给出"听起来最合理的解读"而不是"承认不确定性"。这是它的本性，不是 bug。解决方案是在工具返回值层面消除歧义，而不是期待 LLM 自己变谨慎。</div>
+        </div>
+      </div>
+    </div>
+    <div class="why-insight">这个三问的底层洞察是：幻觉问题的根源不在"模型不够聪明"，而在"数据接口不够语义化"。提升 Belief 准确性最有效的方法，是在工具返回值里消除歧义（加单位、加错误类型、加语义注释），而不只是在 Prompt 里要求模型"要谨慎"。</div>
+  </div>
+
+  <!-- WHY 5 -->
+  <div class="why-section-title" style="margin-top:20px">
+    <span>为什么工具调用需要幂等性？这和 Agent 架构有什么关系？</span>
+    <span class="why-tag">工程可靠性</span>
+  </div>
+  <div class="why-section-body">
+    <div class="why-chain">
+      <div class="why-connector">
+        <div class="why-num w1">W1</div>
+        <div class="why-content d1">
+          <div class="why-q">为什么 Agent 的工具调用需要幂等性？</div>
+          <div class="why-a">因为在网络不稳定的环境下，Agent 无法确认一次调用是否真的成功，会进行重试——如果工具不幂等，重试就会产生重复副作用</div>
+          <div class="why-detail">正常的 API 调用失败了，人类会知道"上次没成功，这次重试"。但 Agent 的情况更复杂：调用可能"发出去了但没收到确认"——这时候 Agent 不知道调用有没有生效，重试可能导致操作被执行了两次。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w2">W2</div>
+        <div class="why-content d2">
+          <div class="why-q">为什么 Agent 不知道"发出去了但没收到确认"这种情况？</div>
+          <div class="why-a">因为从 Agent 的视角，"超时"和"没执行"看起来完全一样——都是没有收到返回结果</div>
+          <div class="why-detail">工具调用超时时，Agent 看到的就是"等了3秒，没有任何返回"。它无法区分"工具服务器根本没收到请求"和"工具服务器收到了请求并执行了，但回复在网络上丢失了"。唯一安全的处理方式就是重试，但重试必须以幂等性为前提。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w3">W3</div>
+        <div class="why-content d3">
+          <div class="why-q">为什么这个问题在移动端特别严重？</div>
+          <div class="why-a">因为移动端的网络是"断断续续"的，不是"全通或全断"——最容易出现"发出去了但回复没收到"这种中间状态</div>
+          <div class="why-detail">WiFi 切换到 4G 的瞬间、地铁进隧道的瞬间、手机从后台切回前台的瞬间——这些都是网络中断的高发时刻，正好可能发生在工具调用的"等待回复"阶段。这不是偶发情况，是移动端的常态。因此幂等性在移动端 Agent 里是必须而不是可选的设计。</div>
+        </div>
+      </div>
+    </div>
+    <div class="why-insight">幂等性表面上是一个工具层的工程问题，但它深刻影响 Agent 的可靠性。一个没有幂等性保证的 Agent，在移动端环境下必然会出现重复创建数据的问题——而用户不会原谅"帮我创建了3个相同的日历事件"这种低级错误。</div>
+  </div>
+
+  <!-- WHY 6 -->
+  <div class="why-section-title" style="margin-top:20px">
+    <span>为什么 Multi-Agent 比单 Agent 更难控制？</span>
+    <span class="why-tag">架构权衡</span>
+  </div>
+  <div class="why-section-body">
+    <div class="why-chain">
+      <div class="why-connector">
+        <div class="why-num w1">W1</div>
+        <div class="why-content d1">
+          <div class="why-q">为什么 Multi-Agent 更难控制？</div>
+          <div class="why-a">因为每个 Agent 都有自己的 Belief 和决策逻辑，多个 Belief 之间可能产生矛盾，而协调这些矛盾需要额外的机制</div>
+          <div class="why-detail">单 Agent 只有一套 Belief——世界在它眼中是统一的。Multi-Agent 中，Agent A 认为"任务3已完成"，Agent B 认为"任务3还在进行中"，这种 Belief 不同步会导致重复执行、冲突写入、决策矛盾。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w2">W2</div>
+        <div class="why-content d2">
+          <div class="why-q">为什么多个 Belief 之间容易不同步？</div>
+          <div class="why-a">因为 Agent 之间的通信是异步的——一个 Agent 更新了状态，其他 Agent 不会立刻知道</div>
+          <div class="why-detail">这和分布式系统里的"一致性问题"完全一样：多个节点各自维护状态，节点间通信有延迟，在任意时刻，不同节点看到的"系统状态"可能不一致。Multi-Agent 本质上就是把分布式系统的全部难题带进了 Agent 架构。</div>
+        </div>
+      </div>
+      <div class="why-line"></div>
+      <div class="why-connector">
+        <div class="why-num w3">W3</div>
+        <div class="why-content d3">
+          <div class="why-q">为什么分布式一致性在 Agent 里比在普通系统里更难解决？</div>
+          <div class="why-a">因为普通分布式系统用严格的协议（如两阶段提交）保证一致性，但 Agent 的行为是 LLM 生成的——LLM 不能像数据库那样提供事务保证</div>
+          <div class="why-detail">数据库可以用"锁"来防止并发冲突；Agent 的"决策"是 LLM 生成的自然语言，没有原子性，没有回滚机制（LLM 不能"撤销"一个已经生成的决策）。这就是为什么 Multi-Agent 的协调器（Orchestrator）需要精心设计：它不能依赖 Agent 自己保证一致性，必须在外层强制施加约束。</div>
+        </div>
+      </div>
+    </div>
+    <div class="why-insight">Multi-Agent 把分布式系统的难题（一致性、并发控制、故障恢复）和 LLM 的不确定性（生成是随机的、不可精确控制）叠加在了一起。这解释了为什么"Multi-Agent 看起来很强大，实际上生产落地非常困难"——这两个挑战单独处理都很复杂，叠加在一起就是指数级的复杂度。</div>
+  </div>
+</div>
+
+<!-- ══ P7 新手认知地图 ══ -->
+<div class="panel" id="p7">
+  <div class="callout-coral">
+    <strong>这个 Tab 专门为新手设计。</strong>下面列出的不是技术细节，而是"第一次接触 Agent 架构时，脑子里最容易形成的错误画面"。每一条都点开看看，确认自己没有这个误解。
+  </div>
+
+  <div class="section-label">5 个新手最常见的错误心智模型</div>
+
+  <div class="mind-card">
+    <div class="mind-head" onclick="toggleMind(this)">
+      <div class="mind-head-wrong">
+        <div class="mind-wrong-label">❌ 错误认知 #1</div>
+        <div class="mind-wrong-text">"Agent = 一个特别聪明的聊天机器人"</div>
+      </div>
+      <div class="mind-toggle">▾</div>
+    </div>
+    <div class="mind-body">
+      <div class="mind-right-label">✅ 正确认知</div>
+      <div class="mind-right-text">Agent 是一个能自主执行操作、改变外部世界状态的系统，聊天只是它的一种交互方式</div>
+      <div class="mind-why">聊天机器人的本质是"输入文字 → 输出文字"，它不会真的帮你把事情做了。Agent 的本质是"接收目标 → 调用工具 → 改变外部状态"——比如真的帮你在日历里创建了事件、真的发出了一封邮件、真的在代码仓库里提交了一个 PR。<br><br>这个区别决定了 Agent 架构的所有复杂性：一旦能改变外部世界，就需要考虑权限、回滚、错误处理、幂等性……这些都是聊天机器人不需要考虑的问题。</div>
+      <div class="mind-example">Speakeasy 里如果只是"生成一个学习建议"，那是聊天机器人。但如果是"把这个建议写进你的日历，并且明天提醒你"，那就是 Agent——它真的修改了你的日历数据。</div>
+    </div>
+  </div>
+
+  <div class="mind-card">
+    <div class="mind-head" onclick="toggleMind(this)">
+      <div class="mind-head-wrong">
+        <div class="mind-wrong-label">❌ 错误认知 #2</div>
+        <div class="mind-wrong-text">"Planning 是在开始前做的，做完就不用管了"</div>
+      </div>
+      <div class="mind-toggle">▾</div>
+    </div>
+    <div class="mind-body">
+      <div class="mind-right-label">✅ 正确认知</div>
+      <div class="mind-right-text">Planning 是持续的——执行中随时可能需要修改计划</div>
+      <div class="mind-why">很多人把 Planning 理解成项目启动前的"需求分析"——做一次就定了。但真实的 Agent 执行环境充满了不确定性：API 返回了意外的数据、用户中途改变了要求、某个子任务比预期耗时更长……这些都需要实时修正计划。<br><br>更精确的理解是：Planning = 维护一个随时可以被修改的"活的任务图"，而不是一张写死的流程图。</div>
+      <div class="mind-example">就像做饭时发现冰箱里没有计划中的食材，你不会"放弃做饭"，而是调整菜谱。Agent 的 Re-Plan 就是这个动态调整的能力。</div>
+    </div>
+  </div>
+
+  <div class="mind-card">
+    <div class="mind-head" onclick="toggleMind(this)">
+      <div class="mind-head-wrong">
+        <div class="mind-wrong-label">❌ 错误认知 #3</div>
+        <div class="mind-wrong-text">"LLM 有记忆，上次对话的内容它还记得"</div>
+      </div>
+      <div class="mind-toggle">▾</div>
+    </div>
+    <div class="mind-body">
+      <div class="mind-right-label">✅ 正确认知</div>
+      <div class="mind-right-text">LLM 完全无状态——每次调用都是全新的，"记忆"是由调用方手动传入的</div>
+      <div class="mind-why">这是最反直觉的一个认知：当你在 ChatGPT 里和它聊天，感觉它"记住了"你说过的话，实际上是因为每次你发消息时，整个对话历史都被偷偷塞进了这次调用的 Prompt 里。<br><br>对 Agent 框架来说，这意味着：每次调用 LLM 时，开发者必须手动决定"把哪些上下文塞进这次的 Prompt"。塞太多：超出 Context Window 限制，报错。塞太少：LLM 不知道之前发生了什么，做出错误判断。这就是 <span class="concept" onclick="openConcept('context_window')">Context Window 管理</span>的核心挑战。</div>
+      <div class="mind-example">Speakeasy 里，如果用户说"继续我上周没做完的练习"，Agent 并不是"记住了"上周的练习——而是框架把上周的练习记录从数据库查出来，拼进了这次 LLM 调用的 Prompt 里。</div>
+    </div>
+  </div>
+
+  <div class="mind-card">
+    <div class="mind-head" onclick="toggleMind(this)">
+      <div class="mind-head-wrong">
+        <div class="mind-wrong-label">❌ 错误认知 #4</div>
+        <div class="mind-wrong-text">"工具调用就是调用函数，很简单"</div>
+      </div>
+      <div class="mind-toggle">▾</div>
+    </div>
+    <div class="mind-body">
+      <div class="mind-right-label">✅ 正确认知</div>
+      <div class="mind-right-text">工具调用是 Agent 与外部世界的接口，需要处理权限、失败、幂等性、结果解读等一系列复杂问题</div>
+      <div class="mind-why">函数调用只需要"调用成功/抛异常"两种状态。但工具调用面临的现实情况是：<br><br>
+      • 权限问题：Agent 有权限调这个工具吗？<br>
+      • 幂等性：如果调用了两次（因为第一次超时），会重复创建数据吗？<br>
+      • 结果解读：API 返回了 200 但数据是空的，Agent 应该认为"成功了但没数据"还是"调用失败了"？<br>
+      • 副作用：这个工具调用会不会产生用户不知情的后果？<br><br>
+      这就是为什么岗位要求专门的"工具调用规范设计"能力。</div>
+      <div class="mind-example">Speakeasy 里调用日历写入 API 时，如果网络超时、Agent 重试，就可能创建两个相同的日历事件。需要在工具层实现幂等性（比如先检查是否已存在）。</div>
+    </div>
+  </div>
+
+  <div class="mind-card">
+    <div class="mind-head" onclick="toggleMind(this)">
+      <div class="mind-head-wrong">
+        <div class="mind-wrong-label">❌ 错误认知 #5</div>
+        <div class="mind-wrong-text">"Agent 越自主越好，让它自己做决定就行"</div>
+      </div>
+      <div class="mind-toggle">▾</div>
+    </div>
+    <div class="mind-body">
+      <div class="mind-right-label">✅ 正确认知</div>
+      <div class="mind-right-text">自主性和可控性需要精心平衡——过度自主的 Agent 会在用户不知情的情况下做出破坏性的操作</div>
+      <div class="mind-why">Agent 架构里有一个基本原则叫做"人类在回路"（Human-in-the-Loop）：越是不可逆的操作（发邮件、删文件、转账），越需要在执行前请求用户确认，而不是 Agent 自己判断。<br><br>新手的本能是"让 Agent 更聪明、更自主"，但经验丰富的架构师想的是"在哪些节点需要暂停和确认、如何设计回滚机制"。这两种思维模式的差距就是这个岗位在选拔的东西。</div>
+      <div class="mind-example">Speakeasy 里，Agent 帮你生成学习计划是低风险的（随时可以改）；但如果 Agent 要"自动取消你明天的会议来给学习腾出时间"，这就是高风险操作，必须先问你。</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:28px">新手必须补的三个前置概念</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-title"><span class="card-icon">📦</span> <span class="concept" onclick="openConcept('context_window')">Context Window</span> 是什么</div>
+      <p>LLM 每次调用能"看到"的最大 token 数量。超出了就会被截断或报错。Agent 框架的很多设计都是在管理这个限制。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔑</span> <span class="concept" onclick="openConcept('token')">Token</span> 是什么</div>
+      <p>LLM 处理文字的基本单位，大约 1 个中文字 = 1-2 个 token，1 个英文单词 ≈ 1-1.5 个 token。Context Window 的大小以 token 计。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🗃️</span> <span class="concept" onclick="openConcept('state_machine')">State Machine</span> 是什么</div>
+      <p>描述系统在不同"状态"之间如何转移的模型。LangGraph 就是把 Agent 的执行流程建模为状态机，每个节点是一个状态，边是条件转移。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🧩</span> <span class="concept" onclick="openConcept('idempotency')">幂等性</span> 是什么</div>
+      <p>一个操作执行一次和执行多次的效果相同。对 Agent 的工具调用极重要——网络重试时不能产生重复副作用。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ P8 理解验证 ══ -->
+<div class="panel" id="p8">
+  <div class="callout">5 道测验，验证你是真的理解了还是只是看完了。<strong>点击选项</strong>后会立即显示解析。</div>
+
+  <div class="quiz-item">
+    <div class="quiz-q">Q1. 用户要求"帮我规划本周所有会议并自动发送会议邀请"，最适合哪种 Agent 模式？</div>
+    <div class="quiz-opts" id="q1-opts">
+      <div class="quiz-opt" onclick="answer(1,'A','B')"><div class="quiz-opt-label">A</div>ReAct，因为需要实时响应用户反馈</div>
+      <div class="quiz-opt" onclick="answer(1,'B','B')"><div class="quiz-opt-label">B</div>Plan-and-Execute，因为任务步骤明确且需要整体一致性</div>
+      <div class="quiz-opt" onclick="answer(1,'C','B')"><div class="quiz-opt-label">C</div>Multi-Agent，因为任务复杂</div>
+      <div class="quiz-opt" onclick="answer(1,'D','B')"><div class="quiz-opt-label">D</div>直接用 Prompt Engineering 列出步骤就够了</div>
+    </div>
+    <div class="quiz-explain" id="q1-explain">Plan-and-Execute 最合适：这个任务的步骤是确定的（查会议→排日程→发邀请），需要整体一致性，中途如果邀请发送失败要能局部重试。ReAct 会让每步都"想一下"，对这种确定性任务太低效。</div>
+  </div>
+
+  <div class="quiz-item">
+    <div class="quiz-q">Q2. ReAct 模式的核心循环是？</div>
+    <div class="quiz-opts" id="q2-opts">
+      <div class="quiz-opt" onclick="answer(2,'A','A')"><div class="quiz-opt-label">A</div>Thought → Action → Observation → Thought…</div>
+      <div class="quiz-opt" onclick="answer(2,'B','A')"><div class="quiz-opt-label">B</div>Plan → Execute → Review → Plan…</div>
+      <div class="quiz-opt" onclick="answer(2,'C','A')"><div class="quiz-opt-label">C</div>Input → Process → Output</div>
+      <div class="quiz-opt" onclick="answer(2,'D','A')"><div class="quiz-opt-label">D</div>Query → Retrieve → Generate</div>
+    </div>
+    <div class="quiz-explain" id="q2-explain">ReAct（Reasoning + Acting）的核心贡献是把推理和行动交替进行，每次行动后观察结果，再用结果指导下一次推理。B 是 Plan-and-Execute 的逻辑，C 是普通 LLM 调用，D 是 RAG。</div>
+  </div>
+
+  <div class="quiz-item">
+    <div class="quiz-q">Q3. Loop Detection 应该基于什么进行检测？</div>
+    <div class="quiz-opts" id="q3-opts">
+      <div class="quiz-opt" onclick="answer(3,'A','C')"><div class="quiz-opt-label">A</div>只检测输出文本是否完全相同</div>
+      <div class="quiz-opt" onclick="answer(3,'B','C')"><div class="quiz-opt-label">B</div>统计总步骤数，超过上限就停止</div>
+      <div class="quiz-opt" onclick="answer(3,'C','C')"><div class="quiz-opt-label">C</div>检测 (工具名 + 标准化输入) 的组合是否在窗口期内重复出现</div>
+      <div class="quiz-opt" onclick="answer(3,'D','C')"><div class="quiz-opt-label">D</div>检测执行时间是否超过阈值</div>
+    </div>
+    <div class="quiz-explain" id="q3-explain">A 太宽松（文字稍变就检测不到）；B 会误杀正常的长任务；D 只是性能监控，不是逻辑检测。正确做法是检测行为指纹重复——同一工具用相似的输入参数被反复调用，才是真正的死循环信号。</div>
+  </div>
+
+  <div class="quiz-item">
+    <div class="quiz-q">Q4. 根据"三问深挖"的分析，LLM 在 Agent 框架里"记住上一步结果"的真实机制是什么？</div>
+    <div class="quiz-opts" id="q4-opts">
+      <div class="quiz-opt" onclick="answer(4,'A','C')"><div class="quiz-opt-label">A</div>LLM 有内置的短期记忆模块，自动记住最近的调用</div>
+      <div class="quiz-opt" onclick="answer(4,'B','C')"><div class="quiz-opt-label">B</div>Agent 框架把结果写入 LLM 的权重里</div>
+      <div class="quiz-opt" onclick="answer(4,'C','C')"><div class="quiz-opt-label">C</div>Agent 框架把上一步的结果手动拼接进下一次调用的 Prompt/Context 里</div>
+      <div class="quiz-opt" onclick="answer(4,'D','C')"><div class="quiz-opt-label">D</div>通过 Cookie 在请求之间共享状态</div>
+    </div>
+    <div class="quiz-explain" id="q4-explain">LLM 完全无状态。所谓"记住"，是 Agent 框架维护了一个状态对象，每次调用 LLM 时把相关状态塞进 Prompt 里。这就是为什么 Context Window 的管理是 Agent 架构的核心挑战之一——放太多历史就会超出限制，放太少就会让 LLM 做出错误判断。</div>
+  </div>
+
+  <div class="quiz-item">
+    <div class="quiz-q">Q5. 为什么说"给 System Prompt 写很详细的步骤列表"不等于实现了 Planning？</div>
+    <div class="quiz-opts" id="q5-opts">
+      <div class="quiz-opt" onclick="answer(5,'A','B')"><div class="quiz-opt-label">A</div>因为 System Prompt 太长会影响模型理解</div>
+      <div class="quiz-opt" onclick="answer(5,'B','B')"><div class="quiz-opt-label">B</div>因为静态步骤列表无法在运行时根据执行结果动态调整任务图</div>
+      <div class="quiz-opt" onclick="answer(5,'C','B')"><div class="quiz-opt-label">C</div>因为 Planning 必须用代码实现，不能用自然语言描述</div>
+      <div class="quiz-opt" onclick="answer(5,'D','B')"><div class="quiz-opt-label">D</div>因为这样做不够"AI"，缺少机器学习成分</div>
+    </div>
+    <div class="quiz-explain" id="q5-explain">Planning 的核心价值是"运行时自适应"：步骤 3 失败了，Planning 模块能跳过或用备选方案替代；发现新的前置条件，能插入新子任务。而 System Prompt 里的步骤是写死的——这本质上还是没有 Planning 的"精心设计的单次调用"。</div>
+  </div>
+
+  <div class="quiz-score" id="quiz-score">
+    <div class="quiz-score-num" id="quiz-score-num">0/5</div>
+    <div class="quiz-score-msg" id="quiz-score-msg"></div>
+  </div>
+</div>
+
+<!-- ══ P9 模式溯源 ══ -->
+<div class="panel" id="p9">
+  <div class="callout">
+    ReAct、Plan-and-Execute、Multi-Agent 不是凭空设计出来的——每种模式的诞生都是为了解决前一种模式暴露出的<strong>具体问题</strong>。理解这条演进脉络，才能真正懂"什么时候用哪个"。
+  </div>
+
+  <div class="section-label">三种模式的诞生背景</div>
+
+  <div class="origin-card">
+    <div class="origin-head">
+      <div class="origin-year-badge">2022 · Google Brain</div>
+      <div>
+        <div class="origin-name">ReAct</div>
+        <div class="origin-subtitle">Reasoning + Acting · 论文：《ReAct: Synergizing Reasoning and Acting in Language Models》</div>
+      </div>
+    </div>
+    <div class="origin-body">
+      <div class="origin-problem">2022年之前，LLM 有两条平行路线：CoT（只推理，不行动）和 Tool-use（只行动，不推理）。两者都有严重缺陷——CoT 产生幻觉，Tool-use 缺乏灵活性。</div>
+      <div class="origin-solution">把推理和行动交织在一起——每次行动前先显式推理（Thought），行动后把观察结果（Observation）喂回推理链，形成闭环。这让模型既能使用工具，又有自我纠错能力。</div>
+      <div style="margin-top:12px;">
+        <div class="origin-section-label">为什么是突破</div>
+        <p>之前的工具调用是"盲打"——模型不知道为什么调用这个工具，也不会根据结果修正行为。ReAct 第一次让模型能"看着结果继续想"。</p>
+      </div>
+      <div class="origin-section">
+        <div class="origin-section-label">遗留的问题</div>
+        <p>ReAct 每一步都在"摸黑走路"——缺乏全局视野，容易陷入局部最优，长任务中会累积推理偏差，而且每步都要调用 LLM，成本很高。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="origin-card">
+    <div class="origin-head">
+      <div class="origin-year-badge">2023 · LangChain Labs</div>
+      <div>
+        <div class="origin-name">Plan-and-Execute</div>
+        <div class="origin-subtitle">先规划再执行 · 论文：《Plan-and-Solve Prompting》+ LangGraph 工程实现</div>
+      </div>
+    </div>
+    <div class="origin-body">
+      <div class="origin-problem">ReAct 在长任务上失控：每步只看当前情况，第10步的决策可能和第1步的规划完全矛盾；而且步骤越多，幻觉累积越严重。</div>
+      <div class="origin-solution">分离"规划"和"执行"两个阶段：第一阶段用 LLM 生成完整任务图（只调用一次），第二阶段按任务图执行（执行时不频繁调用 LLM）。整体一致性大幅提升，成本也更低。</div>
+      <div style="margin-top:12px;">
+        <div class="origin-section-label">关键洞察</div>
+        <p>人类做复杂工作时，会先写项目计划，再按计划执行——而不是每隔10分钟问一次"我现在应该做什么"。Plan-and-Execute 把这个常识带入了 Agent 设计。</p>
+      </div>
+      <div class="origin-section">
+        <div class="origin-section-label">遗留的问题</div>
+        <p>单个 Agent 的能力上限受 Context Window 和专业深度限制。当任务跨越多个专业域（代码 + 搜索 + 数据分析同时需要）时，单 Agent 很难做好所有事。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="origin-card">
+    <div class="origin-head">
+      <div class="origin-year-badge">2023–2024 · 社区 + 学术</div>
+      <div>
+        <div class="origin-name">Multi-Agent</div>
+        <div class="origin-subtitle">AutoGPT 引爆 → CrewAI 规范化 → AutoGen / LangGraph 工程化</div>
+      </div>
+    </div>
+    <div class="origin-body">
+      <div class="origin-problem">单 Agent 处理跨领域复杂任务时，要么 Context Window 撑不住，要么一个"全才 Agent"的 Prompt 过于复杂、表现不稳定。同时，某些任务天然可以并行处理，串行执行太慢。</div>
+      <div class="origin-solution">把一个大任务拆给多个专职 Agent 并行处理——每个 Agent 只做自己擅长的事，一个 Orchestrator 负责协调。理论上无限扩展，实践上需要精心设计通信协议。</div>
+      <div style="margin-top:12px;">
+        <div class="origin-section-label">历史节点</div>
+        <p><strong>2023年3月</strong>：AutoGPT 开源，Multi-Agent 概念爆炸式传播，但工程质量差，大量失控案例。<br><strong>2023年下半年</strong>：CrewAI 用"角色扮演"简化了 Multi-Agent 的配置，降低了使用门槛。<br><strong>2024年</strong>：AutoGen（微软）、LangGraph 提供了更成熟的工程框架，解决了早期的协调混乱问题。</p>
+      </div>
+      <div class="origin-section">
+        <div class="origin-section-label">至今未完全解决的问题</div>
+        <p>Agent 之间的信息同步、任务边界的划定、Orchestrator 的失控风险——这些问题在生产环境中仍然很棘手。Multi-Agent 至今仍是"最强但最难用好"的模式。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">深度决策矩阵</div>
+  <div class="deep-cmp">
+    <div class="deep-cmp-title">不同维度下三种模式的表现</div>
+    <div class="deep-cmp-row header">
+      <div class="deep-cmp-label"></div>
+      <div class="deep-cmp-head">ReAct</div>
+      <div class="deep-cmp-head">Plan-and-Execute</div>
+      <div class="deep-cmp-head">Multi-Agent</div>
+    </div>
+    <div class="deep-cmp-row">
+      <div class="deep-cmp-label">短任务（&lt;5步）</div>
+      <div class="deep-cmp-cell best">✓ 最优</div>
+      <div class="deep-cmp-cell">可以，但浪费</div>
+      <div class="deep-cmp-cell worst">过度设计</div>
+    </div>
+    <div class="deep-cmp-row">
+      <div class="deep-cmp-label">长任务（10步+）</div>
+      <div class="deep-cmp-cell worst">容易偏航</div>
+      <div class="deep-cmp-cell best">✓ 最优</div>
+      <div class="deep-cmp-cell">可以，成本高</div>
+    </div>
+    <div class="deep-cmp-row">
+      <div class="deep-cmp-label">并行执行需求</div>
+      <div class="deep-cmp-cell worst">不支持</div>
+      <div class="deep-cmp-cell">有限支持</div>
+      <div class="deep-cmp-cell best">✓ 天然支持</div>
+    </div>
+    <div class="deep-cmp-row">
+      <div class="deep-cmp-label">LLM 调用次数</div>
+      <div class="deep-cmp-cell worst">每步都调用</div>
+      <div class="deep-cmp-cell best">主要1次规划</div>
+      <div class="deep-cmp-cell">多 Agent × 各自调用</div>
+    </div>
+    <div class="deep-cmp-row">
+      <div class="deep-cmp-label">动态响应能力</div>
+      <div class="deep-cmp-cell best">✓ 最强</div>
+      <div class="deep-cmp-cell">Re-Plan 才能调整</div>
+      <div class="deep-cmp-cell">依赖 Orchestrator</div>
+    </div>
+    <div class="deep-cmp-row">
+      <div class="deep-cmp-label">调试难度</div>
+      <div class="deep-cmp-cell best">每步可见，易追踪</div>
+      <div class="deep-cmp-cell">任务图清晰</div>
+      <div class="deep-cmp-cell worst">跨 Agent 难追踪</div>
+    </div>
+    <div class="deep-cmp-row">
+      <div class="deep-cmp-label">移动端适合度</div>
+      <div class="deep-cmp-cell">短交互 ✓</div>
+      <div class="deep-cmp-cell best">长任务 ✓</div>
+      <div class="deep-cmp-cell worst">通常不适合</div>
+    </div>
+  </div>
+
+  <div class="callout-teal" style="margin-top:20px">
+    <strong>选型口诀：</strong>任务步数少用 ReAct，步骤已知用 Plan-Execute，真正需要专业分工并行才上 Multi-Agent。90% 的移动端 Agent 场景，前两种就够了。
+  </div>
+</div>
+
+<!-- ══ P10 推理演化史 ══ -->
+<div class="panel" id="p10">
+  <div class="callout">
+    AI 推理能力的发展不是一蹴而就的，而是在<strong>一次次"模型做不到 X"的挫败</strong>中，研究者找到了一个又一个突破口。这条演进线索能帮你理解每个技术为什么存在。
+  </div>
+
+  <div class="section-label">推理能力演化时间线</div>
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2017</div>
+      <div class="tl-title">Transformer 出现 —— 记忆力强，但不会"推理"</div>
+      <div class="tl-body">Attention Is All You Need 论文发布。Transformer 架构让模型能处理长文本、做翻译、做摘要，但本质上是<strong>模式匹配</strong>——记住了大量文本中的统计规律，不是真正的步骤推理。<br>给它一道多步数学题，它会胡乱猜一个答案，经常错。</div>
+      <div class="tl-paper">📄 Vaswani et al., "Attention Is All You Need"</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2020</div>
+      <div class="tl-title">GPT-3 —— Few-shot 涌现，但推理仍弱</div>
+      <div class="tl-body">1750亿参数的 GPT-3 第一次展现了<strong>涌现能力（Emergent Ability）</strong>——给几个例子，它能推广到新情况。但多步推理仍然很差：问"Mary 有 3 个苹果，给了 John 1 个，再买了 2 个，现在有几个"这类题，它经常出错。
+      <br><br>关键洞察：Scale（规模）带来了新能力，但没有自动带来推理能力。</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2022 Q1</div>
+      <div class="tl-title">Chain-of-Thought —— 让模型"先想再说"</div>
+      <div class="tl-body">Google Brain 的研究者发现：在 Prompt 里加一句 <strong>"Let's think step by step"</strong>，或者给出几个"先推理再给答案"的例子，模型在多步推理任务上的准确率大幅提升。<br><br>这是第一次发现：推理过程本身对模型来说就是"上下文"——把中间步骤写出来，后续生成的 token 质量会更好。</div>
+      <div class="tl-paper">📄 Wei et al., "Chain-of-Thought Prompting Elicits Reasoning in LLMs"</div>
+      <div class="tl-insight">本质发现：LLM 生成 token 时是"自回归"的——后面的词依赖前面的词。把推理步骤显式生成出来，等于为最终答案提供了更好的"中间跳板"。</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2022 Q3</div>
+      <div class="tl-title">ReAct —— 推理 × 行动的第一次结合</div>
+      <div class="tl-body">CoT 的局限：模型只能"想"，不能"做"。推理链里如果需要查一个真实数据，模型会编造一个。ReAct 把 CoT 和工具调用结合：Thought（推理）→ Action（调用工具）→ Observation（看结果）→ Thought（基于真实结果继续推理）。<br><br>第一次让推理有了<strong>真实世界的锚点</strong>，幻觉大幅减少。</div>
+      <div class="tl-paper">📄 Yao et al., "ReAct: Synergizing Reasoning and Acting in LLMs"</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2023 Q1</div>
+      <div class="tl-title">GPT-4 + Function Calling —— 工具调用标准化</div>
+      <div class="tl-body">OpenAI 在 GPT-4 API 里引入了 Function Calling：开发者可以把工具定义为结构化的 JSON Schema，模型能可靠地输出"调用哪个函数、参数是什么"的结构化指令，而不是在自然语言里夹带工具调用。<br><br>这是工具调用从"实验"走向"工程"的关键节点——准确率从约70%提升到95%+。</div>
+      <div class="tl-big">
+        <div class="tl-big-title">为什么 Function Calling 这么重要？</div>
+        <div class="tl-big-body">之前的工具调用依赖 LLM 在文本里写 <code>[TOOL: search, query: xxx]</code> 这样的标记，然后用正则解析——极不稳定。Function Calling 让模型直接输出结构化 JSON，可靠性质变。这才让生产级 Agent 成为可能。</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2023 Q2</div>
+      <div class="tl-title">AutoGPT 爆红 —— Multi-Agent 的第一次大众化</div>
+      <div class="tl-body">AutoGPT 让 Agent 自主分解任务、调用工具、甚至创建子 Agent。GitHub star 在一周内突破10万。但随之而来的是大量失控案例：Agent 陷入死循环、创建无数无意义文件、一个任务花了几百美元 API 费用……<br><br>AutoGPT 证明了 Multi-Agent 的潜力，也暴露了缺乏 Loop Detection、成本控制、人类监督的严重后果。</div>
+      <div class="tl-insight">这次"爆红 + 翻车"推动了整个领域对 Agent 安全性、可控性的重视。Loop Detection、Token Budget、Human-in-the-Loop 这些概念因此被写进了生产标准。</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2023 下半年</div>
+      <div class="tl-title">LangGraph / CrewAI —— Agent 编排工程化</div>
+      <div class="tl-body">LangGraph 用有向图（DAG）建模 Agent 的执行流程，让 Plan-and-Execute 有了可靠的工程实现。CrewAI 用"角色扮演"简化了 Multi-Agent 的配置，让非专业工程师也能搭 Agent 团队。<br><br>这是 Agent 从"玩具"走向"可落地产品"的分水岭。</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2024</div>
+      <div class="tl-title">OpenAI o1 —— 推理作为"内置计算"</div>
+      <div class="tl-body">o1 模型的核心创新：在输出最终答案前，在模型内部运行大量的"思维 token"（不对用户展示）。本质上是把 CoT 从 Prompt 层移进了模型的训练目标里——模型被强化训练来花时间推理，而不是直接猜答案。<br><br>这改变了 Agent 的设计假设：以前需要通过 ReAct 循环来增强推理，现在模型本身就能更深入地推理，单次调用的质量大幅提升。</div>
+      <div class="tl-big">
+        <div class="tl-big-title">o1 对 Agent 架构的影响</div>
+        <div class="tl-big-body">高推理质量的模型让"每步都要 Thought 节点"的 ReAct 开销下降——单步就能做出更好的判断。但也带来了新问题：推理 token 成本更高，移动端端侧部署更难。</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2024–2025</div>
+      <div class="tl-title">端侧推理 —— Reasoning 走向移动端</div>
+      <div class="tl-body">Llama-3-8B、Phi-3-mini、Gemma-2B 等小模型的推理能力大幅提升，使得移动端本地运行 Agent 成为可能。苹果 Apple Intelligence、高通 AI Hub 推动端侧 LLM 成为手机标配。<br><br>这正是这个岗位要解决的核心工程问题：如何在端侧有限算力上实现完整的 Planning & Reasoning 闭环，以及何时把任务路由到云端。</div>
+      <div class="tl-insight">技术演进的方向越来越清晰：大模型负责"深度推理"，小模型负责"快速响应"，Agent 框架负责"智能路由"。这就是端云协同架构的理论基础。</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ P11 生产实战 ══ -->
+<div class="panel" id="p11">
+  <div class="callout-coral">
+    <strong>这个 Tab 来自真实生产踩坑。</strong>下面每个问题在论文里都找不到标准答案，但在生产 Agent 系统里是高频必踩的坑。每个问题都有具体的解决方案和代码思路。
+  </div>
+
+  <div class="section-label">高危问题（直接影响用户体验）</div>
+
+  <div class="prob-item">
+    <div class="prob-head">
+      <span class="prob-severity sev-high">🔴 高危</span>
+      <span class="prob-title">上下文爆炸 —— Agent 在执行第 8 步时突然报错</span>
+    </div>
+    <div class="prob-body">
+      <div class="prob-scene">一个 15 步的学习计划任务，前 7 步正常，第 8 步开始 LLM 返回错误或者质量急剧下降。原因：前面每步的结果都被塞进 Context，累积下来已经超出了 Context Window 限制。</div>
+      <div class="solutions">
+        <div class="solution-item">
+          <div class="solution-label">方案 1 · 滚动摘要</div>
+          <div class="solution-title">每步执行后压缩历史</div>
+          <div class="solution-body">不把原始结果塞进 Context，而是每步执行后生成一句话摘要。例如"步骤2完成：查到用户本月有17个空闲时段"，而不是把整个 API 返回塞进去。节省80%+ token。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 2 · 外部状态存储</div>
+          <div class="solution-title">只传"当前步骤需要的"进 Context</div>
+          <div class="solution-body">把中间结果存进本地数据库。每次 LLM 调用时，只从数据库取出当前步骤真正需要的字段。就像 SQL 查询只选需要的列，而不是 SELECT *。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 3 · Context Budget 预算制</div>
+          <div class="solution-title">提前计算 token 用量，超阈值触发压缩</div>
+          <div class="solution-body">在 Plan 生成阶段就预估每步的 token 消耗，设置总预算（如 80K tokens）。每步执行前检查剩余预算，不足时触发历史压缩。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prob-item">
+    <div class="prob-head">
+      <span class="prob-severity sev-high">🔴 高危</span>
+      <span class="prob-title">工具调用幻觉 —— Agent 调用了根本不存在的工具</span>
+    </div>
+    <div class="prob-body">
+      <div class="prob-scene">Agent 的 Thought 里写着"我需要调用 translate_and_save 工具"，但这个工具根本没有在工具列表里定义。LLM 编造了一个听起来合理的工具名，然后卡在等待这个工具的返回值。</div>
+      <div class="solutions">
+        <div class="solution-item">
+          <div class="solution-label">方案 1 · 工具名白名单验证</div>
+          <div class="solution-title">解析 LLM 输出时做严格校验</div>
+          <div class="solution-body">在工具调用解析层加入白名单校验：如果 LLM 输出的工具名不在已注册的工具列表里，立即拒绝并触发 Fallback，而不是尝试执行。这比 "try/catch" 更主动。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 2 · Prompt 里精简工具描述</div>
+          <div class="solution-title">工具越少越好，描述越精准越好</div>
+          <div class="solution-body">每个工具的描述要极度精确——什么时候<strong>不该</strong>用它，和什么时候该用它一样重要。工具太多时，分批提供给不同步骤，而不是把所有工具一次性塞进 Prompt。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 3 · 使用 Structured Output</div>
+          <div class="solution-title">强制 LLM 从固定枚举中选择工具</div>
+          <div class="solution-body">用 Function Calling 的 <span class="code-inline">enum</span> 约束工具名字段，让模型只能从预定义的工具名里选，而不是自由填写字符串。这从根本上消灭了工具名幻觉。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">中危问题（影响可靠性）</div>
+
+  <div class="prob-item">
+    <div class="prob-head">
+      <span class="prob-severity sev-mid">🟡 中危</span>
+      <span class="prob-title">规划不稳定 —— 同一个任务，每次生成的 Plan 差异很大</span>
+    </div>
+    <div class="prob-body">
+      <div class="prob-scene">用户两次输入"帮我制定本周学习计划"，第一次 Agent 生成了5步计划，第二次生成了3步，而且步骤名称和顺序都不一样。导致下游系统难以稳定处理。</div>
+      <div class="solutions">
+        <div class="solution-item">
+          <div class="solution-label">方案 1 · Plan Schema 约束</div>
+          <div class="solution-title">用 JSON Schema 限制规划输出格式</div>
+          <div class="solution-body">要求 LLM 以固定的 JSON 结构输出 Plan，包括步骤 ID、步骤类型（从枚举中选）、依赖关系、预期输出格式。格式固定后，内容虽然不同，但下游能稳定处理。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 2 · Plan Validation 验证层</div>
+          <div class="solution-title">Plan 生成后自动验证合理性</div>
+          <div class="solution-body">生成 Plan 后，用规则引擎检查：步骤数是否在合理范围内？依赖关系有没有循环？必要的步骤（如最终输出步骤）是否存在？验证失败则重新生成，最多3次。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 3 · 模板 + LLM 填充</div>
+          <div class="solution-title">预定义任务模板，LLM 只填变量</div>
+          <div class="solution-body">对高频任务类型（制定学习计划、错题复习等）预定义好步骤框架，让 LLM 只填充具体参数（时间范围、词汇难度等）。稳定性从70%提升到95%+。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prob-item">
+    <div class="prob-head">
+      <span class="prob-severity sev-mid">🟡 中危</span>
+      <span class="prob-title">成本失控 —— 一个用户请求花了 $2 的 API 费用</span>
+    </div>
+    <div class="prob-body">
+      <div class="prob-scene">用户说"帮我分析一下我的学习情况"，Agent 生成了一个20步的超详细分析计划，每步都调用大模型，加上 Context 越来越大，一个请求花了30秒、$2 的 API 费用。</div>
+      <div class="solutions">
+        <div class="solution-item">
+          <div class="solution-label">方案 1 · Token Budget 硬上限</div>
+          <div class="solution-title">每个请求设置最大 token 预算</div>
+          <div class="solution-body">在 Agent 启动时设置本次任务的 token 预算（如 20K tokens）。框架层监控每次 LLM 调用的 token 消耗，接近上限时强制压缩 Context 或停止规划，确保不超限。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 2 · 模型分级路由</div>
+          <div class="solution-title">简单步骤用小模型，复杂步骤用大模型</div>
+          <div class="solution-body">格式化输出、简单查询 → Haiku/Gemma-2B（成本1/20）。复杂推理、最终生成 → Sonnet/GPT-4o。这一策略通常能把整体成本降低60-70%，同时保持质量。</div>
+        </div>
+        <div class="solution-item">
+          <div class="solution-label">方案 3 · 步骤数量上限</div>
+          <div class="solution-title">Plan 的步骤数设上限</div>
+          <div class="solution-body">在 Plan 生成的 Prompt 里明确约束："计划不超过7个步骤"。同时在 Plan Validation 里拒绝超过上限的 Plan。这是最简单但非常有效的成本控制手段。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prob-item">
+    <div class="prob-head">
+      <span class="prob-severity sev-low">🟢 低危</span>
+      <span class="prob-title">Observation 解读偏差 —— 工具返回了正确数据，但 Agent 理解错了</span>
+    </div>
+    <div class="prob-body">
+      <div class="prob-scene">日历 API 返回了 JSON 格式的事件列表，但 Agent 把"duration: 60"（分钟）理解成了60秒，导致后续的时间计算全部错误。数据是对的，但 Agent 的理解是错的。</div>
+      <div class="solutions">
+        <div class="solution-item">
+          <div class="solution-label">方案 · 工具返回值语义化</div>
+          <div class="solution-title">返回值加入单位和说明</div>
+          <div class="solution-body">工具的返回值不只是数据，还要包含字段说明。例如不返回 <span class="code-inline">"duration": 60</span>，而是返回 <span class="code-inline">"duration_minutes": 60, "_note": "duration is in minutes"</span>。让 LLM 不需要猜测单位。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ P12 面试题库 ══ -->
+<div class="panel" id="p12">
+  <div class="callout-purple">
+    <strong>使用方法：</strong>先自己想10秒再点开答案。每道题都标注了难度和"常见失误"——失误往往比答案本身更值得记。
+  </div>
+
+  <div class="section-label">基础题 —— 考察概念清晰度</div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-basic">基础</span>
+      <span class="itvw-q">ReAct 和普通 Chain-of-Thought 的本质区别是什么？</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">回答框架（三点）</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>闭环 vs 开环：</strong>CoT 是一次调用内的线性推理，推理完就输出答案，无法获取外部信息；ReAct 是跨多次调用的循环，每次 Action 后会把真实的 Observation 反馈回推理链。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>工具调用：</strong>CoT 只能推理训练数据里有的知识，遇到需要实时数据或私有数据时只能幻觉；ReAct 通过工具调用获取真实数据，从根本上减少幻觉。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>状态维护：</strong>CoT 没有状态，推理结束就结束；ReAct 需要维护 Action 历史和 Observation 历史，让每次 Thought 都能"看到"之前发生了什么。</div></div>
+      </div>
+      <div class="itvw-trap">只说"ReAct 多了行动能力"——这只答到表面。面试官想听到的是"Observation 反馈进 Thought 这个闭环"，以及"这才是减少幻觉的真正机制"。</div>
+    </div>
+  </div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-basic">基础</span>
+      <span class="itvw-q">什么情况下你会选 Plan-and-Execute 而不是 ReAct？</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">回答框架（场景判断法）</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>任务步骤可预知时：</strong>如果任务的大致步骤在开始前就能确定（比如"制定月度计划"永远是 查状态→生成方案→写入系统 这个流程），Plan-and-Execute 能在计划阶段把整体一致性保证好。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>长任务防止累积偏差：</strong>ReAct 在10步以上的任务里，每步的小偏差会累积，到后面可能和最初目标偏离很远。Plan-and-Execute 有全局视图，更容易保持一致性。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>成本控制：</strong>ReAct 每步都要调用 LLM 推理；Plan-and-Execute 主要在 Plan 生成时调用一次，执行阶段调用次数少很多，总成本可以低30-50%。</div></div>
+      </div>
+      <div class="itvw-trap">只说"任务复杂就用 Plan-and-Execute"——这没有说出真正的判断标准。关键词是"步骤可预知"和"需要整体一致性"，不是"复杂度高"。</div>
+    </div>
+  </div>
+
+  <div class="section-label">中级题 —— 考察深度理解</div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-mid">中级</span>
+      <span class="itvw-q">Loop Detection 如果只检测"输出文字相同"会有什么问题？正确的检测方式是什么？</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">回答框架</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>字面检测的漏洞：</strong>Agent 可能每次输出略有不同的文字（"我需要再查一次用户数据" vs "让我重新查询用户信息"），但执行的是完全相同的工具调用。字面检测会认为这是两个不同操作。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>正确方式 —— 行为指纹：</strong>提取 (tool_name + normalized_input_params) 作为行为指纹，对参数做标准化处理（去除时间戳、随机 ID 等随机变量），计算哈希值。在滑动窗口（最近N步）内检测指纹重复。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>阈值设计：</strong>不是出现1次就报警（可能是正常的重试），而是在窗口期内出现 ≥2 次相同指纹才触发。窗口大小和阈值需要根据任务特性调整。</div></div>
+      </div>
+      <div class="itvw-trap">只说"用哈希检测"而不解释"为什么要标准化参数"——面试官会追问：如果参数里有时间戳，哈希每次都不同，怎么检测？这个追问要答到。</div>
+    </div>
+  </div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-mid">中级</span>
+      <span class="itvw-q">移动端 Agent 和服务端 Agent 在架构上最重要的差异是什么？</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">回答框架（三个维度）</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>网络不可靠性：</strong>服务器端的工具调用几乎不会因为网络失败，移动端失败率高很多。这要求每个子任务都必须有 Fallback 策略，Loop Detection 也要能识别"网络失败导致的重试死循环"。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>端云协同路由：</strong>服务器端可以无限制调用云端大模型；移动端需要根据网络状态、任务复杂度、隐私敏感性动态决定是在端侧小模型处理还是路由到云端，这是一个设计上全新的决策层。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>用户中断处理：</strong>服务器端的 Agent 任务一旦开始，通常会跑完；移动端用户随时可能切到别的 App、锁屏、改变需求。Plan 必须支持暂停/恢复，而不是从头重来。</div></div>
+      </div>
+      <div class="itvw-trap">只聊"算力受限"——这是表象，不是架构差异。真正的架构差异是这三点，算力只是其中一个影响因素。</div>
+    </div>
+  </div>
+
+  <div class="section-label">高级题 —— 考察架构判断力</div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-hard">高级</span>
+      <span class="itvw-q">如果 Plan-and-Execute 在执行到第4步时发现前三步的输出存在严重数据质量问题，你会怎么处理？</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">回答框架（分层决策）</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>先分类错误类型：</strong>数据质量问题可能是工具本身返回了脏数据（工具问题），或者 Agent 的参数传错了（规划问题），或者用户的输入本身有歧义（用户问题）。不同原因对应不同处理策略，不能一刀切。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>局部 Re-Plan vs 全局 Re-Plan：</strong>如果只是步骤3的工具返回了脏数据，只需要针对步骤3做局部修复（换数据源或清洗数据）；如果根本原因是最初的 Plan 设计有缺陷，才需要全局 Re-Plan，代价更高。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>用户介入门槛：</strong>如果问题严重到 Agent 无法自主判断（比如数据质量到底是否达标是主观判断），应该暂停执行，把情况告知用户，让用户决定是继续还是重来。这是"Human-in-the-Loop"的核心场景。</div></div>
+        <div class="answer-point"><div class="answer-num">4</div><div class="answer-text"><strong>记录到执行历史：</strong>无论选哪种处理方式，都要把这个异常记录到任务状态里，方便后续分析和改进 Plan 的质量。</div></div>
+      </div>
+      <div class="itvw-trap">直接说"触发全局 Re-Plan"——面试官会追问：Re-Plan 的成本是多少？有没有更轻量的方式？没有分层思考的答案会暴露缺乏生产经验。</div>
+    </div>
+  </div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-hard">高级</span>
+      <span class="itvw-q">设计一个端侧学习助手 Agent，要求在无网络时仍能工作，有网络时利用云端大模型增强体验。你如何设计这个架构？</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">参考架构（Speakeasy 场景）</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>能力分层：</strong>把功能按"是否依赖大模型推理"分级。Level 0（完全离线）：查词汇、看历史记录、做选择题；Level 1（端侧模型）：简单语法判断、发音评分；Level 2（需要联网）：复杂写作分析、个性化计划生成。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>网络状态感知层：</strong>实时监测网络质量（不只是有/无网络，还要检测延迟和稳定性）。根据网络质量动态调整路由策略——弱网时降级到 Level 1，断网时降级到 Level 0，并给用户明确的能力提示。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>离线缓存策略：</strong>用户常用的功能（最近学的词汇、当前学习计划）预先缓存到本地，保证核心体验离线可用。非常用的复杂分析功能降级为"联网后再看"。</div></div>
+        <div class="answer-point"><div class="answer-num">4</div><div class="answer-text"><strong>任务队列与同步：</strong>离线期间产生的数据（练习结果、错题记录）存入本地队列；联网后自动同步到服务器，触发云端的深度分析和计划更新。</div></div>
+      </div>
+      <div class="itvw-trap">只谈"本地模型"而不谈"降级策略和用户体验"——技术上的本地模型方案不难，难的是如何让用户在不同网络状态下都有流畅体验，以及如何明确传达当前能力边界。</div>
+    </div>
+  </div>
+
+  <div class="section-label">架构题 —— 考察系统设计能力</div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-arch">架构</span>
+      <span class="itvw-q">你如何设计一个 Agent 的工具调用规范，使其在移动端高网络失败率下仍然可靠？</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">完整规范设计（5个要素）</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>结构化错误语义：</strong>不只返回 HTTP 状态码，而是返回分类错误码（<span class="code-inline">ERR_NETWORK</span> / <span class="code-inline">ERR_NOT_FOUND</span> / <span class="code-inline">ERR_PERMISSION</span>），让 Reasoning 层能做出不同的恢复决策而不是统一重试。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>幂等性保证：</strong>所有写操作必须幂等——使用请求唯一 ID（<span class="code-inline">idempotency_key</span>），服务端拒绝相同 key 的重复请求。确保网络重试不产生重复副作用（两个日历事件、两条练习记录）。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>超时与重试策略：</strong>每个工具调用设置最大超时（如3秒），超时后的重试使用指数退避（1s、2s、4s），而不是立即重试（会加剧网络拥堵）。最多重试2次，超过后触发 Fallback。</div></div>
+        <div class="answer-point"><div class="answer-num">4</div><div class="answer-text"><strong>副作用声明：</strong>每个工具在定义时声明其副作用级别（只读/可逆写/不可逆写），Agent 框架对高副作用工具自动要求用户确认，对低副作用工具允许自动执行。</div></div>
+        <div class="answer-point"><div class="answer-num">5</div><div class="answer-text"><strong>调用日志：</strong>所有工具调用都写入本地日志（工具名、参数、结果、时间戳），支持 Loop Detection 的历史分析，也方便问题排查。日志定期上传云端用于系统优化。</div></div>
+      </div>
+      <div class="itvw-trap">只谈"重试"——重试只是可靠性的一个维度，而且不合理的重试反而会造成问题（幂等性缺失、加剧 Loop）。完整的工具调用规范需要覆盖这5个要素。</div>
+    </div>
+  </div>
+
+  <div class="itvw-item">
+    <div class="itvw-head" onclick="toggleItvw(this)">
+      <span class="itvw-level lv-arch">架构</span>
+      <span class="itvw-q">请解释"幻觉控制"和"逻辑回滚"在 Agent 系统里具体指什么，以及如何实现？（来自 JD 加分项）</span>
+      <span class="itvw-toggle">▾</span>
+    </div>
+    <div class="itvw-body">
+      <div class="itvw-framework">
+        <div class="itvw-framework-label">幻觉控制</div>
+        <div class="answer-point"><div class="answer-num">1</div><div class="answer-text"><strong>定义：</strong>Agent 在执行过程中产生了与实际工具返回数据不符的声明，或者引用了根本不存在的数据。比如工具返回用户上周有5次练习，但 Agent 在总结里说"您保持了每日练习习惯"。</div></div>
+        <div class="answer-point"><div class="answer-num">2</div><div class="answer-text"><strong>控制方案：</strong>在最终输出生成之前，加入 Grounding 校验——对输出里的每个具体事实数据，对照工具调用的 Observation 做一致性检查。不一致的声明要么删除要么改为模糊表述。</div></div>
+        <div class="answer-point"><div class="answer-num">3</div><div class="answer-text"><strong>Self-Consistency 双校验：</strong>用同一个问题调用 LLM 两次（不同随机性），比对两次输出的核心结论是否一致。不一致时触发第三次调用仲裁，或降级为更保守的表述。</div></div>
+      </div>
+      <div class="itvw-framework" style="margin-top:12px;">
+        <div class="itvw-framework-label">逻辑回滚</div>
+        <div class="answer-point"><div class="answer-num">4</div><div class="answer-text"><strong>定义：</strong>Agent 在对话中某一步产生了一个错误结论，后续的推理都建立在这个错误上。当错误被检测到时，不只是修正当前步骤，而是回到错误发生的那一步，撤销所有基于错误的后续推理。</div></div>
+        <div class="answer-point"><div class="answer-num">5</div><div class="answer-text"><strong>实现方式：</strong>每个推理步骤维护一个"推理树"，记录每个 Belief 的来源（来自哪个工具调用的哪个字段）。发现错误时，找到所有依赖这个错误 Belief 的推理节点，统一标记为失效，触发从该节点开始的局部重新推理。</div></div>
+      </div>
+      <div class="itvw-trap">把幻觉控制说成"加更多提示词"——这只是预防措施，不是检测和修复机制。面试官想听到的是"在 Observation → Thought 环节如何做事实核查"，以及"逻辑回滚需要维护推理树这个数据结构"。</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ P13 任务识别路由 ══ -->
+<div class="panel" id="p13">
+  <div class="callout">
+    <strong>核心问题：</strong>拿到一个用户请求，怎么判断用该用 ReAct、Plan-and-Execute，还是 Multi-Agent？这不是凭感觉的——有可以工程化的识别框架。
+  </div>
+
+  <div class="section-label">任务分类的四个维度</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-title"><span class="card-icon">📏</span> 维度1：步骤数量</div>
+      <p>预估完成任务需要几次工具调用。1-3步 → ReAct；4-10步 → Plan-and-Execute；10步以上且需要并行 → 考虑 Multi-Agent。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔮</span> 维度2：步骤可预测性</div>
+      <p>任务开始前能否列出完整步骤？能列出 → Plan-and-Execute；步骤依赖运行时结果才能确定 → ReAct。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔄</span> 维度3：动态响应需求</div>
+      <p>任务执行中是否需要随时响应用户输入或环境变化？需要 → ReAct；任务是批处理型、执行中不需要互动 → Plan-and-Execute。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🎭</span> 维度4：专业域分工</div>
+      <p>任务是否跨越多个真正不同的专业域，且这些域需要独立的 System Prompt 和工具集？是 → Multi-Agent；否 → 单 Agent 足够。</p>
+    </div>
+  </div>
+
+  <div class="section-label">任务路由决策树</div>
+  <div class="code-block" style="font-family:inherit;font-size:12.5px;line-height:1.9">
+<span class="code-comment">// 任务路由决策树（伪代码逻辑）</span>
+
+<span class="code-key">function</span> routeTask(task) {
+  <span class="code-comment">// Step 1: 快速判断任务复杂度</span>
+  <span class="code-key">const</span> estimated_steps = estimateSteps(task);        <span class="code-comment">// LLM 估计步骤数</span>
+  <span class="code-key">const</span> needs_realtime = hasRealtimeRequirement(task); <span class="code-comment">// 需要实时响应？</span>
+  <span class="code-key">const</span> needs_parallel = hasParallelRequirement(task); <span class="code-comment">// 需要并行处理？</span>
+  <span class="code-key">const</span> domain_count = countDomains(task);             <span class="code-comment">// 跨几个专业域？</span>
+
+  <span class="code-comment">// Step 2: 路由规则（按优先级）</span>
+  <span class="code-key">if</span> (estimated_steps <= <span class="code-val">3</span> || needs_realtime) {
+    <span class="code-key">return</span> <span class="code-str">'REACT'</span>;       <span class="code-comment">// 短任务 / 实时交互</span>
+  }
+  <span class="code-key">if</span> (domain_count >= <span class="code-val">3</span> && needs_parallel) {
+    <span class="code-key">return</span> <span class="code-str">'MULTI_AGENT'</span>; <span class="code-comment">// 多域并行（谨慎使用）</span>
+  }
+  <span class="code-key">return</span> <span class="code-str">'PLAN_EXECUTE'</span>;   <span class="code-comment">// 默认：长任务 / 步骤已知</span>
+}
+  </div>
+
+  <div class="section-label">Speakeasy 任务路由实例</div>
+  <table class="cmp-table">
+    <thead>
+      <tr><th>用户请求</th><th>识别信号</th><th>路由结果</th><th>原因</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>"这句话哪里错了"</td><td>步骤≤2，需即时回复</td><td class="hl">ReAct</td><td>短交互，无需规划</td></tr>
+      <tr><td>"帮我制定本月学习计划"</td><td>步骤5+，步骤可预知</td><td class="hl">Plan-and-Execute</td><td>整体一致性重要</td></tr>
+      <tr><td>"分析我的发音并出一套练习"</td><td>步骤4+，但有分支</td><td class="hl">Plan-and-Execute + ReAct fallback</td><td>混合策略</td></tr>
+      <tr><td>"同时生成本周内容+更新课程库+发通知"</td><td>三个独立域，可并行</td><td class="hl">Multi-Agent</td><td>真正的专业分工</td></tr>
+      <tr><td>"陪我练口语对话"</td><td>实时交互，不确定步骤</td><td class="hl">ReAct</td><td>每轮依赖上轮输入</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">自动路由 Prompt 模板</div>
+  <p>可以在 Agent 入口处加一个"路由 LLM 调用"，让模型根据任务描述输出路由决策：</p>
+  <div class="code-block">
+<span class="code-comment">// 路由 System Prompt（精简版）</span>
+<span class="code-key">const</span> ROUTER_PROMPT = <span class="code-str">`
+你是任务路由器。分析用户请求，输出 JSON：
+{
+  "mode": "REACT" | "PLAN_EXECUTE" | "MULTI_AGENT",
+  "estimated_steps": number,
+  "reason": string,
+  "requires_realtime": boolean
+}
+
+规则：
+- 步骤≤3 或需要实时交互 → REACT
+- 步骤>3 且步骤可预知 → PLAN_EXECUTE  
+- 跨3个以上专业域且需并行 → MULTI_AGENT
+只输出 JSON，不要其他内容。
+`</span>;
+  </div>
+
+  <div class="callout-teal" style="margin-top:16px">
+    <strong>重要：路由本身也会出错。</strong>路由 LLM 可能把复杂任务误判为简单任务。解决方案：在执行层加"步骤数监控"——如果 ReAct 模式下步骤数超过阈值（如6步），自动升级为 Plan-and-Execute。路由是初始决策，不是最终决策。
+  </div>
+</div>
+
+<!-- ══ P14 完整案例代码 ══ -->
+<div class="panel" id="p14">
+  <div class="callout">
+    <strong>完整闭环案例：</strong>用户说"帮我制定本周英语学习计划，写进我的日历"。从接收任务到最终结果的完整流程，含核心代码。模式：<strong>Plan-and-Execute</strong>（步骤可预知，需要整体一致性）。
+  </div>
+
+  <div class="section-label">第一阶段：任务接入 → 路由判断</div>
+  <div class="code-block">
+<span class="code-comment">// ① 接收用户输入，路由到正确模式</span>
+<span class="code-key">async function</span> handleUserRequest(userInput) {
+  <span class="code-comment">// 路由判断（单次 LLM 调用）</span>
+  <span class="code-key">const</span> route = <span class="code-key">await</span> routeTask(userInput);
+  <span class="code-comment">// → { mode: "PLAN_EXECUTE", estimated_steps: 5, requires_realtime: false }</span>
+
+  <span class="code-key">if</span> (route.mode === <span class="code-str">"PLAN_EXECUTE"</span>) {
+    <span class="code-key">return</span> <span class="code-key">await</span> planAndExecute(userInput);
+  } <span class="code-key">else if</span> (route.mode === <span class="code-str">"REACT"</span>) {
+    <span class="code-key">return</span> <span class="code-key">await</span> reactLoop(userInput);
+  }
+}
+  </div>
+
+  <div class="section-label">第二阶段：生成 Plan（一次 LLM 调用）</div>
+  <div class="code-block">
+<span class="code-comment">// ② 让 LLM 生成结构化任务图</span>
+<span class="code-key">async function</span> generatePlan(goal) {
+  <span class="code-key">const</span> response = <span class="code-key">await</span> llm.call({
+    system: <span class="code-str">`生成 JSON 任务图。规则：
+- 每个任务有 id, action, tool, params_template, depends_on, fallback
+- depends_on 为空数组表示可立即执行
+- 只输出 JSON，不要解释`</span>,
+    user: <span class="code-str">`目标：${goal}\n可用工具：get_user_level, get_calendar_slots, generate_plan, write_calendar, verify_write`</span>
+  });
+
+  <span class="code-key">const</span> plan = JSON.parse(response);
+  <span class="code-comment">/* 返回：
+  { tasks: [
+    { id:1, action:"查询用户词汇水平",     tool:"get_user_level",    depends_on:[], fallback:null },
+    { id:2, action:"查询本周空闲时间段",   tool:"get_calendar_slots",depends_on:[], fallback:null },
+    { id:3, action:"生成个性化学习计划",   tool:"generate_plan",     depends_on:[1,2], fallback:null },
+    { id:4, action:"写入日历",             tool:"write_calendar",    depends_on:[3], fallback:"output_text" },
+    { id:5, action:"验证写入结果",         tool:"verify_write",      depends_on:[4], fallback:null }
+  ]} */</span>
+
+  <span class="code-comment">// 验证 Plan 合理性</span>
+  validatePlan(plan); <span class="code-comment">// 检查：无循环依赖、步骤数≤7、必要步骤存在</span>
+  <span class="code-key">return</span> plan;
+}
+  </div>
+
+  <div class="section-label">第三阶段：执行引擎（核心循环）</div>
+  <div class="code-block">
+<span class="code-comment">// ③ 执行引擎：按依赖关系调度任务</span>
+<span class="code-key">async function</span> executeEngine(plan) {
+  <span class="code-key">const</span> state = {
+    results: {},          <span class="code-comment">// 每个任务的执行结果</span>
+    actionHistory: [],    <span class="code-comment">// 用于 Loop Detection</span>
+    tokenUsed: <span class="code-val">0</span>         <span class="code-comment">// Token 预算追踪</span>
+  };
+
+  <span class="code-key">while</span> (hasRemainingTasks(plan)) {
+    <span class="code-comment">// 找到所有"依赖已满足"的就绪任务</span>
+    <span class="code-key">const</span> readyTasks = plan.tasks.filter(t =>
+      t.status === <span class="code-str">'pending'</span> &&
+      t.depends_on.every(dep => state.results[dep]?.status === <span class="code-str">'done'</span>)
+    );
+
+    <span class="code-comment">// 并行执行所有就绪任务</span>
+    <span class="code-key">await</span> Promise.all(readyTasks.map(task =>
+      executeTask(task, state)
+    ));
+  }
+
+  <span class="code-key">return</span> state.results;
+}
+
+<span class="code-key">async function</span> executeTask(task, state) {
+  <span class="code-comment">// Loop Detection</span>
+  <span class="code-key">const</span> fingerprint = <span class="code-str">`${task.tool}:${JSON.stringify(task.resolved_params)}`</span>;
+  <span class="code-key">if</span> (detectLoop(state.actionHistory, fingerprint)) {
+    task.status = <span class="code-str">'loop_detected'</span>;
+    <span class="code-key">return</span> triggerFallback(task, state);
+  }
+  state.actionHistory.push(fingerprint);
+
+  <span class="code-key">try</span> {
+    task.status = <span class="code-str">'running'</span>;
+    <span class="code-key">const</span> params = resolveParams(task.params_template, state.results);
+    <span class="code-key">const</span> result = <span class="code-key">await</span> callTool(task.tool, params);
+
+    <span class="code-comment">// Belief Update：解读工具结果</span>
+    <span class="code-key">const</span> belief = interpretResult(result, task);
+    state.results[task.id] = { status: <span class="code-str">'done'</span>, data: result, belief };
+    task.status = <span class="code-str">'done'</span>;
+
+  } <span class="code-key">catch</span> (error) {
+    <span class="code-comment">// 结构化错误分类</span>
+    <span class="code-key">const</span> errType = classifyError(error);
+    <span class="code-comment">// ERR_NETWORK → 重试；ERR_PERMISSION → fallback；ERR_NOT_FOUND → 更新 belief</span>
+    <span class="code-key">await</span> handleError(task, errType, state);
+  }
+}
+  </div>
+
+  <div class="section-label">第四阶段：工具实现（以日历写入为例）</div>
+  <div class="code-block">
+<span class="code-comment">// ④ 工具层：带幂等性保证的日历写入</span>
+<span class="code-key">async function</span> write_calendar(params) {
+  <span class="code-key">const</span> { events, idempotency_key } = params;
+
+  <span class="code-comment">// 幂等性检查：先查是否已存在</span>
+  <span class="code-key">for</span> (<span class="code-key">const</span> event <span class="code-key">of</span> events) {
+    <span class="code-key">const</span> existing = <span class="code-key">await</span> calendarAPI.check({
+      date: event.date, title: event.title
+    });
+    <span class="code-key">if</span> (existing) {
+      <span class="code-key">continue</span>; <span class="code-comment">// 跳过，不重复创建</span>
+    }
+    <span class="code-key">await</span> calendarAPI.create(event);
+  }
+
+  <span class="code-key">return</span> {
+    status: <span class="code-str">"success"</span>,
+    created_count: events.length,
+    <span class="code-comment">// 语义化返回，帮助 Belief Update</span>
+    _meta: { unit: "events", action: "calendar_write" }
+  };
+}
+  </div>
+
+  <div class="section-label">第五阶段：最终输出生成</div>
+  <div class="code-block">
+<span class="code-comment">// ⑤ 汇总结果，生成用户友好的最终回复</span>
+<span class="code-key">async function</span> generateFinalResponse(state, originalGoal) {
+  <span class="code-comment">// 收集关键结果（不是原始 API 返回，是语义摘要）</span>
+  <span class="code-key">const</span> summary = {
+    user_level: state.results[<span class="code-val">1</span>].belief,   <span class="code-comment">// "用户当前水平：B2"</span>
+    slots_found: state.results[<span class="code-val">2</span>].belief,  <span class="code-comment">// "本周有17个可用时间段"</span>
+    plan_created: state.results[<span class="code-val">3</span>].belief, <span class="code-comment">// "生成了5个学习单元"</span>
+    calendar_status: state.results[<span class="code-val">4</span>].belief <span class="code-comment">// "成功写入日历"</span>
+  };
+
+  <span class="code-comment">// 最终 LLM 调用：生成自然语言回复</span>
+  <span class="code-key">return</span> <span class="code-key">await</span> llm.call({
+    system: <span class="code-str">"用友好的语气总结任务执行结果，控制在3句话内"</span>,
+    user: <span class="code-str">`目标：${originalGoal}\n执行摘要：${JSON.stringify(summary)}`</span>
+  });
+  <span class="code-comment">// → "已为您制定本周英语学习计划！根据您的 B2 水平，
+  //    安排了5个学习单元，利用了周一、三、五的空闲时间段，
+  //    全部已写入您的日历，记得查看 📅"</span>
+}
+  </div>
+
+  <div class="section-label">完整执行流程可视化</div>
+  <div class="flow" style="flex-wrap:wrap;gap:6px">
+    <div class="flow-node fn-highlight"><div class="fn-title">①路由判断</div><div class="fn-sub">1次LLM调用</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node fn-highlight"><div class="fn-title">②生成Plan</div><div class="fn-sub">1次LLM调用</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-title">③并行执行</div><div class="fn-sub">任务1+2同时跑</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-title">④串行执行</div><div class="fn-sub">任务3→4→5</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node fn-highlight"><div class="fn-title">⑤生成回复</div><div class="fn-sub">1次LLM调用</div></div>
+  </div>
+  <p style="color:#888780;font-size:12px">总计：3次 LLM 调用 + 5次工具调用。如果用纯 ReAct，每步都要 LLM 推理，至少需要 8-10 次 LLM 调用。</p>
+</div>
+
+<!-- ══ P15 框架全景 ══ -->
+<div class="panel" id="p15">
+  <div class="callout">每种 Agent 模式都有对应的成熟框架。选框架不只是看功能，还要看"工程复杂度 vs 你真正需要的能力"。</div>
+
+  <div class="section-label">ReAct 模式框架</div>
+  <table class="cmp-table">
+    <thead><tr><th>框架</th><th>特点</th><th>适合场景</th><th>学习曲线</th></tr></thead>
+    <tbody>
+      <tr><td class="hl">LangChain Agent</td><td>最成熟，生态最大，工具集丰富</td><td>快速原型，工具调用为主</td><td>低，文档全</td></tr>
+      <tr><td class="hl">OpenAI Assistants API</td><td>原生 Function Calling，内置状态管理</td><td>纯 OpenAI 生态，快速上线</td><td>极低</td></tr>
+      <tr><td class="hl">Anthropic Tool Use</td><td>Claude 原生工具调用，结构化输出稳定</td><td>需要高质量推理的工具调用</td><td>低</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">Plan-and-Execute 框架</div>
+  <table class="cmp-table">
+    <thead><tr><th>框架</th><th>核心抽象</th><th>优势</th><th>生产就绪度</th></tr></thead>
+    <tbody>
+      <tr><td class="hl">LangGraph</td><td>有向图 + 状态机</td><td>最灵活，支持复杂分支、循环、Human-in-the-Loop</td><td>⭐⭐⭐⭐⭐</td></tr>
+      <tr><td class="hl">LangChain Plan-and-Solve</td><td>Planner + Executor 两阶段</td><td>简单，快速上手</td><td>⭐⭐⭐</td></tr>
+      <tr><td class="hl">Haystack Pipelines</td><td>节点管道</td><td>适合文档处理类任务，工业级稳定</td><td>⭐⭐⭐⭐</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">Multi-Agent 框架</div>
+  <table class="cmp-table">
+    <thead><tr><th>框架</th><th>协调模式</th><th>适合场景</th><th>上手难度</th></tr></thead>
+    <tbody>
+      <tr><td class="hl">CrewAI</td><td>角色扮演，任务分配</td><td>内容生产、研究类任务</td><td>低（YAML 配置）</td></tr>
+      <tr><td class="hl">AutoGen（微软）</td><td>对话驱动，Agent 互相对话</td><td>代码生成+审查、问题求解</td><td>中</td></tr>
+      <tr><td class="hl">LangGraph Multi-Agent</td><td>图结构，显式消息传递</td><td>需要精确控制通信的生产系统</td><td>高</td></tr>
+      <tr><td class="hl">Autogen Studio</td><td>可视化配置</td><td>快速实验，非工程师友好</td><td>极低</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">移动端专用框架 / 工具</div>
+  <table class="cmp-table">
+    <thead><tr><th>工具</th><th>作用</th><th>和 Agent 的关系</th></tr></thead>
+    <tbody>
+      <tr><td class="hl">LLaMA.cpp</td><td>端侧模型推理引擎（C++）</td><td>提供端侧 Reasoning 能力</td></tr>
+      <tr><td class="hl">MLC LLM</td><td>跨平台端侧部署（iOS/Android/Web）</td><td>端侧小模型的工程化运行时</td></tr>
+      <tr><td class="hl">Ollama</td><td>本地模型管理（主要用于 macOS/Linux）</td><td>开发阶段模拟端侧环境</td></tr>
+      <tr><td class="hl">Apple Core ML</td><td>iOS 原生 ML 推理</td><td>Phi-3-mini / Gemma-2B 的 iOS 部署</td></tr>
+      <tr><td class="hl">MCP（Model Context Protocol）</td><td>工具调用协议标准</td><td>打通端侧工具（日历/相册/快捷指令）</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">LangGraph 工程构建要点（重点，JD 要求）</div>
+  <div class="code-block">
+<span class="code-comment">// LangGraph 核心结构示例（Plan-and-Execute）</span>
+<span class="code-key">import</span> { StateGraph, END } <span class="code-key">from</span> <span class="code-str">"@langchain/langgraph"</span>;
+
+<span class="code-comment">// 1. 定义状态结构（贯穿整个图的共享数据）</span>
+<span class="code-key">const</span> graphState = {
+  goal: <span class="code-val">null</span>,
+  plan: <span class="code-val">null</span>,          <span class="code-comment">// Plan-and-Execute 的任务图</span>
+  current_task: <span class="code-val">null</span>,
+  results: {},
+  error: <span class="code-val">null</span>
+};
+
+<span class="code-comment">// 2. 定义节点（每个节点是一个函数）</span>
+<span class="code-key">const</span> workflow = <span class="code-key">new</span> StateGraph({ channels: graphState });
+
+workflow.addNode(<span class="code-str">"planner"</span>,    generatePlan);    <span class="code-comment">// 规划节点</span>
+workflow.addNode(<span class="code-str">"executor"</span>,   executeTask);     <span class="code-comment">// 执行节点</span>
+workflow.addNode(<span class="code-str">"validator"</span>,  validateResult);  <span class="code-comment">// 验证节点</span>
+workflow.addNode(<span class="code-str">"replanner"</span>,  replanTask);      <span class="code-comment">// 重规划节点</span>
+
+<span class="code-comment">// 3. 定义边和条件转移（关键！）</span>
+workflow.addEdge(<span class="code-str">"planner"</span>, <span class="code-str">"executor"</span>);
+workflow.addConditionalEdges(<span class="code-str">"validator"</span>, (state) => {
+  <span class="code-key">if</span> (state.error?.type === <span class="code-str">"ERR_CRITICAL"</span>) <span class="code-key">return</span> <span class="code-str">"replanner"</span>;
+  <span class="code-key">if</span> (hasMoreTasks(state))  <span class="code-key">return</span> <span class="code-str">"executor"</span>;
+  <span class="code-key">return</span> END;
+});
+workflow.addEdge(<span class="code-str">"replanner"</span>, <span class="code-str">"executor"</span>);
+
+<span class="code-comment">// 4. 编译并运行</span>
+<span class="code-key">const</span> app = workflow.compile();
+<span class="code-key">const</span> result = <span class="code-key">await</span> app.invoke({ goal: <span class="code-str">"制定本周学习计划"</span> });
+  </div>
+
+  <div class="section-label">选型建议（Speakeasy 项目）</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-title"><span class="card-icon">✅</span> 推荐：LangGraph</div>
+      <p>用于实现 Plan-and-Execute 的长任务（制定计划、批量练习生成）。状态机模型完美匹配任务依赖关系，Human-in-the-Loop 支持好，生产稳定。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">✅</span> 推荐：Anthropic Tool Use</div>
+      <p>用于 ReAct 模式的短交互（语法解释、即时对话）。Claude 的工具调用质量高，结构化输出稳定，幻觉率低。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">⚠️</span> 谨慎：CrewAI</div>
+      <p>快速实验内容生产流水线可以用，但生产环境的可控性和可观测性弱，排查问题困难。</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔬</span> 实验：MLC LLM + MCP</div>
+      <p>端侧 Agent 的核心组合。先在 Ollama 上用 Phi-3-mini 验证工具调用质量，再迁移到端侧部署。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ P16 底层原理 ══ -->
+<div class="panel" id="p16">
+  <div class="callout">
+    针对你提到的4个深层问题：为什么不能一个 Prompt 搞定、为什么不能运行时动态注册 Prompt、LLM 无状态的底层含义、Belief 是什么。每个都拆到最底层。
+  </div>
+
+  <!-- 问题1 -->
+  <div class="why-section-title">
+    <span>为什么不能把所有步骤写进一个 Prompt 让模型一次完成？</span>
+    <span class="why-tag">高频误区</span>
+  </div>
+  <div class="why-section-body">
+    <p>这个问题有两个层次的答案——表层的"做不到"和深层的"即使做到了也不对"。</p>
+    <div class="cards" style="margin:12px 0">
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🚧</span> 物理层面做不到</div>
+        <p>任务步骤 N 的输入，依赖步骤 N-1 的运行时输出结果。而步骤 N-1 的结果是工具调用后才存在的真实数据——在写 Prompt 时根本还不存在，你不可能提前把它写进去。</p>
+        <p style="margin-top:6px;font-size:12px;color:#888780">例：你无法在写 Prompt 时就知道"日历 API 今天会返回什么空闲时段"——这是 Prompt 写完之后才发生的事。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🧠</span> 认知层面做不到</div>
+        <p>LLM 的生成是"一次性完成的"——它不能在生成过程中"暂停、去查个数据、再继续"。它只能基于 Prompt 里已有的信息生成输出，真实世界的反馈无法注入生成过程。</p>
+        <p style="margin-top:6px;font-size:12px;color:#888780">就算你把所有"假设性结果"都写进 Prompt，模型只是在对假设做推理，不是在做真实决策。</p>
+      </div>
+    </div>
+    <div class="why-insight">根本原因：LLM 是一个函数 f(input) → output，它在一次调用里完成。真实任务是有状态的迭代过程，需要多次 f() 调用，而且每次的 input 都依赖上一次的 output。这两者的结构不匹配，用单次调用硬撑多步任务，就像用一张照片代替一段视频——根本不是同一个东西。</div>
+  </div>
+
+  <!-- 问题2 -->
+  <div class="why-section-title" style="margin-top:20px">
+    <span>为什么不能在运行时动态注册 Prompt？</span>
+    <span class="why-tag">进阶问题</span>
+  </div>
+  <div class="why-section-body">
+    <p>这个问题问的比上面更深——假设我们能在执行过程中动态往 Prompt 里加内容，是否就解决问题了？</p>
+    <p><strong>技术上，这完全可以做到，而且正在被做：</strong>每次 LLM 调用时，Agent 框架都在动态构建 Prompt，把前几步的结果拼接进去。这本身就是"运行时动态 Prompt"。</p>
+    <p>那为什么还需要 Planning 框架？有三个 Prompt 层面解决不了的问题：</p>
+    <div class="cards" style="margin:12px 0">
+      <div class="card">
+        <div class="card-title"><span class="card-icon">📏</span> 问题一：Context 上限</div>
+        <p>持续往 Prompt 里追加内容，Context Window 会被撑爆。Planning 框架的状态管理负责"选择性包含"——只把当前步骤需要的内容塞进 Prompt，而不是全部历史。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🔗</span> 问题二：依赖关系管理</div>
+        <p>Prompt 是线性文本，无法表达"步骤 A 和 B 可以并行，C 必须等 A 和 B 都完成"这样的依赖关系。这需要任务图这种数据结构，不是 Prompt 能做到的。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🔄</span> 问题三：全局一致性</div>
+        <p>动态拼接的 Prompt 容易导致"前后矛盾"——步骤 7 的指令和步骤 2 的前提假设发生冲突，模型会产生混乱。Planning 框架维护全局状态，确保每步调用时的 Prompt 上下文是自洽的。</p>
+      </div>
+    </div>
+    <div class="why-insight">动态 Prompt 是 Planning 框架工作的"媒介"，不是 Planning 本身。Planning 的价值在于：管理状态、维护任务图、协调并行、保证全局一致——这些都在 Prompt 之上的抽象层。</div>
+  </div>
+
+  <!-- 问题3 -->
+  <div class="why-section-title" style="margin-top:20px">
+    <span>深挖：LLM 无状态 + 任务有状态 = 所有复杂性的根源</span>
+    <span class="why-tag">底层洞察</span>
+  </div>
+  <div class="why-section-body">
+    <div class="method-box" style="margin:0 0 16px 0">
+      <div class="method-label">核心命题</div>
+      <div class="method-title">Planning 存在的根本原因</div>
+      <div class="method-body">
+        <strong>LLM 无状态</strong>（每次调用是全新的，没有记忆）<br>
+        + <strong>任务有状态</strong>（步骤之间有依赖，有中间结果，有执行进度）<br>
+        = <strong>必须由外部框架</strong>在多次调用之间维护状态和协调顺序<br>
+        = <strong>Planning 就是这个协调机制的设计</strong>
+      </div>
+    </div>
+    <p>这个洞察能推导出 Agent 架构里所有核心设计决策：</p>
+    <table class="cmp-table">
+      <thead><tr><th>由"LLM无状态"推导出</th><th>对应的架构组件</th></tr></thead>
+      <tbody>
+        <tr><td>状态不能存在 LLM 里，需要外部维护</td><td>状态存储（内存 / 数据库）</td></tr>
+        <tr><td>每次调用都要重新喂入必要上下文</td><td>Context 管理 + 滚动摘要</td></tr>
+        <tr><td>LLM 不知道之前发生了什么</td><td>Action History + Observation 拼接</td></tr>
+        <tr><td>LLM 不知道还剩多少任务</td><td>任务图 + 进度追踪</td></tr>
+        <tr><td>LLM 不能"决定去执行工具"然后等待结果</td><td>工具调用框架 + 异步执行引擎</td></tr>
+        <tr><td>LLM 不能主动感知到工具执行失败</td><td>错误捕获层 + Belief Update</td></tr>
+      </tbody>
+    </table>
+    <div class="why-insight">这个洞察还有更深一层：人类做事时，"我的大脑"（推理）和"我对世界的记忆"（状态）是融合在一起的。LLM 把这两者完全分离了——它只有推理，没有记忆。Agent 框架本质上是在给 LLM "装上记忆器"，让它能处理有状态的任务。</div>
+  </div>
+
+  <!-- 问题4：Belief -->
+  <div class="why-section-title" style="margin-top:20px">
+    <span>Belief 是什么？为什么是 Agent 推理的核心概念？</span>
+    <span class="why-tag">核心概念</span>
+  </div>
+  <div class="why-section-body">
+    <div class="callout-teal" style="margin-bottom:14px">
+      <strong>Belief（信念）</strong>不是"相信不相信"的"信念"，而是 Agent 对"当前世界状态"的<strong>内部模型</strong>——它认为现在的情况是什么样的。
+    </div>
+    <div class="cards" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🗺️</span> 类比：Belief 是你脑中的地图</div>
+        <p>你去一个陌生城市，脑子里有一张"你认为的地图"——可能不完全准确，但是你做决策的依据。走到某个路口，看到实际情况和地图不符，你更新地图（Belief Update），然后基于新地图决定下一步。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🤔</span> Agent 的 Belief</div>
+        <p>Agent 的 Belief 是它对"用户数据、任务进度、工具状态"的内部理解。每次工具调用返回结果，Agent 都要更新自己的 Belief，然后基于更新后的 Belief 决定下一步行动。</p>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:4px">Belief 的三种状态</div>
+    <table class="cmp-table">
+      <thead><tr><th>状态</th><th>含义</th><th>对应行为</th><th>Speakeasy 例子</th></tr></thead>
+      <tbody>
+        <tr><td class="hl">Confident Belief</td><td>高置信度的确定判断</td><td>直接执行下一步</td><td>"用户是 B2 级别"（来自明确的测试结果）</td></tr>
+        <tr><td class="hl">Uncertain Belief</td><td>有证据但不确定</td><td>收集更多信息或给出不确定的输出</td><td>"用户可能是 B1-B2 之间"（测试结果不一致）</td></tr>
+        <tr><td class="hl">Contradictory Belief</td><td>不同来源的信息互相矛盾</td><td>触发人工确认或选择更可信的来源</td><td>"档案显示 B2，但最近练习表现像 A2"</td></tr>
+      </tbody>
+    </table>
+    <div class="section-label">Belief Update 的工作机制</div>
+    <div class="code-block">
+<span class="code-comment">// Belief Update 的简化实现</span>
+<span class="code-key">function</span> updateBelief(currentBelief, observation, task) {
+  <span class="code-comment">// 1. 解读 observation 的语义含义</span>
+  <span class="code-key">if</span> (observation.error_code === <span class="code-str">"ERR_NOT_FOUND"</span>) {
+    <span class="code-key">return</span> { ...currentBelief,
+      [task.target]: { exists: <span class="code-val">false</span>, confidence: <span class="code-str">"high"</span> }
+    };
+  }
+  <span class="code-key">if</span> (observation.error_code === <span class="code-str">"ERR_NETWORK"</span>) {
+    <span class="code-comment">// 不更新关于数据的信念，只记录环境状态</span>
+    <span class="code-key">return</span> { ...currentBelief,
+      env_status: { network: <span class="code-str">"unstable"</span>, last_check: Date.now() }
+    };
+  }
+  <span class="code-comment">// 2. 用成功的观察结果更新信念</span>
+  <span class="code-key">return</span> { ...currentBelief,
+    [task.target]: { value: observation.data, confidence: <span class="code-str">"high"</span>, source: task.tool }
+  };
+}
+    </div>
+    <div class="why-insight">Belief 是 Reasoning 的"基底"——所有的 Thought 都是基于当前 Belief 做出的。Belief 的质量（准不准确、有没有及时更新）直接决定了 Agent 的决策质量。这就是为什么"工具调用返回结构化错误语义"如此重要——准确的错误信息才能产生准确的 Belief Update，进而产生正确的下一步行动。</div>
+  </div>
+</div>
+
+</div><!-- /layout -->
+
+<!-- ── Side Panel ── -->
+<div class="overlay" id="overlay" onclick="closeSidePanel()"></div>
+<div class="side-panel" id="sidePanel">
+  <div class="sp-header">
+    <div class="sp-title" id="spTitle">概念解析</div>
+    <div class="sp-close" onclick="closeSidePanel()">✕</div>
+  </div>
+  <div class="sp-body" id="spBody"></div>
+</div>
+
+<script>
+// ── Tabs ──
+function show(i) {
+  document.querySelectorAll('.panel').forEach((p,j) => p.classList.toggle('active', j===i));
+  document.querySelectorAll('.tab').forEach((t,j) => t.classList.toggle('active', j===i));
+  closeSidePanel();
+}
+
+// ── Mind Cards ──
+function toggleMind(head) {
+  const body = head.nextElementSibling;
+  const toggle = head.querySelector('.mind-toggle');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+}
+
+function toggleItvw(head) {
+  const body = head.nextElementSibling;
+  const toggle = head.querySelector('.itvw-toggle');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+}
+
+// ── Quiz ──
+let quizAnswers={}, quizTotal=0;
+function answer(qNum, chosen, correct) {
+  const opts = document.querySelectorAll('#q'+qNum+'-opts .quiz-opt');
+  opts.forEach(opt => {
+    const label = opt.querySelector('.quiz-opt-label').textContent;
+    opt.classList.add('revealed');
+    if (label===correct) opt.classList.add('correct');
+    else if (label===chosen && chosen!==correct) opt.classList.add('wrong');
+    opt.onclick = null;
+  });
+  document.getElementById('q'+qNum+'-explain').classList.add('show');
+  if (!quizAnswers[qNum]) {
+    quizAnswers[qNum] = chosen===correct;
+    if (Object.keys(quizAnswers).length===5) showScore();
+  }
+}
+function showScore() {
+  const correct = Object.values(quizAnswers).filter(Boolean).length;
+  document.getElementById('quiz-score').style.display='block';
+  document.getElementById('quiz-score-num').textContent = correct+'/5';
+  const msgs=['再仔细读一遍，加油💪','基础有了，继续巩固','理解得不错，可以动手实践了','掌握得很扎实！','完美，可以直接上 LangGraph 了 🎉'];
+  document.getElementById('quiz-score-msg').textContent = msgs[correct]||'';
+}
+
+// ── Concepts ──
+const CONCEPTS = {
+
+  planning: {
+    title: 'Planning（任务规划）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>将用户的高层次目标分解为可执行的有序子任务序列，并确定依赖关系（哪些必须先做、哪些可以并行）。Planning 的结果是一个运行时动态维护的"任务图"。</p></div>
+      <div class="sp-section"><div class="sp-section-label">和 Prompt Engineering 的区别</div><p>Prompt Engineering 是在调用前写好的静态指令；Planning 是在运行时生成和修改的动态任务结构。关键差异：Planning 能根据执行结果修改计划，Prompt 不能。</p></div>
+      <div class="sp-section"><div class="sp-section-label">三连问</div>
+        <div class="sp-why-chain">
+          <div class="sp-why-item"><div class="sp-why-dot">1</div><div class="sp-why-text">为什么需要它？→ 复杂任务有状态依赖，单次 LLM 调用无法处理</div></div>
+          <div class="sp-why-item"><div class="sp-why-dot">2</div><div class="sp-why-text">为什么不一次规划到底？→ 执行环境不确定，中途情况会变</div></div>
+          <div class="sp-why-item"><div class="sp-why-dot">3</div><div class="sp-why-text">为什么 LLM 自己记不住状态？→ LLM 无状态，每次调用是全新的</div></div>
+        </div>
+      </div>
+      <div class="sp-speakeasy">把"帮我制定一个月英语学习计划"拆解为：查词汇水平 → 查空闲时间 → 生成计划 → 写入日历 → 验证结果。这个拆解过程 + 维护这五步之间的依赖关系，就是 Planning。</div>`
+  },
+
+  reasoning: {
+    title: 'Reasoning（推理）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>Agent 在每个执行步骤前后进行的判断：当前情况是什么、下一步该做什么、上一步的结果是否符合预期、是否需要修改计划。</p></div>
+      <div class="sp-section"><div class="sp-section-label">和 Chain-of-Thought 的关系</div><p>Chain-of-Thought（思维链）是让 LLM 在生成最终答案前"先想一想"的 Prompt 技巧。Reasoning 在 Agent 里的范围更广——不只是生成答案时的思考，还包括观察工具返回结果后的判断（Observation → Thought）。</p></div>
+      <div class="sp-section"><div class="sp-section-label">最重要的 Reasoning 节点</div><p>Observation → Thought 这个节点最容易被忽视：工具调用之后，Agent 看到结果，然后判断"这个结果正常吗？下一步应该做什么？"。这个判断的质量决定了 Agent 能不能从错误中恢复。</p></div>
+      <div class="sp-speakeasy">语法分析工具返回了一个错误码，Agent 的 Reasoning 需要判断：这是网络问题还是语法本身有歧义？对应不同的 Reasoning 质量，下一步行动完全不同。</div>`
+  },
+
+  react: {
+    title: 'ReAct（Reasoning + Acting）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">来源</div><p>2022 年 Google 论文提出的 Agent 执行范式。名字是 Reasoning 和 Acting 的合并。</p></div>
+      <div class="sp-section"><div class="sp-section-label">核心循环</div><p><code>Thought → Action → Observation → Thought → ...</code><br><br>每次 Action（工具调用）之后，都会有一个 Observation（观察结果）和 Thought（推理下一步），形成闭环。</p></div>
+      <div class="sp-section"><div class="sp-section-label">优点 vs 缺点</div><p>优点：灵活，能响应环境变化；每步都有推理过程，可解释性好。<br>缺点：没有全局视野，容易陷入局部最优；每步都调用 LLM，成本高。</p></div>
+      <div class="sp-section"><div class="sp-section-label">适用场景</div><p>短交互任务（5步以内）、需要动态响应用户输入、不确定性高的探索性任务。</p></div>
+      <div class="sp-speakeasy">用户问"这句话的语法哪里错了" → Thought: 分析这句话 → Action: 调用语法检查工具 → Observation: 返回错误位置 → Thought: 如何解释最易懂 → 输出。2-3步，完全适合 ReAct。</div>`
+  },
+
+  plan_execute: {
+    title: 'Plan-and-Execute（先规划后执行）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>在开始执行之前，先让 LLM 生成一个完整的执行计划（任务列表+依赖关系），然后按计划依次执行，执行时不再频繁调用 LLM 进行推理。</p></div>
+      <div class="sp-section"><div class="sp-section-label">和 ReAct 的核心区别</div><p>ReAct：每步都问 LLM "我接下来应该做什么"（实时推理）<br>Plan-and-Execute：开始前先问 LLM "整个任务应该怎么做"，然后按计划执行（一次规划）</p></div>
+      <div class="sp-section"><div class="sp-section-label">典型框架</div><p>LangGraph 是最适合实现 Plan-and-Execute 的框架——它的状态机模型天然支持维护任务图和分支跳转。</p></div>
+      <div class="sp-section"><div class="sp-section-label">最大风险</div><p>前期规划质量决定一切。如果 Plan 生成得不准确，后面整个执行链都会跑偏。需要在 Plan 生成后做一次验证。</p></div>
+      <div class="sp-speakeasy">"帮我制定一个月学习计划"这种任务，步骤是确定的，适合 Plan-and-Execute：先规划好5个步骤，然后依次执行，不需要每步都"想一想"。</div>`
+  },
+
+  multiagent: {
+    title: 'Multi-Agent（多智能体架构）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>多个 Agent 协同工作，每个 Agent 负责特定专业域，通过消息或共享状态进行通信。典型角色：Orchestrator（协调者）+ 多个 Worker（执行者）。</p></div>
+      <div class="sp-section"><div class="sp-section-label">适用场景</div><p>真正需要专业分工的复杂任务——比如一个 Agent 负责代码生成、一个负责代码审查、一个负责测试。三者并行工作，速度更快。</p></div>
+      <div class="sp-section"><div class="sp-section-label">常见误用</div><p>"任务复杂了就上 Multi-Agent"——这是错的。Multi-Agent 解决的是专业分工和并行执行，不是规划复杂度。引入 Multi-Agent 会带来协调成本和信息同步问题，不要随意使用。</p></div>
+      <div class="sp-section"><div class="sp-section-label">典型框架</div><p>CrewAI（角色扮演式）、AutoGen（对话驱动）、LangGraph（图结构，可表示多 Agent）</p></div>
+      <div class="sp-speakeasy">如果 Speakeasy 要自动生产内容（选题 Agent + 写稿 Agent + 配图 Agent 并行工作），才真的需要 Multi-Agent。大多数用户交互用单 Agent 就够。</div>`
+  },
+
+  loop_detection: {
+    title: 'Loop Detection（死循环检测）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>检测 Agent 是否陷入了无效的重复执行循环，并在检测到时强制中断，触发 Re-Plan 或向用户报告。</p></div>
+      <div class="sp-section"><div class="sp-section-label">检测方法</div><p>对每次 Action 计算行为指纹：<code>(tool_name + normalized_input)</code> 的哈希值。如果在最近 N 步内出现相同指纹，判定为死循环。<br><br>注意：不能只检测输出文字是否相同——文字可能每次稍有变化，但行为是相同的。</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么移动端特别需要</div><p>移动端网络不稳定 → 工具调用返回空/错误 → Agent 以为任务未完成 → 反复重试 → 耗尽电量和流量。服务器端这个问题影响较小，但移动端是用户直接感受到的。</p></div>
+      <div class="sp-speakeasy">用户说"找我上周没完成的练习"，但上周没有记录。Agent 会反复查询，每次换不同条件。Loop Detection 检测到同一工具被反复调用后，中断并回复"上周没有练习记录"。</div>`
+  },
+
+  decomp: {
+    title: 'Task Decomposition（任务分解）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>将高层次目标拆解成多个原子可执行的子任务，并确定每个子任务的前置依赖（某任务必须在另一任务完成后才能开始）。</p></div>
+      <div class="sp-section"><div class="sp-section-label">依赖关系很重要</div><p>不只是"把任务列出来"，更要确定哪些任务必须串行（B 依赖 A 的输出）、哪些可以并行（C 和 D 互不依赖）。并行执行可以大幅降低总耗时。</p></div>
+      <div class="sp-section"><div class="sp-section-label">常见方法</div><p>1. LLM 直接生成任务列表（灵活但不稳定）<br>2. 预定义模板，LLM 填充参数（稳定但不灵活）<br>3. LangGraph 手动定义状态机（最可控，推荐生产环境）</p></div>
+      <div class="sp-speakeasy">"帮我复习上周的错题" → 子任务：查询错题记录（依赖：无）→ 按类别分类（依赖：1）→ 生成复习卡片（依赖：2）→ 安排到日历（依赖：3，但可与生成复习卡片并行开始）。</div>`
+  },
+
+  belief_update: {
+    title: 'Belief Update（信念更新）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>Agent 根据工具返回的观察结果，更新自己对"当前世界状态"的理解。这是 Reasoning 里最关键的环节。</p></div>
+      <div class="sp-section"><div class="sp-section-label">来自哪里</div><p>这个概念来自人工智能规划领域的"信念状态"理论——Agent 维护一个对世界的"信念模型"，每次获得新信息就更新这个模型，然后基于更新后的模型决策。</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么重要</div><p>Belief Update 的质量决定了 Agent 能否从错误中恢复。如果工具返回空结果，Agent 是更新为"数据不存在"还是"查询方式不对"，会导致完全不同的下一步行动。</p></div>
+      <div class="sp-speakeasy">日历 API 返回了 403 错误。Agent 的 Belief Update：不是"日历里没有数据"，而是"Agent 没有权限访问日历"。这两种 Belief 对应的下一步完全不同：前者继续查，后者请求用户授权。</div>`
+  },
+
+  context_window: {
+    title: 'Context Window（上下文窗口）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>LLM 每次调用能"看到"的最大信息量，以 token 为单位。例如 claude-3.5-sonnet 的 Context Window 是 200K tokens，约等于 15 万个中文字。</p></div>
+      <div class="sp-section"><div class="sp-section-label">对 Agent 的影响</div><p>Agent 需要在每次 LLM 调用时把相关上下文塞进 Prompt：用户的原始请求 + 已完成步骤的结果 + 当前状态 + 工具描述……这些加起来很容易超出限制。</p></div>
+      <div class="sp-section"><div class="sp-section-label">管理策略</div><p>1. 摘要压缩：对长历史做压缩摘要，而不是原文塞入<br>2. 选择性包含：只放入当前步骤真正需要的上下文<br>3. 外部存储：把中间结果存到数据库，需要时再查询</p></div>
+      <div class="sp-speakeasy">用户和 Speakeasy 对话了 50 轮，中间学了 200 个单词。如果把全部对话历史都塞进每次 LLM 调用，很快就会超出限制。解决方案：只保留最近 5 轮对话 + 关键学习记录摘要。</div>`
+  },
+
+  token: {
+    title: 'Token（词元）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>LLM 处理文字的基本单位。不完全等于"字"或"词"，而是由分词器（Tokenizer）切分的文字片段。</p></div>
+      <div class="sp-section"><div class="sp-section-label">大致换算</div><p>英文：1 个词 ≈ 1-1.5 个 token<br>中文：1 个字 ≈ 1-2 个 token<br>代码：1 行 ≈ 5-15 个 token<br>1000 个中文字 ≈ 1500-2000 tokens</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么重要</div><p>LLM 的计费和 Context Window 限制都以 token 为单位。写 Prompt 时要意识到长度对成本和限制的影响。</p></div>`
+  },
+
+  langgraph: {
+    title: 'LangGraph',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>LangChain 公司推出的 Agent 编排框架，核心抽象是"图"——把 Agent 的执行流程建模为有向图，节点是处理步骤，边是条件转移。</p></div>
+      <div class="sp-section"><div class="sp-section-label">核心概念</div><p>State（状态）：贯穿整个图的共享数据结构<br>Node（节点）：执行具体操作的函数<br>Edge（边）：节点之间的连接，可以有条件</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么适合 Plan-and-Execute</div><p>LangGraph 的状态机模型天然支持"维护任务图 + 根据执行结果跳转"——这正是 Plan-and-Execute 需要的。</p></div>
+      <div class="sp-section"><div class="sp-section-label">学习路径</div><p>1. 官方文档 Quick Start<br>2. 跑通一个带条件分支的 Agent<br>3. 加入 Human-in-the-Loop 节点<br>4. 实现 Re-Plan 逻辑</p></div>`
+  },
+
+  state_machine: {
+    title: 'State Machine（状态机）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>描述系统如何在有限个"状态"之间转移的数学模型。系统在任意时刻处于某一个状态，特定的输入（事件）会触发状态转移。</p></div>
+      <div class="sp-section"><div class="sp-section-label">在 Agent 里的用途</div><p>把 Agent 的执行流程建模为状态机：<br>• 状态 = "正在查询日历" / "正在生成计划" / "等待用户确认"<br>• 转移条件 = 工具调用成功/失败、用户确认/拒绝</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么有用</div><p>状态机让 Agent 的行为变得可预测、可测试、可调试。每个状态和转移都是明确定义的，出了问题知道去哪里找。</p></div>`
+  },
+
+  llm_call: {
+    title: '单次 LLM 调用 vs Agent',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">单次调用是什么</div><p>给 LLM 一个输入，拿回一个输出，结束。整个过程是无状态的，LLM 不知道这次调用之前发生了什么，也不会有后续行动。</p></div>
+      <div class="sp-section"><div class="sp-section-label">Agent 模式是什么</div><p>Agent 是"多次 LLM 调用 + 工具调用 + 状态管理"的组合。LLM 的每次输出不只是文字，还可能是"调用哪个工具、参数是什么"的指令，Agent 框架执行这个指令，把结果反馈给下一次 LLM 调用。</p></div>
+      <div class="sp-section"><div class="sp-section-label">形象对比</div><p>单次调用：问一个专家一个问题，得到答案，结束。<br>Agent：雇了一个会主动查资料、会打电话问人、会记笔记的助理——你只需要告诉他最终目标。</p></div>`
+  },
+
+  tooluse: {
+    title: 'Tool Use（工具调用）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>Agent 通过调用外部工具（API、数据库查询、系统命令等）来获取信息或执行操作的能力。这是 Agent 能"做事"而不只是"说话"的关键。</p></div>
+      <div class="sp-section"><div class="sp-section-label">工具的定义方式</div><p>每个工具需要定义：名称、描述（让 LLM 知道什么时候该用）、输入参数 schema、返回值格式。LLM 根据这些定义决定要不要调用、怎么调用。</p></div>
+      <div class="sp-section"><div class="sp-section-label">容易被忽视的问题</div><p>幂等性（重复调用不产生副作用）、权限控制（Agent 有没有权限调这个工具）、错误语义（失败了是什么原因），这些都需要在工具定义层处理好。</p></div>
+      <div class="sp-speakeasy">Speakeasy 的工具可能包括：查询用户单词库、获取发音评分、写入日历、查询近期错题记录。每个都需要定义清楚输入输出，以及失败时的行为。</div>`
+  },
+
+  replan: {
+    title: 'Re-Plan（重新规划）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>当执行中遇到重大偏差或计划外情况时，放弃或修改当前计划，重新生成新的任务图。</p></div>
+      <div class="sp-section"><div class="sp-section-label">触发条件</div><p>不是所有错误都需要 Re-Plan。触发原则：<br>• 子任务连续失败 ≥ N 次 → 局部 Re-Plan（只修改这个子任务）<br>• 发现了计划外的重要新信息 → 全局 Re-Plan<br>• Loop Detection 触发 → 强制 Re-Plan</p></div>
+      <div class="sp-section"><div class="sp-section-label">代价</div><p>每次 Re-Plan 都意味着一次 LLM 调用（重新生成计划），在移动端成本很高。所以 Re-Plan 要设置触发阈值，不能随便触发。</p></div>`
+  },
+
+  cot: {
+    title: 'Chain-of-Thought（思维链）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>一种 Prompt 技巧：在要求 LLM 给出答案之前，先让它"一步步思考"（step by step）。这能显著提升 LLM 在复杂推理任务上的表现。</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么有效</div><p>LLM 生成 token 时，后面的 token 受前面的 token 影响。把推理过程显式写出来，相当于"给后续生成提供了更好的上下文"，减少了错误跳跃。</p></div>
+      <div class="sp-section"><div class="sp-section-label">和 ReAct 的关系</div><p>CoT 是单次调用内的"边想边说"；ReAct 是跨多次调用的"边做边想"。CoT 是 ReAct 里 Thought 步骤的一种实现方式，但 ReAct 的范围更大。</p></div>`
+  },
+
+  task_graph: {
+    title: '任务图（Task Graph）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>用有向图表示任务之间的依赖关系。节点是子任务，边是依赖关系（A 必须在 B 之前完成）。</p></div>
+      <div class="sp-section"><div class="sp-section-label">和普通任务列表的区别</div><p>任务列表只告诉你"做什么"和"顺序"；任务图还告诉你"为什么这个顺序"以及"哪些可以并行"。这让 Agent 框架能做更智能的调度。</p></div>
+      <div class="sp-section"><div class="sp-section-label">动态 vs 静态</div><p>静态任务图：写在代码里，永远不变（适合固定流程）。动态任务图：运行时生成，可以根据执行结果增删节点（适合不确定性任务）。Planning 模块管理的就是动态任务图。</p></div>`
+  },
+
+  fingerprint: {
+    title: '行为指纹（Action Fingerprint）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>对一次工具调用的"语义摘要"——通常是 (工具名 + 标准化输入参数) 的哈希值。用于在 Loop Detection 中判断一次调用是否和之前的某次调用"语义上相同"。</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么用哈希而不是字符串比较</div><p>原始输入可能包含时间戳、随机 ID 等每次不同的字段，导致字符串不匹配但语义相同。标准化处理去掉这些变量字段后再哈希，才能准确检测语义重复。</p></div>
+      <div class="sp-section"><div class="sp-section-label">代码示例</div><p><code>fingerprint = hash(tool_name + JSON.stringify(normalized_input))</code></p></div>`
+  },
+
+  fallback: {
+    title: 'Fallback（降级策略）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>当主方案失败时自动切换到备选方案的机制。在 Agent 里，通常在任务定义时就预设好每个子任务的 Fallback 路径。</p></div>
+      <div class="sp-section"><div class="sp-section-label">层级设计</div><p>好的 Fallback 有层级：<br>1. 重试（同一方案再试一次）<br>2. 备选方案（换一种工具或方法）<br>3. 降级（提供部分结果而非全部失败）<br>4. 人工介入（告知用户，请求帮助）</p></div>
+      <div class="sp-speakeasy">日历写入失败 → Fallback: 生成 ICS 文件让用户手动导入 → 再失败 → 以文字形式输出计划。三个层级，而不是直接"写入失败，操作终止"。</div>`
+  },
+
+  cloud_routing: {
+    title: '端云协同路由',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>根据任务的复杂程度和实时条件，动态决定这个任务在本地设备（端侧小模型）处理还是发送到云端（大模型）处理。这正是岗位 JD 里提到的核心能力。</p></div>
+      <div class="sp-section"><div class="sp-section-label">路由依据</div><p>• 任务复杂度：简单问答 → 端侧；复杂推理 → 云端<br>• 网络状态：有网 → 可以路由到云端；弱网 → 强制端侧<br>• 隐私敏感性：私密数据 → 端侧；通用查询 → 云端<br>• 延迟要求：实时响应 → 端侧；允许延迟 → 云端</p></div>
+      <div class="sp-speakeasy">"这句话对吗" → 简单语法判断 → 端侧小模型秒回。"帮我分析我这个月的学习进展并给出建议" → 复杂分析 → 路由到云端大模型。</div>`
+  },
+
+  conflict: {
+    title: '矛盾信息处理',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">什么是矛盾信息</div><p>Agent 在执行过程中从不同工具获得了互相冲突的信息。例如：用户档案显示是 B2 级别，但近期练习表现只有 A2 水准。</p></div>
+      <div class="sp-section"><div class="sp-section-label">Reasoning 如何处理</div><p>好的 Reasoning 不是随机选一个信任，而是：识别矛盾 → 评估信源可靠性 → 在不确定时向用户确认 → 记录这个不确定性到状态里。</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么重要</div><p>矛盾信息是幻觉（Hallucination）的常见来源。Agent 在面对矛盾时的处理方式，直接影响最终输出的准确性。这就是 JD 里提到"幻觉控制"的核心场景。</p></div>`
+  },
+
+  error_recovery: {
+    title: 'Error Recovery（错误恢复）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>Agent 检测到子任务失败后，通过重试、切换备选方案或调整计划来继续完成整体目标的能力，而不是直接崩溃退出。</p></div>
+      <div class="sp-section"><div class="sp-section-label">关键：区分错误类型</div><p>可恢复错误（如网络超时）→ 重试<br>永久性错误（如无权限）→ 切换方案或人工介入<br>数据错误（如数据不存在）→ 更新 Belief，调整计划</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么难</div><p>工具层的错误信息通常不够语义化（只有 HTTP 错误码），Agent 需要额外的错误分类逻辑才能做出正确的恢复决策。这就是为什么设计工具调用规范时要加入丰富的错误语义。</p></div>`
+  },
+
+  mobile_constraint: {
+    title: '移动端 Agent 的特殊约束',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">和服务器端的核心差异</div><p>移动端 Agent 面临三个服务器端不需要考虑的约束：<br>1. 网络不稳定：工具调用失败率高 10 倍以上<br>2. 资源受限：不能长时间、高频次调用 LLM<br>3. 用户行为不可预测：随时可能关 App、切换任务、改变需求</p></div>
+      <div class="sp-section"><div class="sp-section-label">对架构的影响</div><p>这些约束直接驱动了三个设计需求：<br>• Loop Detection（防止网络失败触发无限重试）<br>• 端云协同路由（节省资源，降低对网络的依赖）<br>• Plan 暂停/恢复机制（支持用户中断后继续）</p></div>`
+  },
+
+  idempotency: {
+    title: '幂等性（Idempotency）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div><p>一个操作无论执行一次还是多次，产生的结果相同。用数学语言：f(f(x)) = f(x)。</p></div>
+      <div class="sp-section"><div class="sp-section-label">为什么对 Agent 重要</div><p>网络不稳定时，Agent 会重试失败的工具调用。如果工具不幂等，重试就会产生重复副作用：创建两个日历事件、发两封邮件、转两次账。</p></div>
+      <div class="sp-section"><div class="sp-section-label">实现方式</div><p>1. 写操作前先查询是否已存在（Check before Write）<br>2. 使用请求唯一 ID，服务端拒绝相同 ID 的重复请求<br>3. 把写操作设计为"设置"（SET）而非"追加"（APPEND）</p></div>
+      <div class="sp-speakeasy">Speakeasy 写入日历前，先查询该日期该时间段是否已有"Speakeasy 学习"事件。有则跳过，没有才创建。这就是幂等性实现。</div>`
+  },
+
+  belief: {
+    title: 'Belief（信念/内部世界模型）',
+    body: `
+      <div class="sp-section"><div class="sp-section-label">是什么</div>
+        <p>Belief 是 Agent 对"当前世界状态"的<strong>内部模型</strong>——它<em>认为</em>现在情况是什么样的。不是"相信不相信"的主观信仰，而是一个随时更新的"内部地图"。</p>
+      </div>
+      <div class="sp-section"><div class="sp-section-label">来自哪里</div>
+        <p>来自人工智能规划（AI Planning）领域的"信念状态（Belief State）"理论。经典 AI 中，Agent 在不确定环境下必须维护一个"我认为世界现在是什么样子"的概率分布，每次感知（Observation）后更新它。</p>
+      </div>
+      <div class="sp-section"><div class="sp-section-label">Belief vs 事实</div>
+        <p>事实是工具返回的原始数据。Belief 是 Agent 对这个数据的<strong>解读和内化</strong>。工具返回 <code>{"duration": 60}</code>，Belief 可能是"这个事件持续60分钟"或"60秒"——解读取决于 Agent 的推理能力。</p>
+      </div>
+      <div class="sp-section"><div class="sp-section-label">Belief Update</div>
+        <p>每次工具调用返回 Observation 后，Agent 都要更新 Belief。更新的质量决定后续推理的质量。错误的 Belief Update（如把网络错误解读为"数据不存在"）是 Agent 行为异常的最常见根源。</p>
+      </div>
+      <div class="sp-section"><div class="sp-section-label">三种 Belief 状态</div>
+        <p><strong>Confident</strong>：高置信度，直接据此行动<br>
+        <strong>Uncertain</strong>：低置信度，需要收集更多信息<br>
+        <strong>Contradictory</strong>：来自不同来源的信息互相矛盾，需要人工介入或选择更可信来源</p>
+      </div>
+      <div class="sp-speakeasy">日历 API 返回 403 错误。<br>❌ 错误 Belief：日历里没有数据 → 继续查询 → 死循环<br>✅ 正确 Belief：Agent 没有权限访问日历 → 请求用户授权 → 问题解决</div>`
+  }
+};
+
+function openConcept(key) {
+  const c = CONCEPTS[key];
+  if (!c) return;
+  document.getElementById('spTitle').textContent = c.title;
+  document.getElementById('spBody').innerHTML = c.body;
+  document.getElementById('sidePanel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSidePanel() {
+  document.getElementById('sidePanel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+</script>
+</body>
+</html>
