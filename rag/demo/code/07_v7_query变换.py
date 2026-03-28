@@ -35,6 +35,17 @@
 运行：python 07_v7_query变换.py
 """
 
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  📺 讲师注释                                                  ║
+# ║  对应集数：独立专题（Query 变换三种方式）                    ║
+# ║  核心代码：第 131~150 行（rrf_merge_multi，N路融合），        ║
+# ║            multi_query_expand / hyde_embed / step_back 三个  ║
+# ║            函数                                              ║
+# ║  可跳过：第 101~129 行（BM25，已讲）                         ║
+# ║  本集关键数字：4路对比——原始 Query vs Multi-Query vs         ║
+# ║               HyDE vs Step-back                              ║
+# ╚══════════════════════════════════════════════════════════════╝
+
 import json
 import math
 import re

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RAG 完全理解 · 5D框架</title>
+<title>RAG 完全理解 · 概念手册</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -285,6 +285,11 @@ td strong { color: #1a1a18; }
 .q20-a { font-size: 12px; color: #5f5e5a; line-height: 1.7; }
 .q20-a strong { color: #1a1a18; }
 .q20-a code { font-family: "SF Mono", monospace; font-size: 10px; background: #f1efe8; padding: 1px 5px; border-radius: 3px; }
+.q20-group { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #888780; margin: 20px 0 8px 0; padding-bottom: 6px; border-bottom: 0.5px solid #dedad4; }
+.concept-index-group { margin-bottom: 18px; }
+.concept-index-group-label { font-size: 10px; font-weight: 700; color: #888780; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+.concept-badge { display: inline-block; cursor: pointer; background: #f1efe8; border: 0.5px solid #dedad4; border-radius: 20px; padding: 5px 12px; font-size: 11px; color: #1a1a18; margin: 3px; transition: all .15s; }
+.concept-badge:hover { background: #F26419; color: #fff; border-color: #F26419; }
 @media(max-width:820px){.page-intro,.intro-meta-grid{grid-template-columns:1fr}}
 
 /* ── Comparison ── */
@@ -303,7 +308,7 @@ td strong { color: #1a1a18; }
     <div class="site-nav-links">
       <a href="index.html" class="site-nav-link">首页</a>
       <a href="00_课程路线图.html" class="site-nav-link">系统学习</a>
-      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="04_工程方法论手册.html" class="site-nav-link">做项目</a>
       <a href="ai-knowledge-hub.html" class="site-nav-link">快速回查</a>
       <a href="rag-5d.html" class="site-nav-link current">讲解 / 面试</a>
       <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
@@ -316,7 +321,7 @@ td strong { color: #1a1a18; }
     <div class="sub-nav-label">当前页 · 辨析与讲解</div>
     <div class="sub-nav-links">
       <a href="ai-knowledge-hub.html#glossary" class="sub-nav-link">共享词汇表</a>
-      <a href="03_工程方法论手册.html#boundary" class="sub-nav-link">方案边界</a>
+      <a href="04_工程方法论手册.html#boundary" class="sub-nav-link">方案边界</a>
       <a href="rag-knowledge-map.html" class="sub-nav-link">知识地图</a>
     </div>
   </div>
@@ -337,7 +342,7 @@ td strong { color: #1a1a18; }
   <div class="page-header-main">
     <div class="eyebrow">Explain / Compare / Interview</div>
     <h1>RAG 完全理解</h1>
-    <p class="lead">这页用 5D 框架做横向辨析、讲解表达和面试复习。你可以把它当成“概念边界和方案判断”的训练场，而不是第一次学习 RAG 的入口。</p>
+    <p class=”lead”>这页做横向辨析、讲解表达和面试复习，涵盖 10+ 个参考维度和 23 个可检索概念。你可以把它当成”概念边界和方案判断”的训练场，而不是第一次学习 RAG 的入口。</p>
     <div class="header-badges">
       <span>5D 框架</span>
       <span>横向辨析</span>
@@ -349,7 +354,7 @@ td strong { color: #1a1a18; }
 
 <section class="page-intro">
   <div class="page-role">
-    <strong>这页负责横向辨析、讲解和面试，不负责第一次系统入门。</strong> 如果你还没建立顺序感，请回到 <a href="index.html">总站首页</a> 后先进入 <a href="00_课程路线图.html">课程路线图</a>。
+    <strong>这页负责术语速查、横向辨析和面试复习，不负责数学原理推导。</strong> 想深入理解向量空间直觉请看 <a href="02_概念手册_向量与检索.html">02 · 概念手册</a>；第一次学习请回到 <a href="index.html">总站首页</a>。
   </div>
   <div class="intro-meta-grid">
     <article class="intro-meta-card">
@@ -362,7 +367,7 @@ td strong { color: #1a1a18; }
     </article>
     <article class="intro-meta-card">
       <div class="intro-label">下一步</div>
-      <div class="intro-body"><a href="ai-knowledge-hub.html">回索引页</a> · <a href="03_工程方法论手册.html#boundary">看方案边界</a> · 点击橙色虚线词看深度解析</div>
+      <div class="intro-body"><a href="ai-knowledge-hub.html">回索引页</a> · <a href="04_工程方法论手册.html#boundary">看方案边界</a> · 点击橙色虚线词看深度解析</div>
     </article>
   </div>
 </section>
@@ -371,14 +376,15 @@ td strong { color: #1a1a18; }
   <button class="tab active" onclick="show(0)">🗺 总览</button>
   <button class="tab" onclick="show(1)">① 分层解构</button>
   <button class="tab" onclick="show(2)">② 对比辨析</button>
-  <button class="tab" onclick="show(3)">③ 类比迁移</button>
+  <button class="tab" onclick="show(3)">③ 概念索引</button>
   <button class="tab" onclick="show(4)">④ 错误雷达</button>
   <button class="tab" onclick="show(5)">⑤ 实战场景</button>
   <button class="tab" onclick="show(6)">⑥ 进阶决策</button>
   <button class="tab" onclick="show(7)">⑦ 问题解答</button>
   <button class="tab" onclick="show(8)">⑧ 面试题库</button>
-  <button class="tab" onclick="window.location.href='rag-knowledge-map.html'" style="border-color:#9f7aea;color:#9f7aea">🔬 知识地图 ↗</button>
+  <button class="tab" onclick="show(9)">🔬 Attention必读</button>
   <button class="tab" onclick="show(10)">✅ 理解验证</button>
+  <button class="tab" onclick="window.location.href='rag-knowledge-map.html'" style="border-color:#9f7aea;color:#9f7aea">🗺 知识地图 ↗</button>
 </div>
 
 <!-- ══ Panel 0: 总览 ══ -->
@@ -591,69 +597,55 @@ td strong { color: #1a1a18; }
   </div>
 </div>
 
-<!-- ══ Panel 3: 类比迁移 ══ -->
+<!-- ══ Panel 3: 概念索引 ══ -->
 <div class="panel" id="p3">
-  <div class="callout"><strong>类比迁移的目标：</strong>把 RAG 的核心机制映射到已有的认知结构上。能用类比解释，说明真正理解了。</div>
+  <div class="callout"><strong>概念索引：</strong>点击任意概念标签，立即查看深度解析。共 23 个 RAG 核心概念，覆盖全文所有橙色虚线词。</div>
 
-  <div class="sl">类比 1：开卷考试（最直觉的类比）</div>
-  <div class="card">
-    <div class="card-b">
-      <strong>闭卷考试 = 纯 LLM</strong>：只能用脑子里记住的内容作答。知识过时了、记错了，答案就错了。<br><br>
-      <strong>开卷考试 = RAG</strong>：考试时允许翻参考资料。不依赖记忆，依赖实时查找。<br><br>
-      <strong><span class="concept" onclick="openConcept('isomorphism')">同构</span>的核心结构：</strong>从"依赖记忆"到"依赖实时检索"——不是记得更多，而是查得更准。<br><br>
-      <strong>类比的边界：</strong>开卷考试里学生自己判断翻哪页；RAG 里这个判断由向量相似度算法完成，不一定总是正确的。
-    </div>
+  <div class="concept-index-group">
+    <div class="concept-index-group-label">🔧 基础流程</div>
+    <span class="concept-badge" onclick="openConcept('gigo')">Garbage In, Garbage Out</span>
+    <span class="concept-badge" onclick="openConcept('chunking')">Chunking · 切块策略</span>
+    <span class="concept-badge" onclick="openConcept('overlap')">Overlap · 块重叠</span>
+    <span class="concept-badge" onclick="openConcept('embedding')">Embedding · 向量化</span>
+    <span class="concept-badge" onclick="openConcept('vectordb')">Vector DB · 向量数据库</span>
   </div>
 
-  <div class="sl">类比 2：图书馆馆员（理解 RAG 分工）</div>
-  <div class="card">
-    <div class="card-b">
-      <strong>先明确馆员的角色定义：</strong>馆员不是「直接回答你的问题」的人，而是「帮你找到答案在哪本书的哪一页」的人。这个分工是整个类比的核心。<br><br>
-      <strong>RAG 的分工映射：</strong>
-      <pre>你（用户）         → 提出问题
-馆员 = RAG系统      → 把问题转成向量，去书架（Vector DB）找相关书籍
-书架 = Vector DB    → 返回最相关的几段内容（Top-K Chunks）
-馆员 + 段落 + LLM   → 基于找到的段落内容，综合生成回答</pre>
-      <strong>这个类比准确的部分：</strong>强调了「检索」和「回答」是两步分开的——馆员（RAG）先找到内容，LLM 再基于内容生成答案，不是 LLM 直接从记忆回答。<br><br>
-      <strong>书架的正确理解：</strong>书架就是 Vector DB，里面存的不是原始书籍，而是书籍内容的「向量索引」——类似图书馆的检索系统（杜威十进制分类法），按语义相似度排布，方便快速找到相关内容。<br><br>
-      <strong>类比的边界（也是RAG的真实局限）：</strong>真人馆员能理解隐含意图（你说「找本能帮我睡着的书」，他能联想到睡眠障碍/冥想/心理疏导）；RAG 的向量检索只理解表面语义相似度，理解不了隐含逻辑——这就是为什么要加 <span class="concept" onclick="openConcept('queryrewrite')">Query 改写</span>来弥补：用 LLM 先理解真实意图，再去检索。
-    </div>
+  <div class="concept-index-group">
+    <div class="concept-index-group-label">🔍 检索技术</div>
+    <span class="concept-badge" onclick="openConcept('retrieval')">Retrieval · 检索</span>
+    <span class="concept-badge" onclick="openConcept('sparse')">稀疏 vs 稠密检索</span>
+    <span class="concept-badge" onclick="openConcept('hybrid')">混合检索 · Hybrid Search</span>
+    <span class="concept-badge" onclick="openConcept('rrf')">RRF · 互惠排名融合</span>
+    <span class="concept-badge" onclick="openConcept('reranking')">Reranking · 重排序</span>
+    <span class="concept-badge" onclick="openConcept('recall')">召回率 · Recall</span>
+    <span class="concept-badge" onclick="openConcept('queryrewrite')">Query 改写 / 扩展</span>
+    <span class="concept-badge" onclick="openConcept('metadata')">Metadata Filter · 元数据过滤</span>
   </div>
 
-  <div class="sl">类比 3：Google 搜索 + 摘要（理解范式转变）</div>
-  <div class="card">
-    <div class="card-b">
-      <strong>Google 时代</strong>：你输入关键词 → 系统返回10条链接 → <strong>你自己点进去读每篇文章</strong> → 你自己综合得出结论<br><br>
-      <strong>RAG 时代</strong>：你提出问题 → 系统检索相关文档块 → <strong>LLM 替你读并综合</strong> → 直接输出结论<br><br>
-      核心差别只有一步：<strong>「谁来阅读和总结」</strong>——Google 让你自己读，RAG 让 LLM 替你读。<br><br>
-      <strong>这是一次范式转变：</strong>从「检索→展示→用户自己理解」变成了「检索→理解→直接给出结论」。用户不再需要阅读能力和信息筛选能力，而是把这部分工作外包给了 LLM。<br><br>
-      <strong>RAG vs Google 的技术差别：</strong>
-      <table style="margin:8px 0;font-size:11px">
-        <tr><th></th><th>Google</th><th>RAG</th></tr>
-        <tr><td>排名方式</td><td>PageRank（链接图谱）</td><td>向量相似度（语义）</td></tr>
-        <tr><td>数据范围</td><td>公开网页</td><td>私有知识库</td></tr>
-        <tr><td>输出形式</td><td>链接列表，展示原文</td><td>LLM 重新生成的答案</td></tr>
-        <tr><td>最终工作</td><td>用户自己阅读综合</td><td>LLM 替用户阅读综合</td></tr>
-      </table>
-    </div>
+  <div class="concept-index-group">
+    <div class="concept-index-group-label">🏗 架构选型</div>
+    <span class="concept-badge" onclick="openConcept('finetune')">Fine-tuning vs RAG</span>
+    <span class="concept-badge" onclick="openConcept('realtime')">实时性场景 · 替代方案</span>
   </div>
 
-  <div class="sl">RAG 协调了哪三层？</div>
-  <div class="callout-blue">
-    <strong>你的理解是正确的：RAG 协调了 LLM + 向量数据库 + 原始文档三层。</strong><br><br>
-    更精确地说：<br>
-    • <strong>原始文档</strong>（数据源）= 知识的「原材料」，PDF/网页/笔记<br>
-    • <strong>向量数据库</strong>（索引层）= 原始文档的「检索索引」，把文档变成可快速语义检索的形式<br>
-    • <strong>LLM</strong>（生成层）= 「理解和表达」引擎，基于检索到的内容生成人类可读的答案<br><br>
-    RAG 是让这三层协同工作的 Pipeline：原始文档 → 向量化存入 DB → 检索时找出相关块 → 给 LLM 参考生成答案。每层可以独立升级（换更好的 Embedding 模型、换更大的 LLM），互不影响。
+  <div class="concept-index-group">
+    <div class="concept-index-group-label">🧠 LLM 行为</div>
+    <span class="concept-badge" onclick="openConcept('hallucination')">Hallucination · 幻觉</span>
+    <span class="concept-badge" onclick="openConcept('attention')">注意力机制 &amp; Lost in the Middle</span>
+    <span class="concept-badge" onclick="openConcept('lostinmiddle')">Lost in the Middle</span>
+    <span class="concept-badge" onclick="openConcept('llmbehavior')">LLM 行为 · 深度理解</span>
+    <span class="concept-badge" onclick="openConcept('fewshot')">Few-shot · 少样本提示</span>
   </div>
 
-  <div class="sl">RAG 和 MCP 的关系</div>
-  <div class="callout-blue">
-    <strong>RAG 和 MCP 是互补的，不是竞争的。</strong><br><br>
-    MCP Resource = <strong>精确地址查找</strong>——你知道要找「3楼302室」，直接去拿<br>
-    RAG = <strong>语义搜索</strong>——你只知道「好像有个关于退款的东西」，需要系统帮你找<br><br>
-    同一个知识库：知道要什么用 MCP，不知道要什么用 RAG。两种访问方式各有适用场景。
+  <div class="concept-index-group">
+    <div class="concept-index-group-label">📐 高级概念</div>
+    <span class="concept-badge" onclick="openConcept('isomorphism')">同构 · Isomorphism</span>
+    <span class="concept-badge" onclick="openConcept('querydoc')">Query 与 Document · 双编码器</span>
+    <span class="concept-badge" onclick="openConcept('tokenizer')">Token 与汉字 · 换算关系</span>
+  </div>
+
+  <div class="callout" style="margin-top:8px;font-size:11px;color:#888780;background:#f5f4f0;border-left-color:#c8c7be;">
+    💡 这些概念词在其他 Tab 的正文中也以橙色虚线标注，点击文中的词同样可以查看解析。
   </div>
 </div>
 
@@ -1036,7 +1028,7 @@ td strong { color: #1a1a18; }
     ① 知识量很小（&lt;50页文档）→ 直接放进 system prompt，全局理解反而更好，但每次消耗全部 token<br>
     ② 需要改变 LLM 的推理方式或稳定输出格式 → 微调（或 system prompt + few-shot）<br>
     ③ 所有问题都是精确查找 → 传统数据库/搜索引擎直接查更好<br>
-    ④ 实时性要求极高（秒级更新）→ RAG 的 Embedding 有延迟
+    ④ <span class="concept" onclick="openConcept('realtime')">实时性要求极高（秒级更新）</span>→ RAG 的 Embedding 入库有延迟，新内容无法被立刻检索到
   </div>
 
   <div class="methodology-box">
@@ -1050,8 +1042,9 @@ td strong { color: #1a1a18; }
 
 <!-- ══ Panel 7: 问题解答 ══ -->
 <div class="panel" id="p7">
-  <div class="callout"><strong>针对你的 19 个问题的深度解答。</strong>这些是理解 RAG 过程中最容易卡住的地方。</div>
+  <div class="callout"><strong>21 个高频问题深度解答。</strong>这些是理解 RAG 过程中最容易卡住的地方。</div>
 
+  <div class="q20-group">🧱 核心原理 · Q1–Q4</div>
   <div class="q20">
     <div class="q20-q"><span class="q20-num">Q1</span>Garbage In, Garbage Out 分别是什么意思？</div>
     <div class="q20-a">直译"垃圾进，垃圾出"。这是计算机科学的基础原则，意思是：<strong>无论算法多好，输入数据质量差，输出结果必然差</strong>。在 RAG 里具体指：文档有错误内容 → 检索到错误内容 → LLM 基于错误内容生成错误回答。就像厨师再厉害，食材是烂的也做不出好菜。这个原则的深层含义：<strong>优化算法的投入回报，永远低于提升数据质量的投入回报</strong>。</div>
@@ -1075,37 +1068,26 @@ td strong { color: #1a1a18; }
     <strong>类比迁移的价值：</strong>当你找到同构结构，就可以直接迁移已有认知，不需要重新建立理解框架。学过开卷考试的人立刻就能理解 RAG 的核心逻辑。这是高效学习和解释复杂概念的核心技巧。</div>
   </div>
 
+  <div class="q20-group">✂️ 分块 &amp; 向量 · Q5–Q12</div>
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q1</span>RAG 协调了哪三层？</div>
+    <div class="q20-q"><span class="q20-num">Q5</span>RAG 协调了哪三层？</div>
     <div class="q20-a">你的理解正确。RAG 协调了：<strong>原始文档</strong>（数据源，PDF/网页/笔记）→ <strong>向量数据库</strong>（索引层，把文档变成可快速语义检索的形式）→ <strong>LLM</strong>（生成层，基于检索结果理解并输出答案）。向量库是原始文档的「检索索引」而不是替代——检索时从向量库找到相关 Chunk 的位置，再去原始文档里拿内容给 LLM。三层各司其职，可以独立升级。</div>
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q2</span>Reranking 是什么，为什么能解决"语义相关不代表回答问题"？</div>
-    <div class="q20-a"><strong>向量检索的局限：</strong>「取消订单原因」和「取消订单步骤」在向量空间里距离很近（都和「取消订单」相关），但一个回答「为什么」，一个回答「怎么做」——本质不同。<br><br>
-    <strong>Reranking 的原理：</strong>交叉编码器把「问题 + 文档」拼在一起输入模型，联合理解「这个文档是否真的回答了这个问题」。类比：向量检索是「看书名猜内容」，Reranking 是「翻开书逐页阅读判断相关性」。精度高但速度慢，所以只用在候选集缩小后的精排阶段。</div>
-  </div>
-
-  <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q3</span><span class="concept" onclick="openConcept('querydoc')">query 和 document 分别编码，这里的 query 和 document 是什么？</span></div>
+    <div class="q20-q"><span class="q20-num">Q6</span><span class="concept" onclick="openConcept('querydoc')">query 和 document 分别编码，这里的 query 和 document 是什么？</span></div>
     <div class="q20-a"><strong>Query</strong>（查询） = 用户提的问题，是「需求方」；<strong>Document</strong>（文档块）= 知识库里的 Chunk，是「供给方」。<br><br>
     双编码器分别把两者编码成向量再计算相似度，速度快（文档向量可以预先计算存好）。交叉编码器（Reranking 阶段使用）把 query+document 拼在一起联合评分，精度高但每次都要重新计算。点击概念词查看详细对比。</div>
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q4</span>同构是什么意思？</div>
-    <div class="q20-a">来自数学的概念，指<strong>两个不同系统之间存在相同的结构关系</strong>。例：开卷考试和 RAG 表面完全不同，但「从外部资料检索→基于资料回答」这个结构是同构的。<br><br>
-    <strong>类比迁移的价值：</strong>当你找到同构结构，就可以直接迁移已有认知，不需要重新建立理解框架。学过开卷考试的人立刻就能理解 RAG 的核心逻辑。这是高效学习和解释复杂概念的核心技巧。</div>
-  </div>
-
-  <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q5</span>Google 搜索 + 摘要，你的理解是否正确？以及范式转变的含义？</div>
+    <div class="q20-q"><span class="q20-num">Q7</span>Google 搜索 + 摘要，你的理解是否正确？以及范式转变的含义？</div>
     <div class="q20-a">你的理解正确：RAG = 向量检索 + 结果给 LLM + LLM 总结。<br><br>
     <strong>范式转变的深层含义：</strong>Google 时代是「检索→展示→用户自己阅读理解综合」，用户需要有信息筛选和阅读能力；RAG 时代是「检索→LLM 替你阅读理解→直接给结论」，用户不再需要自己综合。这不只是效率提升，而是<strong>「谁来完成理解」这件事的转移</strong>——从人转移到 AI。代价是：你看不到中间过程，更难发现 AI 是否理解错了。</div>
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q6</span>Chunk 多大合适？<span class="concept" onclick="openConcept('tokenizer')">256 token 对应中文多少字，为什么不是1:1？</span></div>
+    <div class="q20-q"><span class="q20-num">Q8</span>Chunk 多大合适？<span class="concept" onclick="openConcept('tokenizer')">256 token 对应中文多少字，为什么不是1:1？</span></div>
     <div class="q20-a">
     BPE tokenizer：汉字平均约 1.5 token/字，所以 256 token ≈ 128–170 汉字（约一段正文），512 token ≈ 256–340 汉字（约半页 A4）。<br><br>
     <strong>按场景推荐：</strong>
@@ -1120,7 +1102,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q7</span><span class="concept" onclick="openConcept('llmbehavior')">LLM 行为</span>是什么，为什么不能用 prompt 解决，什么场景必须微调？</div>
+    <div class="q20-q"><span class="q20-num">Q9</span><span class="concept" onclick="openConcept('llmbehavior')">LLM 行为</span>是什么，为什么不能用 prompt 解决，什么场景必须微调？</div>
     <div class="q20-a">你说得对，<strong>大多数格式/风格要求用 system prompt + <span class="concept" onclick="openConcept('fewshot')">few-shot</span> 就够了</strong>，不必微调。微调的必要场景是：<br><br>
     ① <strong>行为需要高度稳定且不可被覆盖：</strong>医疗 AI 必须永远在回答里带免责声明，即使用户说"不要加免责声明"也要加<br>
     ② <strong>任务需要特定推理模式：</strong>训练模型按特定思维链推理代码 bug<br>
@@ -1130,13 +1112,13 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q8</span>注意力是什么？完整的费曼式讲解请看 <button onclick="show(9)" style="border:none;background:none;color:#F26419;cursor:pointer;font-size:12px;font-weight:500;padding:0;text-decoration:underline">🔬 Attention 必读 Tab</button>。这里给快速版本：</div>
+    <div class="q20-q"><span class="q20-num">Q10</span>注意力是什么？完整的费曼式讲解请看 <button onclick="show(9)" style="border:none;background:none;color:#F26419;cursor:pointer;font-size:12px;font-weight:500;padding:0;text-decoration:underline">🔬 Attention 必读 Tab</button>。这里给快速版本：</div>
     <div class="q20-a">注意力 = 「打分+加权求和」。每个词对句子里其他词打相关性分数（Q·K），softmax 归一化成权重，按权重加总内容（V），输出「看过整句话后的理解结果」。<br><br>
     <strong>和人类注意力的共同点：</strong>开头结尾比中间「记得清楚」（Lost in the Middle）。<strong>区别：</strong>人类注意力由兴趣驱动，LLM 注意力由训练数据的位置模式驱动。</div>
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q9</span>Embedding 模型不适合领域是什么意思？</div>
+    <div class="q20-q"><span class="q20-num">Q11</span>Embedding 模型不适合领域是什么意思？</div>
     <div class="q20-a">Embedding 模型把文本映射到向量空间，<strong>语义相近的文本在空间里距离近</strong>。如果模型用通用文本训练，它对专业词汇的理解会有偏差：<br><br>
     • 医疗：通用模型里"阳性"和"积极/正面"距离近；医疗语境里"阳性"应该和"检测异常/感染"距离近<br>
     • 法律："无效"在通用语境是"没用"，法律语境是"不具法律效力"<br>
@@ -1145,7 +1127,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q10</span>Overlap 是什么，20-30% overlap 表达什么意思？</div>
+    <div class="q20-q"><span class="q20-num">Q12</span>Overlap 是什么，20-30% overlap 表达什么意思？</div>
     <div class="q20-a"><strong>定义：</strong>切块时相邻两块共享一部分内容，防止重要信息被切断分在两块。<br><br>
     <strong>具体例子</strong>（Chunk=100 token，overlap=20%=20 token）：
     <pre>第1块：第 1-100 token（"退款申请需在购买后30天内提交...必须附上"）
@@ -1155,8 +1137,9 @@ td strong { color: #1a1a18; }
     <strong>代价：</strong>存储空间增加 20-30%，检索时可能出现重复内容（需去重）。<strong>收益：</strong>大幅降低"语义被切断"导致的检索质量下降。</div>
   </div>
 
+  <div class="q20-group">🔎 检索策略进阶 · Q13–Q18</div>
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q11</span>为什么混合检索比单一检索更有效？人类是如何检索的？</div>
+    <div class="q20-q"><span class="q20-num">Q13</span>为什么混合检索比单一检索更有效？人类是如何检索的？</div>
     <div class="q20-a"><strong>互补盲区：</strong>
     • 稀疏检索（BM25）盲区：不理解同义词和语义关联——"汽车"和"车辆"会被认为完全不同的词
     • 稠密检索（向量）盲区：精确词匹配弱——"iPhone 16 Pro Max 256GB 钛金黑"可能被模糊匹配到其他型号<br><br>
@@ -1165,7 +1148,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q12</span>多文档综合问题回答差，具体讲解一下？</div>
+    <div class="q20-q"><span class="q20-num">Q14</span>多文档综合问题回答差，具体讲解一下？</div>
     <div class="q20-a"><strong>场景：</strong>用户问"对比我们2023年和2024年的定价策略有什么变化"。<br><br>
     <strong>问题：</strong>这个问题需要同时检索 2023 年文档和 2024 年文档的相关段落。如果 Top-K=3，系统可能只返回 3 条结果，而这 3 条可能全来自 2024 年文档（因为更新，向量更接近当前 query），2023 年的数据根本没有进入 context。LLM 没有足够信息做对比，只能编造或说"没有2023年数据"。<br><br>
     <strong>解决方案：</strong>
@@ -1175,7 +1158,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q13</span>Query 扩展是什么？<span class="concept" onclick="openConcept('recall')">召回率</span>是什么？</div>
+    <div class="q20-q"><span class="q20-num">Q15</span>Query 扩展是什么？<span class="concept" onclick="openConcept('recall')">召回率</span>是什么？</div>
     <div class="q20-a">用户的原始 query 往往太短、信息不足，导致检索召回不全。Query 扩展就是用 LLM 把原始 query 扩展成多个相关 query，每个 query 分别检索，合并去重后统一送入 Reranking。<br><br>
     <strong>具体例子：</strong>
     <pre>原始 query: "这个怎么退"
@@ -1189,7 +1172,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q14</span>Metadata Filter + 混合检索的机制是什么？有成型技术方案么？深层方法论是什么？</div>
+    <div class="q20-q"><span class="q20-num">Q16</span>Metadata Filter + 混合检索的机制是什么？有成型技术方案么？深层方法论是什么？</div>
     <div class="q20-a"><strong>机制：</strong>在向量检索之上叠加结构化字段过滤。先用元数据（行业/年份/文档类型）缩小候选集，再在候选集内做混合检索。<br><br>
     <strong>执行顺序：</strong>
     <pre>全量文档（100,000条）
@@ -1203,7 +1186,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q15</span>Query 改写，LLM 是基于单个句子改写，还是基于上下文改写？</div>
+    <div class="q20-q"><span class="q20-num">Q17</span>Query 改写，LLM 是基于单个句子改写，还是基于上下文改写？</div>
     <div class="q20-a">两种模式都有，取决于场景：<br><br>
     <strong>单轮对话：</strong>只有当前 query，LLM 基于这一句改写，扩展意图（如 Q13 的例子）。<br><br>
     <strong>多轮对话（更重要的场景）：</strong>
@@ -1215,7 +1198,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q16</span>RRF 是什么，怎么用，为什么这么用？</div>
+    <div class="q20-q"><span class="q20-num">Q18</span>RRF 是什么，怎么用，为什么这么用？</div>
     <div class="q20-a"><strong>定义：</strong>Reciprocal Rank Fusion，互惠排名融合。合并多个排序列表的算法。<br><br>
     <strong>公式：</strong><code>score(doc) = Σ 1/(k + rank_i)</code>，k=60（经验值），rank_i 是文档在第 i 个列表里的排名<br><br>
     <strong>具体例子：</strong>
@@ -1227,8 +1210,9 @@ td strong { color: #1a1a18; }
     <strong>为什么不直接加分数？</strong>向量相似度是 0.85，BM25 分数是 47.3——两个完全不同的尺度，直接相加没有意义。排名是可比的（第1名就是第1名），用排名融合绕开了尺度问题。</div>
   </div>
 
+  <div class="q20-group">🏗 系统设计 · Q19–Q21</div>
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q17</span>知识量小（&lt;50页）直接放 system prompt，准确率如何？有什么问题？</div>
+    <div class="q20-q"><span class="q20-num">Q19</span>知识量小（&lt;50页）直接放 system prompt，准确率如何？有什么问题？</div>
     <div class="q20-a"><strong>优势：</strong>LLM 能整体理解文档的完整语境，没有检索误差，对需要跨文档推理的问题效果更好。<br><br>
     <strong>问题和限制：</strong>
     • <strong>成本：</strong>每次请求都消耗全部文档的 token，50页约 25,000 token，每次请求费用 ≈ $0.05-0.1（GPT-4o），高频查询成本很高
@@ -1239,7 +1223,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q18</span>256-512 token 对应中文是多少个字？</div>
+    <div class="q20-q"><span class="q20-num">Q20</span>256-512 token 对应中文是多少个字？</div>
     <div class="q20-a">OpenAI tokenizer 对中文的处理：<strong>1个汉字 ≈ 1-2个 token</strong>（平均约 1.5 token）。<br><br>
     • 256 token ≈ 128-170 个汉字（约一个段落，100-150字的正文）<br>
     • 512 token ≈ 256-340 个汉字（约半页 A4 纸的正文）<br>
@@ -1248,7 +1232,7 @@ td strong { color: #1a1a18; }
   </div>
 
   <div class="q20">
-    <div class="q20-q"><span class="q20-num">Q19</span>稀疏检索就是关键词切分，稠密检索就是向量，理解对吗？</div>
+    <div class="q20-q"><span class="q20-num">Q21</span>稀疏检索就是关键词切分，稠密检索就是向量，理解对吗？</div>
     <div class="q20-a">理解基本正确，补充更精确的定义：<br><br>
     <strong>稀疏检索：</strong>文档表示为词频向量——每个维度对应一个词，值是该词在文档中的权重（TF-IDF/BM25）。维度数量 = 词汇表大小（通常数万维），但每个文档只有少量非零维度，所以叫"稀疏"。BM25 是稀疏检索的主流算法，改进了简单词频计数，考虑了词的稀有性和文档长度。<br><br>
     <strong>稠密检索：</strong>文档通过神经网络（Embedding 模型）映射到固定维度的向量（通常 768-1536 维），所有维度都有值，所以叫"稠密"。检索时计算 query 向量和文档向量的余弦相似度或点积。<br><br>
@@ -1258,61 +1242,31 @@ td strong { color: #1a1a18; }
 
 <!-- ══ Panel 8: 面试题库 ══ -->
 <div class="panel" id="p8">
-  <div class="sl">基础题</div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#3b6d11">基础</div>
-    <div class="qa-q">RAG 是什么？解决了什么问题？</div>
-    <div class="qa-a">Retrieval-Augmented Generation，检索增强生成。解决两个问题：①LLM 知识有截止日期；②LLM 不知道你的私有数据。核心机制：回答前先检索相关内容，把检索结果附在 prompt 里让 LLM 参考，而不是靠训练记忆。</div>
-    <div class="qa-hl">"RAG 让 AI 从靠记忆答题，变成靠查资料答题。"</div>
+  <div class="callout-blue">
+    <strong>面试题库已整理为专题文档，内容更完整。</strong><br>
+    位置：<code>rag/demo/code/mock-interview/</code>
   </div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#3b6d11">基础</div>
-    <div class="qa-q">RAG 的完整流程是什么？</div>
-    <div class="qa-a">建设期（离线）：文档清洗 → Chunking 切块 → Embedding 向量化 → 存入 Vector DB<br>查询期（在线）：用户提问 → 问题向量化 → Vector DB 检索 Top-K → 注入 Prompt → LLM 生成回答</div>
-  </div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#3b6d11">基础</div>
-    <div class="qa-q">RAG 和微调有什么区别，什么时候用哪个？</div>
-    <div class="qa-a">RAG：解决"知道什么"的问题，知识频繁更新、需要可溯源时用；微调：解决"怎么说"的问题，固定输出格式/风格、任务专一化时用。两者不互斥，生产中常结合使用。简单格式要求用 system prompt + few-shot 往往就够了，不必微调。</div>
-  </div>
-
-  <div class="sep"></div>
-  <div class="sl">进阶题</div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#F26419">进阶</div>
-    <div class="qa-q">RAG 效果差，你会从哪里开始排查？</div>
-    <div class="qa-a">分层诊断（不要上来就调所有参数）：①先打印检索到的内容，看是否相关（检索层问题）；②如果检索内容对但回答还是差，看 Prompt 是否约束了"仅基于内容回答"（生成层问题）；③如果检索内容不完整，看 Chunk 是否太小或缺 overlap（索引层问题）；④如果数据本身有错误，追溯到数据层。</div>
-  </div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#F26419">进阶</div>
-    <div class="qa-q">稀疏检索和稠密检索的区别？生产环境用哪个？</div>
-    <div class="qa-a">稀疏（BM25）：词频匹配，精确词/专业术语/型号好，不理解语义；稠密（向量）：语义理解强，模糊查询好，精确词匹配弱。生产环境推荐混合检索（Hybrid Search），用 RRF 合并两者结果：score = Σ1/(60+rank)，因为两种分数尺度不可比，用排名融合绕开尺度问题。</div>
-  </div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#F26419">进阶</div>
-    <div class="qa-q">Reranking 是什么，为什么要加它？</div>
-    <div class="qa-a">向量检索是"找语义相似的内容"，Reranking 是"找真正回答了问题的内容"。实现：交叉编码器把 query+document 拼在一起联合评分，精度比双编码器高。两阶段：向量检索粗召回 Top-20（速度优先）→ Reranking 精排取 Top-5（精度优先）。代价：增加一次模型推理延迟；收益：准确率大幅提升，生产环境几乎必加。</div>
-  </div>
-
-  <div class="sep"></div>
-  <div class="sl">实战题</div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#E24B4A">实战</div>
-    <div class="qa-q">如何向非技术客户解释 RAG 的价值？</div>
-    <div class="qa-a">从业务痛点切入，不提向量数据库：<br><br>"您的 AI 助手现在靠'记忆'回答，文件更新了它不知道。RAG 让 AI 每次回答前先查您的最新文档——答案基于真实文件，可以追溯到哪个文件哪段话。文件更新了，AI 的回答当天就跟着变。回答不对时，您可以立刻核查来源，不是黑盒。"</div>
-  </div>
-
-  <div class="qa">
-    <div class="qa-level" style="color:#E24B4A">实战</div>
-    <div class="qa-q">设计一个金融行业客服的 RAG 系统，关键决策点是什么？</div>
-    <div class="qa-a">①数据层：产品说明书 + 监管规定 + FAQ，严格去除过期文档（金融合规要求）；②索引层：512 token Chunk + 30% overlap，保留产品代码作元数据；③检索层：混合检索（BM25 处理产品代码/条款编号 + 向量处理自然语言问询）+ Reranking；④生成层：Prompt 强制约束"仅基于提供内容回答，不确定时说明无法确认"，每条答案标注来源文件版本和日期——金融合规要求可溯源。</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+    <div class="card">
+      <div class="card-t">01_基础概念题.md</div>
+      <div class="card-b">RAG 定义、流程、RAG vs 微调等基础问答</div>
+    </div>
+    <div class="card">
+      <div class="card-t">04_rag评估方案汇总.md</div>
+      <div class="card-b">MRR vs RAGAS、评估工具选型</div>
+    </div>
+    <div class="card">
+      <div class="card-t">05_混合检索RRF平局陷阱.md</div>
+      <div class="card-b">RRF 平局的三种解法深度分析</div>
+    </div>
+    <div class="card">
+      <div class="card-t">06_embedding选型参考.md</div>
+      <div class="card-b">C-MTEB 榜单解读、合成 Query 陷阱</div>
+    </div>
+    <div class="card">
+      <div class="card-t">07_agentic_rag_模型选型.md</div>
+      <div class="card-b">Self-RAG meta-cognition 要求、小模型特性</div>
+    </div>
   </div>
 </div>
 
@@ -1581,7 +1535,9 @@ const CONCEPTS = {
       { label: '定义', body: 'RAG 的核心步骤：把用户问题向量化，在 Vector DB 里找最相关的 Chunk，返回 Top-K 个结果。' },
       { label: '三种检索方式', body: '稀疏检索（BM25）：词频匹配，精确词强，不理解语义\n稠密检索（向量）：语义理解强，模糊查询好，精确词弱\n混合检索（推荐）：两者结合，用 RRF 合并排名', type: 'code' },
       { label: 'Top-K 的设置', body: 'K 太小：漏掉相关内容，多文档综合问题回答差\nK 太大：噪声增多，LLM context 膨胀，成本升高\n实践：先用 K=5，评测后调整。通常生产环境 K=5-10。', type: 'code' },
-      { label: '检索 ≠ 回答', body: '向量相似度高 ≠ 真正回答了问题。「取消订单的原因」和「取消订单的步骤」语义很近，但一个问 Why，一个问 How。这就是为什么需要 Reranking。', type: 'warn' }
+      { label: '检索 ≠ 回答', body: '向量相似度高 ≠ 真正回答了问题。「取消订单的原因」和「取消订单的步骤」语义很近，但一个问 Why，一个问 How。这就是为什么需要 Reranking。', type: 'warn' },
+      { label: '检索（动作）vs 召回（指标）', body: '两个词在 RAG 圈经常被混用，但含义不同：\n\n检索（Retrieval）= 动作，从知识库「找」内容的过程\n  例：「进行混合检索」「检索阶段」\n\n召回（Recall）= 指标，相关文档中有多少比例被找到\n  例：「召回率 = 0.8」「Context Recall」\n\n口语混用：「召回了 3 个 chunk」= 「检索到了 3 个 chunk」\n  ← 推荐系统用语渗透进 RAG，技术上不精确但广泛使用', type: 'warn' },
+      { label: 'RAG vs 推荐系统的术语差异', body: 'RAG 语境：「召回」主要是指标，检索阶段统称 retrieval\n\n推荐系统语境：有严格的阶段划分\n  召回层（Recall）= 候选集生成，从亿级压缩到万级\n  粗排层 = 万级压缩到百级\n  精排层 = 百级压缩到十级\n  重排层（Reranking）= 最终顺序\n\n跨圈说话时注意：推荐系统的「召回层」≈ RAG 的「检索阶段」', type: 'code' }
     ]
   },
   reranking: {
@@ -1705,7 +1661,9 @@ const CONCEPTS = {
       { label: '定义', body: '召回率 = 找到的相关内容 / 全部相关内容。衡量「有多少该找到的东西被找到了」，而不是「找到的东西有多准确」。' },
       { label: '和精确率的区别', body: '召回率（Recall）：在所有10条相关文档里，找到了几条？→ 找全不找全\n精确率（Precision）：在找到的10条里，有几条真的相关？→ 找准不找准\n\n两者往往是矛盾的：扩大搜索范围（更多 K）→ 召回率↑ 精确率↓', type: 'code' },
       { label: '具体数字例子', body: '知识库里有5条关于「退款」的相关文档\nTop-K=3，找到了其中3条：召回率 = 3/5 = 60%\nTop-K=8，找到了其中5条：召回率 = 5/5 = 100%\n\nQuery 扩展把召回率从 65% 提升到 85% 的意思：原来100条相关里找到65条，扩展后找到85条。', type: 'code' },
-      { label: '在 RAG 里的重要性', body: '召回率低 → 关键信息没检索到 → LLM 只能靠记忆回答 → 幻觉风险高\n召回率过高（K 太大）→ 噪声多 → LLM 注意力分散 → 回答质量下降\n\n实践中 K=5–10 是常见的平衡点。', type: 'methodology' }
+      { label: '在 RAG 里的重要性', body: '召回率低 → 关键信息没检索到 → LLM 只能靠记忆回答 → 幻觉风险高\n召回率过高（K 太大）→ 噪声多 → LLM 注意力分散 → 回答质量下降\n\n实践中 K=5–10 是常见的平衡点。', type: 'methodology' },
+      { label: 'Recall@K vs Context Recall', body: 'Recall@K（MRR 用的）：二值指标\n  正确答案在 Top-K 里有 = 1，没有 = 0\n  不区分「覆盖了多少信息点」\n\nContext Recall（RAGAS 用的）：连续指标 0-1\n  ground truth 里有多少信息点被召回的 context 覆盖到了\n  = 信息覆盖度，更细粒度\n\n使用场景：\n  早期快速迭代 → Recall@K / MRR（无需 LLM，快速反馈）\n  阶段性评估 → Context Recall（需 LLM，但覆盖生成维度）', type: 'code' },
+      { label: '「召回」作为动词的混用', body: 'RAG 圈口语常用「召回了 3 个 chunk」，意思是「检索到了 3 个 chunk」。\n\n这是推荐系统的用语渗透：推荐系统里「召回层」专指候选集生成阶段（从亿级压到万级），术语迁移到 RAG 后变成了动词。\n\n技术交流时不会被误解，面试答题时最好用「检索到」。', type: 'warn' }
     ]
   },
   llmbehavior: {
@@ -1748,6 +1706,16 @@ const CONCEPTS = {
       { label: '选型策略', body: '学习 / Demo 阶段  → Chroma（pip install，零配置）\n生产自建（中小规模）→ Qdrant（性能好，部署简单）\n生产自建（大规模）→ Milvus（分布式，成熟生态）\n已有 PostgreSQL   → pgvector（无需引入新组件）\n不想运维          → Pinecone（全托管，最快上线）', type: 'good' },
       { label: '核心能力对照', body: '混合检索（向量+BM25）：Qdrant ✓  Weaviate ✓  Milvus ✓  Chroma ✗\n元数据过滤：所有主流产品均支持\n持久化存储：除纯内存模式外均支持\n分布式扩展：Milvus ✓  Weaviate ✓  其余有限\n私有化部署：Chroma / Qdrant / Milvus / pgvector ✓  Pinecone ✗', type: 'code' },
       { label: '普世方法论', body: '选型原则：先能跑通，再谈性能。Demo 用 Chroma，验证完业务逻辑再迁移到 Qdrant/Milvus。向量库本身是可替换的基础设施，不要在选型上卡太久。', type: 'methodology' }
+    ]
+  },
+  realtime: {
+    title: '实时性场景 · RAG 的替代方案',
+    sections: [
+      { label: '为什么 RAG 不适合实时场景', body: 'RAG 的知识更新路径：新内容 → 分块 → Embedding 模型推理 → 写入向量库 → 才可被检索\n\n这个管道最快也需要数秒到数分钟，无法支持股价、订单状态、直播数据等秒级变化的信息。', type: 'warn' },
+      { label: '按场景选方案', body: '外部 API 数据（天气/股价/汇率）\n  → Tool Calling：LLM 在对话中直接调用 API 获取实时数据\n\n内部结构化数据（订单/库存/用户信息）\n  → Text-to-SQL：LLM 生成 SQL，直接查询数据库\n\n高频更新文档（新闻/公告/日志）\n  → 增量索引：Qdrant/Weaviate 支持实时 insert，延迟从「天」降到「分钟」\n\n同一对话内的实时上下文\n  → 直接注入 Context，不需要检索', type: 'code' },
+      { label: '生产主流：RAG + Tool Calling 混合架构', body: '把「静态知识」和「动态数据」分开处理：\n\n用户 Query\n    ↓\nLLM 判断意图\n  ├─ 问产品手册/FAQ/历史文档 → RAG 检索向量库\n  └─ 问库存/股价/实时状态   → Tool Calling 调 API/DB\n\n两者共享同一个 LLM 决策层，是 Agentic RAG 的标准延伸形态。\n实现框架：LangChain Tools、LlamaIndex Query Engine、OpenAI Function Calling', type: 'code' },
+      { label: 'Text-to-SQL 的适用边界', body: '适合：数据结构规整，字段语义清晰（如 orders.status、inventory.count）\n不适合：多表 JOIN 复杂、字段名歧义多、安全审计要求严格（SQL 注入风险）\n\n生产实践：限制 LLM 只能查 SELECT，禁止 INSERT/UPDATE/DELETE；预先生成常见 Query 模板，LLM 只填参数。', type: 'methodology' },
+      { label: '普世方法论', body: '「实时」和「语义检索」是两个正交的需求。\n实时 → 不要存向量库，直接查数据源（API / DB）\n语义检索 → RAG 擅长，但只适合相对稳定的知识\n\n判断标准：这份数据多久更新一次？\n  按天/周更新 → RAG + 增量索引\n  按秒/分钟更新 → Tool Calling / Text-to-SQL', type: 'methodology' }
     ]
   }
 };

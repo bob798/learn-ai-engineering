@@ -16,6 +16,16 @@
   python 01_v1_最小RAG循环.py
 """
 
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  📺 讲师注释                                                  ║
+# ║  对应集数：01_理解RAG.html · Ep2「RAG 怎么运作」             ║
+# ║  核心代码：第 48~65 行（retrieve + build_prompt），          ║
+# ║            STEP 3&4（有/无 RAG 对比）                        ║
+# ║  可跳过：第 37~47 行（provider 加载样板）                    ║
+# ║  本集关键数字：有 RAG vs 无 RAG 的回答质量对比               ║
+# ║               （肉眼判断，无量化指标）                        ║
+# ╚══════════════════════════════════════════════════════════════╝
+
 import numpy as np
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path

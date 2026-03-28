@@ -271,7 +271,7 @@
     <div class="site-nav-links">
       <a href="index.html" class="site-nav-link">首页</a>
       <a href="00_课程路线图.html" class="site-nav-link">系统学习</a>
-      <a href="03_工程方法论手册.html" class="site-nav-link">做项目</a>
+      <a href="04_工程方法论手册.html" class="site-nav-link">做项目</a>
       <a href="ai-knowledge-hub.html" class="site-nav-link current">快速回查</a>
       <a href="rag-5d.html" class="site-nav-link">讲解 / 面试</a>
       <a href="rag-knowledge-map.html" class="site-nav-link">知识地图</a>
@@ -284,10 +284,9 @@
     <div class="sub-nav-label">当前页 · 查阅入口</div>
     <div class="sub-nav-links">
       <a href="#glossary" class="sub-nav-link">术语表</a>
-      <a href="01_概念手册_向量与检索.html" class="sub-nav-link">概念手册</a>
-      <a href="02_代码讲解_V1V2.html" class="sub-nav-link">代码讲解</a>
-      <a href="03_工程方法论手册.html" class="sub-nav-link">工程手册</a>
-      <a href="knowledge-updates.html" class="sub-nav-link">更新日志</a>
+      <a href="02_概念手册_向量与检索.html" class="sub-nav-link">概念手册</a>
+      <a href="03_代码讲解_V1V2.html" class="sub-nav-link">代码讲解</a>
+      <a href="04_工程方法论手册.html" class="sub-nav-link">工程手册</a>
     </div>
   </div>
 </div>
@@ -322,7 +321,7 @@
       </article>
       <article class="intro-meta-card">
         <div class="intro-label">下一步</div>
-        <div class="intro-body"><a href="01_概念手册_向量与检索.html">查概念</a> · <a href="03_工程方法论手册.html">看工程手册</a> · <a href="rag-knowledge-map.html">回到知识地图</a></div>
+        <div class="intro-body"><a href="02_概念手册_向量与检索.html">查概念</a> · <a href="04_工程方法论手册.html">看工程手册</a> · <a href="rag-knowledge-map.html">回到知识地图</a></div>
       </article>
     </div>
   </section>
@@ -333,15 +332,15 @@
       <div class="list">
         <div class="list-item">
           <div><strong>Embedding / 向量 / 余弦相似度</strong><p>概念原理、维度含义、为什么余弦更适合语义检索。</p></div>
-          <a href="01_概念手册_向量与检索.html#embed">打开</a>
+          <a href="02_概念手册_向量与检索.html#embed">打开</a>
         </div>
         <div class="list-item">
           <div><strong>Chunking / overlap / 分块边界</strong><p>为什么分块决定上限，以及 V2 代码里三种分块策略的行为差异。</p></div>
-          <a href="02_代码讲解_V1V2.html#v2">打开</a>
+          <a href="03_代码讲解_V1V2.html#v2">打开</a>
         </div>
         <div class="list-item">
           <div><strong>Recall@K / MRR / 黄金数据集</strong><p>做优化前先定义尺子，避免“凭感觉优化”。</p></div>
-          <a href="03_工程方法论手册.html#experiment">打开</a>
+          <a href="04_工程方法论手册.html#experiment">打开</a>
         </div>
         <div class="list-item">
           <div><strong>混合检索 / Reranking / GraphRAG</strong><p>生产级增强策略、适用边界和扩展方向。</p></div>
@@ -352,10 +351,10 @@
     <div>
       <div class="section-title">按问题查</div>
       <div class="toc-list">
-        <a href="01_概念手册_向量与检索.html#cosine">为什么用余弦相似度而不是欧氏距离</a>
-        <a href="02_代码讲解_V1V2.html#v2">chunk 多大合适，overlap 取多少</a>
-        <a href="03_工程方法论手册.html#failure">为什么 Demo 能跑但系统不好用</a>
-        <a href="03_工程方法论手册.html#boundary">什么时候该用 RAG，什么时候不该用</a>
+        <a href="02_概念手册_向量与检索.html#cosine">为什么用余弦相似度而不是欧氏距离</a>
+        <a href="03_代码讲解_V1V2.html#v2">chunk 多大合适，overlap 取多少</a>
+        <a href="04_工程方法论手册.html#failure">为什么 Demo 能跑但系统不好用</a>
+        <a href="04_工程方法论手册.html#boundary">什么时候该用 RAG，什么时候不该用</a>
         <a href="rag-knowledge-map.html">RAG 全链路有哪些模块</a>
         <a href="rag-5d.html">RAG 和微调到底怎么分工</a>
       </div>
@@ -377,8 +376,8 @@
           <li><strong>相关代码：</strong>`01_v1_最小RAG循环.py` 的 embedding 与相似度计算。</li>
         </ul>
         <div class="object-links">
-          <a href="01_概念手册_向量与检索.html#embed">深入原理 →</a>
-          <a href="02_代码讲解_V1V2.html#v1">对应代码 →</a>
+          <a href="02_概念手册_向量与检索.html#embed">深入原理 →</a>
+          <a href="03_代码讲解_V1V2.html#v1">对应代码 →</a>
         </div>
       </article>
       <article class="object-card" id="obj-chunk" data-type="concept" data-keywords="chunk,overlap,分块,chunking">
@@ -392,8 +391,8 @@
           <li><strong>相关代码：</strong>`02_v2_文档分块策略.py`。</li>
         </ul>
         <div class="object-links">
-          <a href="02_代码讲解_V1V2.html#v2">看代码策略 →</a>
-          <a href="03_工程方法论手册.html#failure">看失败模式 →</a>
+          <a href="03_代码讲解_V1V2.html#v2">看代码策略 →</a>
+          <a href="04_工程方法论手册.html#failure">看失败模式 →</a>
         </div>
       </article>
       <article class="object-card" id="obj-recall" data-type="metric" data-keywords="recall,mrr,评估,黄金数据集">
@@ -407,8 +406,8 @@
           <li><strong>相关代码：</strong>`03_v3.5_黄金数据集.py`。</li>
         </ul>
         <div class="object-links">
-          <a href="03_工程方法论手册.html#experiment">看评估方法 →</a>
-          <a href="03_工程方法论手册.html#checklist">看项目检查点 →</a>
+          <a href="04_工程方法论手册.html#experiment">看评估方法 →</a>
+          <a href="04_工程方法论手册.html#checklist">看项目检查点 →</a>
         </div>
       </article>
       <article class="object-card" id="obj-reranking" data-type="method" data-keywords="reranking,重排,排序,精排">
@@ -429,7 +428,6 @@
     </div>
     <div class="maint-card">
       <p><strong>维护规则：</strong>这里是高频概念的标准入口。其他页面出现这些概念时，只保留当前语境下的解释，不再重复写完整定义。</p>
-      <a href="knowledge-updates.html">查看知识库更新日志 →</a>
     </div>
   </section>
 
@@ -473,10 +471,10 @@
         <tr><th>词条</th><th>一句话定义</th><th>建议回看</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong>Embedding</strong></td><td>把文本转成高维向量，使语义相近的内容在向量空间里更接近。</td><td><a href="01_概念手册_向量与检索.html#embed">概念手册</a></td></tr>
-        <tr><td><strong>Chunk</strong></td><td>文档切分后的最小检索单元，太碎会丢语义，太大则噪声多。</td><td><a href="02_代码讲解_V1V2.html#v2">代码讲解 V2</a></td></tr>
+        <tr><td><strong>Embedding</strong></td><td>把文本转成高维向量，使语义相近的内容在向量空间里更接近。</td><td><a href="02_概念手册_向量与检索.html#embed">概念手册</a></td></tr>
+        <tr><td><strong>Chunk</strong></td><td>文档切分后的最小检索单元，太碎会丢语义，太大则噪声多。</td><td><a href="03_代码讲解_V1V2.html#v2">代码讲解 V2</a></td></tr>
         <tr><td><strong>Reranking</strong></td><td>在粗召回候选集上做精排序，用精度换取额外延迟。</td><td><a href="rag-5d.html">5D 完全理解</a></td></tr>
-        <tr><td><strong>Recall@K</strong></td><td>相关内容有没有被找回来，衡量“找全不找全”。</td><td><a href="03_工程方法论手册.html#experiment">工程手册</a></td></tr>
+        <tr><td><strong>Recall@K</strong></td><td>相关内容有没有被找回来，衡量“找全不找全”。</td><td><a href="04_工程方法论手册.html#experiment">工程手册</a></td></tr>
       </tbody>
     </table>
   </section>

@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>理解 RAG · 5集入门系列</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  background: #f5f4f0; color: #1a1a18;
+  min-height: 100vh;
+}
+
+.site-nav{position:sticky;top:0;z-index:120;background:rgba(245,244,240,.92);backdrop-filter:blur(12px);border-bottom:.5px solid #dedad4}
+.site-nav-inner{max-width:1160px;margin:0 auto;min-height:54px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.site-nav-brand,.site-nav-link,.site-nav-home,.sub-nav-label,.sub-nav-link{font-family:"SF Mono",monospace;font-size:11px;text-decoration:none}
+.site-nav-brand{color:#888780;letter-spacing:1.5px;text-transform:uppercase}
+.site-nav-links,.sub-nav-links{display:flex;gap:6px;flex-wrap:wrap}
+.site-nav-link{color:#5f5e5a;padding:7px 10px;border-radius:999px}
+.site-nav-link.current{color:#a32d2d;background:#fcebeb;border:1px solid rgba(163,45,45,.16)}
+.site-nav-home{margin-left:auto;color:#1a1a18;padding:7px 10px;border-radius:999px;border:.5px solid #dedad4;background:#fff}
+.sub-nav{border-bottom:.5px solid #dedad4;background:rgba(255,255,255,.65)}
+.sub-nav-inner{max-width:1160px;margin:0 auto;min-height:44px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.sub-nav-label{color:#888780;letter-spacing:1.2px;text-transform:uppercase}
+.sub-nav-link{color:#1a1a18;padding:4px 0}
+.page-header,.page-intro{max-width:820px;margin-left:auto;margin-right:auto}
+.page-header{margin-bottom:18px;padding:28px 28px 24px;border:1px solid #dedad4;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(241,239,232,.92))}
+.page-header-main{display:grid;gap:12px}
+.eyebrow,.intro-label{font-family:"SF Mono",monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.eyebrow{color:#F26419;margin-bottom:14px}
+.page-header h1{font-size:clamp(30px,4vw,48px);font-weight:800;line-height:1.05;letter-spacing:-1.5px}
+.lead{max-width:680px;color:#5f5e5a;font-size:14px;line-height:1.8}
+.header-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.header-badges span{padding:5px 10px;border-radius:999px;border:1px solid #dedad4;background:rgba(255,255,255,.75);color:#5f5e5a;font-family:"SF Mono",monospace;font-size:11px}
+.page-intro{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-bottom:20px}
+.page-role{padding:16px 18px;border:1px solid #dedad4;background:#fff;border-radius:14px;font-size:13px;color:#5f5e5a;line-height:1.8}
+.page-role strong{color:#1a1a18}
+.page-role a,.intro-body a{color:#185fa5;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.intro-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.intro-meta-card{padding:16px 18px;border:1px solid #dedad4;background:#fff;border-radius:14px}
+.intro-label{color:#F26419;margin-bottom:8px}
+.intro-body{font-size:13px;color:#5f5e5a;line-height:1.8}
+
+/* ── Layout ── */
+.layout { display: flex; min-height: 100vh; }
+.main { flex: 1; padding: 28px 16px 60px; min-width: 0; }
+.container { max-width: 820px; margin: 0 auto; }
+
+/* ── Callouts ── */
+.callout { border-left: 3px solid #F26419; padding: 10px 14px; background: #fff3ec; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #444441; line-height: 1.7; }
+.callout strong { color: #1a1a18; }
+.callout-blue { border-left: 3px solid #3b8bd4; padding: 10px 14px; background: #e6f1fb; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #042c53; line-height: 1.7; }
+.callout-blue strong { color: #0c447c; }
+.callout-green { border-left: 3px solid #639922; padding: 10px 14px; background: #eaf3de; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #173404; line-height: 1.7; }
+.callout-green strong { color: #3b6d11; }
+.callout-dark { border-left: 3px solid #1a1a18; padding: 10px 14px; background: #f1efe8; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 13px; color: #2c2c2a; line-height: 1.7; }
+.callout-dark strong { color: #1a1a18; font-weight: 500; }
+
+/* ── Cards ── */
+.card { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; border: 0.5px solid #dedad4; }
+.card-t { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 5px; }
+.card-b { font-size: 12px; color: #5f5e5a; line-height: 1.75; }
+
+pre { font-family: "SF Mono", "Fira Code", monospace; font-size: 11px; background: #f1efe8; border-radius: 7px; padding: 11px 13px; border: 0.5px solid #c8c7be; margin: 8px 0; line-height: 1.9; overflow-x: auto; white-space: pre; color: #1a1a18; }
+code { font-family: "SF Mono", monospace; font-size: 11px; background: #e8e6df; padding: 1px 5px; border-radius: 3px; }
+
+/* ── Grids ── */
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 10px 0; }
+@media(max-width:600px){ .row,.row3 { grid-template-columns: 1fr; } }
+
+.gbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #97c459; background: #eaf3de; color: #173404; }
+.rbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #f09595; background: #fcebeb; color: #501313; }
+.obox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #EF9F27; background: #faeeda; color: #412402; }
+.bbox { border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.7; border: 0.5px solid #85b7eb; background: #e6f1fb; color: #042c53; }
+
+table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+th { background: #f5f4f0; padding: 8px 10px; text-align: left; font-weight: 500; border: 0.5px solid #dedad4; color: #1a1a18; }
+td { padding: 8px 10px; border: 0.5px solid #dedad4; color: #5f5e5a; line-height: 1.5; vertical-align: top; }
+td strong { color: #1a1a18; }
+
+.sep { border: none; border-top: 0.5px solid #dedad4; margin: 14px 0; }
+
+.step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+.sn { width: 22px; height: 22px; border-radius: 50%; background: #F26419; color: #fff; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.sb { flex: 1; font-size: 13px; color: #444441; line-height: 1.6; }
+.sb strong { color: #1a1a18; }
+
+.tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; margin-right: 4px; }
+.tag-o { background: #fef0e7; color: #B8440A; }
+.tag-b { background: #e6f1fb; color: #185fa5; }
+.tag-g { background: #eaf3de; color: #3b6d11; }
+.tag-r { background: #fcebeb; color: #a32d2d; }
+
+/* ── Flow ── */
+.flow { display: flex; align-items: stretch; gap: 0; margin: 12px 0; overflow-x: auto; }
+.flow-node { background: #fff; border: 0.5px solid #dedad4; border-radius: 8px; padding: 10px 12px; font-size: 11px; text-align: center; min-width: 90px; flex-shrink: 0; }
+.flow-node .fn-title { font-weight: 500; color: #1a1a18; font-size: 12px; margin-bottom: 3px; }
+.flow-node .fn-sub { color: #888780; font-size: 10px; line-height: 1.4; }
+.flow-arrow { display: flex; align-items: center; padding: 0 6px; color: #c8c7be; font-size: 18px; flex-shrink: 0; }
+.flow-node.active-node { background: #fef0e7; border-color: #EF9F27; }
+.flow-node.active-node .fn-title { color: #B8440A; }
+
+/* ── Layers ── */
+.layer { border-radius: 10px; padding: 13px 15px; margin-bottom: 8px; border: 0.5px solid; }
+.layer-title { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+.layer-body { font-size: 11px; line-height: 1.7; }
+.l-data { background: #f1efe8; border-color: #c8c7be; }
+.l-data .layer-title { color: #2c2c2a; }
+.l-data .layer-body { color: #5f5e5a; }
+.l-index { background: #e6f1fb; border-color: #85b7eb; }
+.l-index .layer-title { color: #185fa5; }
+.l-index .layer-body { color: #042c53; }
+.l-retrieve { background: #fef0e7; border-color: #EF9F27; }
+.l-retrieve .layer-title { color: #B8440A; }
+.l-retrieve .layer-body { color: #633806; }
+.l-generate { background: #eaf3de; border-color: #97c459; }
+.l-generate .layer-title { color: #3b6d11; }
+.l-generate .layer-body { color: #173404; }
+
+/* ── Comparison ── */
+.vs-table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 8px 0; }
+.vs-table th { background: #f5f4f0; padding: 8px 10px; text-align: left; font-weight: 500; border: 0.5px solid #dedad4; color: #1a1a18; }
+.vs-table td { padding: 8px 10px; border: 0.5px solid #dedad4; color: #5f5e5a; line-height: 1.5; vertical-align: top; }
+.vs-win { color: #3b6d11 !important; font-weight: 500; }
+.vs-lose { color: #a32d2d !important; }
+
+/* ── Episode Components ── */
+.episode {
+  background: #fff;
+  border: 0.5px solid #dedad4;
+  border-radius: 16px;
+  padding: 28px 28px 24px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.episode::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #F26419, #EF9F27);
+}
+
+.ep-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.ep-num {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #F26419;
+  color: #fff;
+  font-family: "SF Mono", monospace;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: -1px;
+}
+.ep-header-text { flex: 1; }
+.ep-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a18;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  margin-bottom: 5px;
+}
+.ep-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ep-time {
+  font-family: "SF Mono", monospace;
+  font-size: 10px;
+  color: #888780;
+  letter-spacing: 0.5px;
+}
+.ep-progress {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.ep-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #dedad4;
+}
+.ep-dot.active { background: #F26419; }
+.ep-dot.done { background: #c8c7be; }
+
+.learning-goal {
+  background: #e6f1fb;
+  border: 0.5px solid #85b7eb;
+  border-radius: 10px;
+  padding: 13px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #042c53;
+  line-height: 1.7;
+}
+.learning-goal-label {
+  font-family: "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #185fa5;
+  margin-bottom: 7px;
+}
+
+.section-4mat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  margin-top: 18px;
+}
+.mat-why { background: #fcebeb; color: #a32d2d; }
+.mat-what { background: #e6f1fb; color: #185fa5; }
+.mat-how { background: #eaf3de; color: #3b6d11; }
+.mat-whatif { background: #fef0e7; color: #B8440A; }
+
+.section-4mat-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a18;
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+
+.output-box {
+  background: #1a1a18;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px;
+  color: #d4d0c8;
+  line-height: 1.85;
+  position: relative;
+  overflow-x: auto;
+  white-space: pre;
+  border: 0.5px solid #333330;
+}
+.output-box-label {
+  display: inline-block;
+  position: absolute;
+  top: 10px; right: 12px;
+  font-family: "SF Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #666660;
+  background: #252523;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.output-box .hl-green { color: #a8c65c; }
+.output-box .hl-orange { color: #EF9F27; }
+.output-box .hl-red { color: #e87070; }
+.output-box .hl-blue { color: #7ab8e8; }
+.output-box .hl-dim { color: #666660; }
+
+.next-ep {
+  background: linear-gradient(135deg, #1a1a18, #2c2c2a);
+  color: #f5f4f0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.next-ep-label {
+  font-family: "SF Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #888780;
+  margin-bottom: 4px;
+}
+.next-ep-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f4f0;
+  line-height: 1.3;
+}
+.next-ep-arrow {
+  margin-left: auto;
+  font-size: 20px;
+  color: #F26419;
+  flex-shrink: 0;
+}
+
+.video-marker {
+  font-family: "SF Mono", monospace;
+  font-size: 9px;
+  color: transparent;
+  background: transparent;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 6px;
+  transition: all .2s;
+  cursor: default;
+  user-select: none;
+}
+.video-marker:hover,
+.show-timestamps .video-marker {
+  color: #888780;
+  background: #f1efe8;
+}
+
+.self-check {
+  border: 0.5px solid #dedad4;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 20px;
+  background: #fafaf8;
+}
+.self-check summary {
+  padding: 13px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a18;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  outline: none;
+  user-select: none;
+}
+.self-check summary::-webkit-details-marker { display: none; }
+.self-check summary::before {
+  content: '✎';
+  font-size: 14px;
+  color: #F26419;
+  flex-shrink: 0;
+}
+.self-check summary .check-label {
+  font-family: "SF Mono", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #F26419;
+  background: #fef0e7;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+.self-check summary .toggle-hint {
+  margin-left: auto;
+  font-family: "SF Mono", monospace;
+  font-size: 10px;
+  color: #888780;
+}
+details[open] .self-check summary .toggle-hint { display: none; }
+.self-check-answer {
+  border-top: 0.5px solid #dedad4;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #444441;
+  line-height: 1.75;
+  background: #fff;
+}
+.self-check-answer strong { color: #1a1a18; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 48px;
+  flex-shrink: 0;
+  padding: 28px 0 60px;
+}
+.sidebar-inner {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-left: 12px;
+}
+.sidebar-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #dedad4;
+  text-decoration: none;
+  transition: all .2s;
+  flex-shrink: 0;
+  position: relative;
+}
+.sidebar-dot:hover { background: #F26419; transform: scale(1.3); }
+.sidebar-dot.active { background: #F26419; width: 12px; height: 12px; }
+.sidebar-dot[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 18px;
+  top: -2px;
+  background: #1a1a18;
+  color: #f5f4f0;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.sidebar-line {
+  width: 1px;
+  height: 20px;
+  background: #dedad4;
+}
+
+/* ── Footer ── */
+.page-footer {
+  max-width: 820px;
+  margin: 0 auto 40px;
+  background: #1a1a18;
+  border-radius: 14px;
+  padding: 22px 24px;
+  color: #f5f4f0;
+}
+.page-footer p { font-size: 14px; line-height: 1.7; color: #d4d0c8; }
+.page-footer a { color: #EF9F27; text-decoration: none; border-bottom: 1px solid rgba(239,159,39,.3); }
+.page-footer a:hover { border-color: #EF9F27; }
+
+@media(max-width:820px){
+  .page-intro,.intro-meta-grid{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .episode{padding:20px 18px 18px}
+}
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <span class="site-nav-brand">RAG Series</span>
+    <div class="site-nav-links">
+      <a href="#ep1" class="site-nav-link current">Ep1</a>
+      <a href="#ep2" class="site-nav-link">Ep2</a>
+      <a href="#ep3" class="site-nav-link">Ep3</a>
+      <a href="#ep4" class="site-nav-link">Ep4</a>
+      <a href="#ep5" class="site-nav-link">Ep5</a>
+    </div>
+    <a href="rag-5d.html" class="site-nav-home">概念手册 →</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- Left Sidebar Progress Dots -->
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <a href="#ep1" class="sidebar-dot active" title="Ep1 · LLM 的两个缺陷"></a>
+      <div class="sidebar-line"></div>
+      <a href="#ep2" class="sidebar-dot" title="Ep2 · 四层架构"></a>
+      <div class="sidebar-line"></div>
+      <a href="#ep3" class="sidebar-dot" title="Ep3 · 检索失败与解法"></a>
+      <div class="sidebar-line"></div>
+      <a href="#ep4" class="sidebar-dot" title="Ep4 · MRR 到 RAGAS"></a>
+      <div class="sidebar-line"></div>
+      <a href="#ep5" class="sidebar-dot" title="Ep5 · Demo 到生产"></a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="container">
+
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom:24px">
+        <div class="page-header-main">
+          <div class="eyebrow">RAG 入门系列 · 5集全</div>
+          <h1>理解 RAG</h1>
+          <p class="lead">从 LLM 的根本缺陷出发，5集走完 RAG 核心路径：原理 → 架构 → 检索优化 → 评估 → 生产化。每集 5–10 分钟，跟着真实代码输出学。</p>
+          <div class="header-badges">
+            <span>5 集 · 约 34 min</span>
+            <span>含真实输出</span>
+            <span>Why→What→How→What if</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           EPISODE 1
+      ════════════════════════════════════════ -->
+      <div class="episode" id="ep1">
+        <div class="ep-header">
+          <div class="ep-num">01</div>
+          <div class="ep-header-text">
+            <div class="ep-title">LLM 的两个缺陷，RAG 是什么解法</div>
+            <div class="ep-meta">
+              <span class="ep-time">⏱ 5 min</span>
+              <div class="ep-progress">
+                <div class="ep-dot active"></div>
+                <div class="ep-dot"></div>
+                <div class="ep-dot"></div>
+                <div class="ep-dot"></div>
+                <div class="ep-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="learning-goal">
+          <div class="learning-goal-label">学完这集你能回答</div>
+          RAG 解决了 LLM 的哪两个根本问题？用一句话解释什么是 RAG？什么情况下不需要用 RAG？
+        </div>
+
+        <!-- WHY -->
+        <div class="section-4mat mat-why">WHY · 为什么需要 RAG</div>
+        <div class="section-4mat-title"><span class="video-marker">[00:00]</span>LLM 有两个根本缺陷</div>
+
+        <div class="row">
+          <div class="rbox">
+            <strong>缺陷 1：知识截止日期</strong><br>
+            GPT-4o 训练截止 2024 年初。你问它"昨天 A 股发生了什么"，它不知道——不是不聪明，是物理上没有这段记忆。
+          </div>
+          <div class="rbox">
+            <strong>缺陷 2：私有数据盲区</strong><br>
+            你公司的内部报销规定、产品文档、合同模板，LLM 从没见过。问它"我们公司报销需要几天审批"，它只能猜。
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>具体场景：</strong>问"RAG 分块推荐用多大？"——LLM 会给一个模糊的通用答案（"通常 256-512 tokens……"），因为它不知道你的知识库用的什么框架、存的什么内容。
+        </div>
+
+        <!-- WHAT -->
+        <div class="section-4mat mat-what">WHAT · RAG 是什么</div>
+        <div class="section-4mat-title"><span class="video-marker">[01:30]</span>一句话定义 + 一个类比</div>
+
+        <div class="callout-blue">
+          <strong>RAG = 每次回答前，先去检索相关资料，再基于资料回答。</strong><br>
+          全称 Retrieval-Augmented Generation（检索增强生成）。
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div class="bbox">
+            <strong>类比：闭卷考试</strong><br>
+            纯 LLM = 闭卷考试。考生只能靠脑子里记住的知识作答。知识截止日期之后的事，以及你公司的私有信息，永远答不上来。
+          </div>
+          <div class="gbox">
+            <strong>类比：开卷考试</strong><br>
+            RAG = 开卷考试。考试时可以翻书。LLM 仍然负责"理解题意、组织语言、给出答案"，但知识来自实时检索的文档。
+          </div>
+        </div>
+
+        <!-- HOW -->
+        <div class="section-4mat mat-how">HOW · 真实输出对比</div>
+        <div class="section-4mat-title"><span class="video-marker">[02:45]</span>跑一下 v1，看看差别</div>
+
+        <div style="position:relative">
+          <div class="output-box"><span class="output-box-label">输出</span><span class="hl-dim">── 无 RAG ──────────────────────────────</span>
+<span class="hl-orange">Q:</span> RAG 分块推荐用多大？
+<span class="hl-green">A:</span> 通常建议 256-512 tokens，具体取决于您的使用场景。
+   对于长文档建议 512 tokens，短文档可以用 256 tokens。
+   <span class="hl-dim">（模糊通用答案，无来源）</span>
+
+<span class="hl-dim">── 有 RAG（v1 运行结果）───────────────────</span>
+<span class="hl-orange">Q:</span> RAG 分块推荐用多大？
+<span class="hl-blue">[检索]</span> 命中文档片段:
+   "推荐200-500字符，overlap设置10%-20%以保持上下文连贯"
+<span class="hl-green">A:</span> 根据知识库文档，推荐分块大小 200-500 字符，
+   overlap 设置 10%-20%。这样既保证检索精度，
+   又能保留句子间的上下文连贯性。</div>
+        </div>
+
+        <div class="callout-green">
+          <strong>关键差别：</strong>有 RAG 的回答有来源、有具体数字、可以追溯。这是因为检索到了你自己写进知识库的文档片段。
+        </div>
+
+        <!-- WHAT IF -->
+        <div class="section-4mat mat-whatif">WHAT IF · 什么时候不用 RAG</div>
+        <div class="section-4mat-title"><span class="video-marker">[04:00]</span>三种不需要 RAG 的情况</div>
+
+        <table>
+          <tr>
+            <th>情况</th>
+            <th>原因</th>
+            <th>更好的方案</th>
+          </tr>
+          <tr>
+            <td>知识量 &lt; 50 页</td>
+            <td>直接塞进 context window 就够了</td>
+            <td>Long-context LLM（Gemini 1M token）</td>
+          </tr>
+          <tr>
+            <td>需要改变 LLM 行为</td>
+            <td>RAG 只补充知识，不改变模型"性格"</td>
+            <td>Fine-tuning</td>
+          </tr>
+          <tr>
+            <td>秒级实时数据</td>
+            <td>建索引本身有延迟，无法做到实时</td>
+            <td>Tool Calling + 数据库直查</td>
+          </tr>
+        </table>
+
+        <!-- Self Check -->
+        <details class="self-check">
+          <summary>
+            <span class="check-label">自测</span>
+            RAG 解决了 LLM 的什么问题？
+            <span class="toggle-hint">点击查看答案 ↓</span>
+          </summary>
+          <div class="self-check-answer">
+            RAG 解决了 LLM 的两个根本缺陷：<strong>知识截止日期</strong>（训练后的新信息 LLM 不知道）和<strong>私有数据盲区</strong>（企业内部文档、产品手册等 LLM 从未见过）。通过在每次推理时检索相关文档并注入 prompt，RAG 让 LLM 能基于最新的、特定的知识回答问题，而不是仅凭训练时的记忆猜测。
+          </div>
+        </details>
+
+        <div class="next-ep">
+          <div>
+            <div class="next-ep-label">下一集预告</div>
+            <div class="next-ep-title">Ep2 · RAG 怎么运作，四层拆解 →</div>
+          </div>
+          <div class="next-ep-arrow">→</div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           EPISODE 2
+      ════════════════════════════════════════ -->
+      <div class="episode" id="ep2">
+        <div class="ep-header">
+          <div class="ep-num">02</div>
+          <div class="ep-header-text">
+            <div class="ep-title">RAG 怎么运作，四层拆解</div>
+            <div class="ep-meta">
+              <span class="ep-time">⏱ 8 min</span>
+              <div class="ep-progress">
+                <div class="ep-dot done"></div>
+                <div class="ep-dot active"></div>
+                <div class="ep-dot"></div>
+                <div class="ep-dot"></div>
+                <div class="ep-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="learning-goal">
+          <div class="learning-goal-label">学完这集你能回答</div>
+          RAG 的四层架构分别是什么？离线阶段做什么、在线阶段做什么？每层的核心决策点是什么？
+        </div>
+
+        <!-- WHY -->
+        <div class="section-4mat mat-why">WHY · 10 行够用，但不够好</div>
+        <div class="section-4mat-title"><span class="video-marker">[00:00]</span>v1 能跑，为什么生产 RAG 需要更多设计？</div>
+
+        <div class="callout">
+          v1 的 RAG 只有约 10 行核心代码就能工作。但生产环境中你会遇到：<strong>文档太长塞不进 context</strong>、<strong>相似问题找到不相关的内容</strong>、<strong>模型"脑补"了知识库里没有的答案</strong>。这就是为什么每一层都有必要被认真设计。
+        </div>
+
+        <!-- WHAT -->
+        <div class="section-4mat mat-what">WHAT · 四层架构</div>
+        <div class="section-4mat-title"><span class="video-marker">[01:30]</span>离线 + 在线，两阶段四层</div>
+
+        <div class="row">
+          <div>
+            <div style="font-family:'SF Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#888780;margin-bottom:8px">离线阶段（一次性）</div>
+            <div class="layer l-data">
+              <div class="layer-title">数据层</div>
+              <div class="layer-body">文档加载、清洗、分块（Chunking）</div>
+            </div>
+            <div class="layer l-index">
+              <div class="layer-title">索引层</div>
+              <div class="layer-body">Embedding → 存入向量数据库</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'SF Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#888780;margin-bottom:8px">在线阶段（每次请求）</div>
+            <div class="layer l-retrieve">
+              <div class="layer-title">检索层</div>
+              <div class="layer-body">Query Embedding → ANN 搜索 → Top-K 文档</div>
+            </div>
+            <div class="layer l-generate">
+              <div class="layer-title">生成层</div>
+              <div class="layer-body">构造 Prompt + 调用 LLM → 最终回答</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HOW -->
+        <div class="section-4mat mat-how">HOW · 逐层拆解，每层一个决策点</div>
+        <div class="section-4mat-title"><span class="video-marker">[03:00]</span>四层各自解决什么问题</div>
+
+        <div class="card">
+          <div class="card-t">🗂 数据层：Chunking — 为什么不把整本书扔进去？</div>
+          <div class="card-b">
+            LLM 有 context 上限（即使 1M token 也贵）；更重要的是<strong>检索精度问题</strong>——一大段文字的向量是"平均值"，无法精确匹配用户的具体问题。分块让每个片段语义聚焦，检索命中率更高。<br><br>
+            <code>推荐：200-500 字符，overlap 10-20%</code>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-t">📐 索引层：Embedding — 文字怎么变成可搜索的数字？</div>
+          <div class="card-b">
+            Embedding 模型把文本映射到高维向量空间。<strong>语义相似 = 向量方向相似</strong>（余弦相似度高）。"分块大小"和"chunk size"的向量在空间里彼此靠近，即使一个中文一个英文。
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-t">🔍 检索层：Vector DB — 为什么不用 MySQL？</div>
+          <div class="card-b">
+            MySQL 全表扫描计算余弦相似度复杂度 O(n)，百万文档时慢到不可用。向量数据库（ChromaDB、Pinecone、Weaviate）用 ANN（近似最近邻）索引，复杂度接近 O(log n)，毫秒级返回 Top-K。
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-t">✍️ 生成层：为什么要约束"仅基于以下内容回答"？</div>
+          <div class="card-b">
+            不加约束，LLM 会混合知识库内容和训练时的记忆，悄悄"脑补"。加上 <code>仅基于以下检索内容回答，如无相关信息请说"我不知道"</code> 这行约束，可以大幅降低幻觉概率，让回答可以追溯到具体文档片段。
+          </div>
+        </div>
+
+        <!-- WHAT IF -->
+        <div class="section-4mat mat-whatif">WHAT IF · 每层出问题的诊断信号</div>
+        <div class="section-4mat-title"><span class="video-marker">[06:30]</span>回答不对，是哪一层的问题？</div>
+
+        <table>
+          <tr>
+            <th>症状</th>
+            <th>根因层</th>
+            <th>诊断方向</th>
+          </tr>
+          <tr>
+            <td>回答内容是编造的（有文档但答错）</td>
+            <td><strong>生成层</strong></td>
+            <td>检查 Prompt 约束是否够强；检索到的内容是否被完整传入</td>
+          </tr>
+          <tr>
+            <td>找到的内容不相关</td>
+            <td><strong>检索层</strong></td>
+            <td>检查 Embedding 模型；考虑混合检索；查看 Top-K 文档</td>
+          </tr>
+          <tr>
+            <td>分析表格、图片、代码失败</td>
+            <td><strong>数据层</strong></td>
+            <td>PDF 解析器是否支持结构化提取；图片需要多模态处理</td>
+          </tr>
+          <tr>
+            <td>相关内容存在但没被检索到</td>
+            <td><strong>索引层</strong></td>
+            <td>检查 Chunking 策略；文档是否成功入库；Embedding 维度是否匹配</td>
+          </tr>
+        </table>
+
+        <!-- Self Check -->
+        <details class="self-check">
+          <summary>
+            <span class="check-label">自测</span>
+            用户问了一个问题，RAG 执行了哪几步？
+            <span class="toggle-hint">点击查看答案 ↓</span>
+          </summary>
+          <div class="self-check-answer">
+            在线阶段执行两步：<br>
+            <strong>1. 检索层</strong>：将用户问题 Embedding 成向量 → 在向量数据库中 ANN 搜索 → 返回 Top-K 最相关文档片段。<br>
+            <strong>2. 生成层</strong>：将检索到的文档片段 + 用户问题拼接成 Prompt → 调用 LLM → 得到基于文档的回答。<br><br>
+            离线阶段（数据层 + 索引层）在用户提问之前就已完成，是一次性的预处理工作。
+          </div>
+        </details>
+
+        <div class="next-ep">
+          <div>
+            <div class="next-ep-label">下一集预告</div>
+            <div class="next-ep-title">Ep3 · 检索为什么会失败，三个递进解法 →</div>
+          </div>
+          <div class="next-ep-arrow">→</div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           EPISODE 3
+      ════════════════════════════════════════ -->
+      <div class="episode" id="ep3">
+        <div class="ep-header">
+          <div class="ep-num">03</div>
+          <div class="ep-header-text">
+            <div class="ep-title">检索为什么会失败，三个递进解法</div>
+            <div class="ep-meta">
+              <span class="ep-time">⏱ 10 min</span>
+              <div class="ep-progress">
+                <div class="ep-dot done"></div>
+                <div class="ep-dot done"></div>
+                <div class="ep-dot active"></div>
+                <div class="ep-dot"></div>
+                <div class="ep-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="learning-goal">
+          <div class="learning-goal-label">学完这集你能回答</div>
+          BM25 和向量检索各自的盲区是什么？混合检索如何互补？MRR 从 0.71 提升到 1.00 经历了哪些步骤？
+        </div>
+
+        <!-- WHY -->
+        <div class="section-4mat mat-why">WHY · 先看一个真实的失败案例</div>
+        <div class="section-4mat-title"><span class="video-marker">[00:00]</span>纯向量检索的盲区</div>
+
+        <div style="position:relative">
+          <div class="output-box"><span class="output-box-label">输出</span><span class="hl-dim">── v3.5 基线评估（纯向量检索）────────────────</span>
+
+<span class="hl-orange">Query:</span> "RAG 中推荐的分块大小和 overlap 是多少？"
+<span class="hl-blue">Top-1:</span> "embedding 模型选型建议..."           <span class="hl-dim">← 排第1（错）</span>
+<span class="hl-green">Top-2:</span> "推荐200-500字符，overlap 10%-20%"    <span class="hl-dim">← 正确答案排第2</span>
+
+<span class="hl-red">MRR@3: 0.50</span>  <span class="hl-dim">（正确答案排第2，得分0.5，不是1.0）</span>
+
+<span class="hl-dim">原因分析: 问题包含"RAG"这个主题词，污染了向量方向</span>
+<span class="hl-dim">         向量模型把"RAG"当成主要语义，而非背景信息</span></div>
+        </div>
+
+        <div class="callout">
+          这个案例由 Andrej Karpathy 在演讲中展示过类似模式：<strong>越精确的词越容易被稀释</strong>。用户真正想问的是"分块大小"，但"RAG"这个词的向量权重把检索方向拉偏了。
+        </div>
+
+        <!-- WHAT -->
+        <div class="section-4mat mat-what">WHAT · 三种检索方式的盲区对比</div>
+        <div class="section-4mat-title"><span class="video-marker">[02:30]</span>没有银弹，只有互补</div>
+
+        <table class="vs-table">
+          <tr>
+            <th>检索方式</th>
+            <th>优势</th>
+            <th>盲区</th>
+          </tr>
+          <tr>
+            <td><strong>稀疏检索（BM25）</strong></td>
+            <td class="vs-win">精确词匹配强；不受语义方向污染；无需 GPU</td>
+            <td class="vs-lose">不理解语义；"汽车"找不到"automobile"</td>
+          </tr>
+          <tr>
+            <td><strong>稠密检索（向量）</strong></td>
+            <td class="vs-win">理解语义和同义词；支持跨语言</td>
+            <td class="vs-lose">精确词弱；长 query 语义被平均；主题词污染</td>
+          </tr>
+          <tr>
+            <td><strong>混合检索（RRF）</strong></td>
+            <td class="vs-win">两路互补；精确 + 语义双保险</td>
+            <td class="vs-lose">需要调权重；偶尔有平局问题</td>
+          </tr>
+        </table>
+
+        <div class="callout-blue">
+          <strong>RRF（Reciprocal Rank Fusion）</strong>：把两路检索的排名倒数相加。比如某文档在 BM25 排第2、向量检索排第1，则 RRF 得分 = 1/(60+2) + 1/(60+1) ≈ 0.0323。取所有文档 RRF 得分最高的 K 个。
+        </div>
+
+        <!-- HOW -->
+        <div class="section-4mat mat-how">HOW · MRR 数字演进，步步为营</div>
+        <div class="section-4mat-title"><span class="video-marker">[05:00]</span>从 0.71 到 1.00 的四个版本</div>
+
+        <table>
+          <tr>
+            <th>版本</th>
+            <th>MRR@3</th>
+            <th>关键改动</th>
+            <th>解决的问题</th>
+          </tr>
+          <tr>
+            <td><code>v3.5</code> 基线</td>
+            <td><strong>0.71</strong></td>
+            <td>人工标注 8 条 Query，纯向量检索</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>v5</code> 混合检索</td>
+            <td><strong>0.85</strong></td>
+            <td>加入 BM25，RRF 融合两路结果</td>
+            <td>精确词被稀释的问题</td>
+          </tr>
+          <tr>
+            <td><code>v6</code> 加权 RRF</td>
+            <td><strong>0.92</strong></td>
+            <td><code>w_bm25=1.5</code>，解决排名平局</td>
+            <td>两路得分相同时的模糊排序</td>
+          </tr>
+          <tr>
+            <td><code>v6</code> + Reranking</td>
+            <td><strong>1.00</strong></td>
+            <td>Cross-encoder 精排 Top-K 结果</td>
+            <td>双路召回后的排序精度问题</td>
+          </tr>
+        </table>
+
+        <div class="callout-green">
+          <strong>Reranking 的原理：</strong>Cross-encoder 模型同时"看"Query 和文档，计算两者的相关性得分。比 Bi-encoder（向量）的近似相似度更精准，但更慢，所以只在 Top-K 上做精排，不做全量搜索。
+        </div>
+
+        <!-- WHAT IF -->
+        <div class="section-4mat mat-whatif">WHAT IF · 检索好了但回答还是差？</div>
+        <div class="section-4mat-title"><span class="video-marker">[08:30]</span>问题可能出在 Query 本身</div>
+
+        <div class="callout">
+          MRR 提升到 1.00 之后，如果回答质量还是不够好，原因可能是：用户的 Query 本身不清晰、包含多个子问题、或者使用了知识库里没有的术语。这就需要 <strong>Query 变换</strong>——在检索之前先对问题进行改写、拆解或扩展。这是 v7 的核心内容，下一集介绍。
+        </div>
+
+        <!-- Self Check -->
+        <details class="self-check">
+          <summary>
+            <span class="check-label">自测</span>
+            BM25 和向量检索各自的盲区是什么？
+            <span class="toggle-hint">点击查看答案 ↓</span>
+          </summary>
+          <div class="self-check-answer">
+            <strong>BM25（稀疏检索）的盲区：</strong>只做词频匹配，不理解语义。"汽车"和"automobile"、"分块"和"切割"对它来说是完全不同的词，无法召回语义相关但用词不同的文档。<br><br>
+            <strong>向量检索（稠密检索）的盲区：</strong>精确词匹配弱。当 Query 中有强主题词（如"RAG"）时，向量方向会被平均拉偏，导致包含精确答案但不那么"主题相关"的文档排名靠后。<br><br>
+            <strong>混合检索的价值：</strong>两路互补——BM25 保住精确词命中，向量检索保住语义理解，RRF 融合后综合排序。
+          </div>
+        </details>
+
+        <div class="next-ep">
+          <div>
+            <div class="next-ep-label">下一集预告</div>
+            <div class="next-ep-title">Ep4 · 怎么知道系统好不好，从 MRR 到 RAGAS →</div>
+          </div>
+          <div class="next-ep-arrow">→</div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           EPISODE 4
+      ════════════════════════════════════════ -->
+      <div class="episode" id="ep4">
+        <div class="ep-header">
+          <div class="ep-num">04</div>
+          <div class="ep-header-text">
+            <div class="ep-title">怎么知道系统好不好，从 MRR 到 RAGAS</div>
+            <div class="ep-meta">
+              <span class="ep-time">⏱ 6 min</span>
+              <div class="ep-progress">
+                <div class="ep-dot done"></div>
+                <div class="ep-dot done"></div>
+                <div class="ep-dot done"></div>
+                <div class="ep-dot active"></div>
+                <div class="ep-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="learning-goal">
+          <div class="learning-goal-label">学完这集你能回答</div>
+          MRR 和 RAGAS 各自衡量什么？RAGAS 四个指标分别代表什么？什么时候从 MRR 切换到 RAGAS？
+        </div>
+
+        <!-- WHY -->
+        <div class="section-4mat mat-why">WHY · "感觉变好了"不够</div>
+        <div class="section-4mat-title"><span class="video-marker">[00:00]</span>7 个版本迭代完，系统到底在什么水平？</div>
+
+        <div class="callout">
+          从 v1 到 v7，我们做了分块优化、混合检索、Reranking、Query 变换……每次修改后都感觉"好了一点"。但<strong>感觉不是指标</strong>。没有量化评估，你不知道：各项改进叠加后总效果如何？检索好了但生成还在出错吗？新功能是否引入了退步？
+        </div>
+
+        <!-- WHAT -->
+        <div class="section-4mat mat-what">WHAT · 两种评估工具的分工</div>
+        <div class="section-4mat-title"><span class="video-marker">[01:30]</span>MRR vs RAGAS，用哪个？</div>
+
+        <div class="row">
+          <div class="bbox">
+            <strong>MRR（平均倒数排名）</strong><br><br>
+            评估：检索排名质量<br>
+            成本：无 LLM 调用<br>
+            速度：毫秒级<br>
+            适用：早期迭代，频繁调整检索参数<br><br>
+            <em>只看"正确文档排第几"，不管生成质量</em>
+          </div>
+          <div class="obox">
+            <strong>RAGAS（4 维度评估框架）</strong><br><br>
+            评估：检索 + 生成全链路<br>
+            成本：每条需调用 LLM 评判<br>
+            速度：分钟级（取决于 Query 数量）<br>
+            适用：阶段性全面评估，上线前验收<br><br>
+            <em>覆盖完整 RAG 链路，有 ground truth 更准</em>
+          </div>
+        </div>
+
+        <!-- HOW -->
+        <div class="section-4mat mat-how">HOW · RAGAS 四个指标，直观解释</div>
+        <div class="section-4mat-title"><span class="video-marker">[03:00]</span>每个指标回答一个具体问题</div>
+
+        <div class="card">
+          <div class="card-t">Context Recall · 该找到的信息找到了多少？</div>
+          <div class="card-b">把 ground truth 答案分解成若干信息点，检查每个信息点是否出现在检索到的文档里。<strong>衡量检索的覆盖率</strong>——重要信息有没有遗漏。</div>
+        </div>
+        <div class="card">
+          <div class="card-t">Context Precision · 找到的里有多少是有用的？</div>
+          <div class="card-b">检索到的文档中，有多少比例真正被用于回答问题。<strong>衡量检索的精准率</strong>——有没有引入噪音文档把 LLM 搞糊涂。</div>
+        </div>
+        <div class="card">
+          <div class="card-t">Faithfulness · 回答有没有编造内容？</div>
+          <div class="card-b">把生成的回答拆解成若干陈述，检查每个陈述是否可以从检索到的文档中推断出来。<strong>衡量生成层的幻觉率</strong>——是否基于文档作答。</div>
+        </div>
+        <div class="card">
+          <div class="card-t">Answer Relevancy · 回答有没有切题？</div>
+          <div class="card-b">检查生成的回答是否真正回答了用户的问题（而不是答非所问或过于宽泛）。<strong>衡量回答的相关性</strong>——有没有废话、有没有跑题。</div>
+        </div>
+
+        <div style="position:relative">
+          <div class="output-box"><span class="output-box-label">输出</span><span class="hl-dim">── v8 RAGAS 评估结果（8条标注Query）─────────</span>
+
+<span class="hl-blue">Context Recall:    </span><span class="hl-green">0.87</span>  <span class="hl-dim">← 87% 的关键信息被检索到</span>
+<span class="hl-blue">Context Precision: </span><span class="hl-orange">0.79</span>  <span class="hl-dim">← 79% 的检索内容有用</span>
+<span class="hl-blue">Faithfulness:      </span><span class="hl-green">0.91</span>  <span class="hl-dim">← 91% 的回答陈述可追溯到文档</span>
+<span class="hl-blue">Answer Relevancy:  </span><span class="hl-green">0.88</span>  <span class="hl-dim">← 88% 的回答切题</span>
+
+<span class="hl-dim">瓶颈：Context Precision 0.79，说明检索引入了</span>
+<span class="hl-dim">      约 21% 的噪音文档，可进一步优化 Reranking</span></div>
+        </div>
+
+        <!-- WHAT IF -->
+        <div class="section-4mat mat-whatif">WHAT IF · 没有 ground truth 怎么办？</div>
+        <div class="section-4mat-title"><span class="video-marker">[05:00]</span>合成 Query 的陷阱</div>
+
+        <div class="callout">
+          没有人工标注的 ground truth 时，常见做法是用 LLM 从文档自动生成 Query-Answer 对。<strong>但要注意：合成 Query 评估出来的 RAGAS 指标会系统性虚高 10-30%</strong>。原因是合成的问题天然契合文档内容，和真实用户提问的分布完全不同。合成评估适合回归测试（防止退步），但不能替代真实用户标注。
+        </div>
+
+        <!-- Self Check -->
+        <details class="self-check">
+          <summary>
+            <span class="check-label">自测</span>
+            为什么不一直用 MRR，什么时候切换到 RAGAS？
+            <span class="toggle-hint">点击查看答案 ↓</span>
+          </summary>
+          <div class="self-check-answer">
+            <strong>一直用 MRR 的问题：</strong>MRR 只评估检索排名，完全不看生成质量。即使检索 MRR = 1.0，LLM 还是可能基于检索到的文档产生幻觉、答非所问或遗漏关键信息。MRR 无法发现这些生成层的问题。<br><br>
+            <strong>切换时机：</strong>早期迭代（频繁调整 Chunking、Embedding、检索参数）用 MRR——快、无成本。<strong>阶段性全面评估时（每隔几个版本、或上线前）切换到 RAGAS</strong>，用 4 个维度全面检查整个链路，找出瓶颈所在。
+          </div>
+        </details>
+
+        <div class="next-ep">
+          <div>
+            <div class="next-ep-label">下一集预告</div>
+            <div class="next-ep-title">Ep5 · Demo 到生产，差了什么 →</div>
+          </div>
+          <div class="next-ep-arrow">→</div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           EPISODE 5
+      ════════════════════════════════════════ -->
+      <div class="episode" id="ep5">
+        <div class="ep-header">
+          <div class="ep-num">05</div>
+          <div class="ep-header-text">
+            <div class="ep-title">Demo 到生产，差了什么</div>
+            <div class="ep-meta">
+              <span class="ep-time">⏱ 5 min</span>
+              <div class="ep-progress">
+                <div class="ep-dot done"></div>
+                <div class="ep-dot done"></div>
+                <div class="ep-dot done"></div>
+                <div class="ep-dot done"></div>
+                <div class="ep-dot active"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="learning-goal">
+          <div class="learning-goal-label">学完这集你能回答</div>
+          生产 RAG 系统有哪四个核心关注点？语义缓存和精确缓存有什么区别？数据秒级更新时 RAG 怎么办？
+        </div>
+
+        <!-- WHY -->
+        <div class="section-4mat mat-why">WHY · v1 能跑 ≠ 生产能用</div>
+        <div class="section-4mat-title"><span class="video-marker">[00:00]</span>生产环境的四个真实挑战</div>
+
+        <div class="callout">
+          v1 跑通了，但部署到生产环境会遇到：<strong>相同问题反复调 API 浪费钱</strong>、<strong>出问题不知道哪一步错了</strong>、<strong>A 部门看到 B 部门的文档</strong>、<strong>一篇文档更新要重建整个索引</strong>。这四个问题是从 Demo 到生产必须解决的工程关键。
+        </div>
+
+        <!-- WHAT -->
+        <div class="section-4mat mat-what">WHAT · 四个生产关注点</div>
+        <div class="section-4mat-title"><span class="video-marker">[01:00]</span>v10 企业级 RAG 的核心设计</div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="bbox">
+            <strong>语义缓存</strong><br>
+            相似问题命中缓存，不重复调 LLM API。"RAG 分块多大"和"RAG chunk size 推荐"语义相似，第二个问题直接返回缓存结果。
+          </div>
+          <div class="obox">
+            <strong>请求追踪</strong><br>
+            每次请求打一个 trace ID，记录检索了哪些文档、生成了什么 Prompt、LLM 返回了什么。出问题时能定位到具体步骤。
+          </div>
+        </div>
+        <div class="row">
+          <div class="rbox">
+            <strong>多租户隔离</strong><br>
+            不同部门的文档打上 tenant_id 标签。检索时自动过滤，保证 A 部门只能看到 A 部门的内容。
+          </div>
+          <div class="gbox">
+            <strong>增量索引</strong><br>
+            文档更新时只重新 Embedding 修改的部分，不重建全量索引。大知识库尤其关键（全量重建可能需要数小时）。
+          </div>
+        </div>
+
+        <!-- HOW -->
+        <div class="section-4mat mat-how">HOW · 语义缓存效果对比</div>
+        <div class="section-4mat-title"><span class="video-marker">[03:00]</span>v10 真实输出</div>
+
+        <div style="position:relative">
+          <div class="output-box"><span class="output-box-label">输出</span><span class="hl-dim">── v10 语义缓存效果（生产压测）────────────────</span>
+
+<span class="hl-orange">请求 1:</span> "RAG 的分块推荐用多大？"
+<span class="hl-red">  状态: MISS</span>  <span class="hl-dim">（未命中缓存，完整执行检索+生成）</span>
+<span class="hl-blue">  耗时: 624ms</span>
+  <span class="hl-dim">→ 结果写入语义缓存</span>
+
+<span class="hl-orange">请求 2:</span> "RAG 分块大小推荐是多少？"
+<span class="hl-green">  状态: HIT </span>  <span class="hl-dim">（命中缓存，跳过检索和 LLM 调用）</span>
+<span class="hl-blue">  耗时: 117ms</span>  <span class="hl-green">节省 81% 延迟</span>
+
+<span class="hl-dim">相似度阈值: 0.85（低于此值不命中，防止误匹配）</span></div>
+        </div>
+
+        <div class="callout-green">
+          <strong>81% 的延迟节省</strong>在实际业务中意味着什么：高峰时段 80% 的问题是同类问题的变体（不同措辞问同一件事），语义缓存可以让这些请求不花一分 API 费用、不占用 LLM 资源。
+        </div>
+
+        <!-- WHAT IF -->
+        <div class="section-4mat mat-whatif">WHAT IF · 数据秒级更新怎么办？</div>
+        <div class="section-4mat-title"><span class="video-marker">[04:15]</span>RAG 的边界在哪里</div>
+
+        <div class="callout">
+          RAG 的索引有延迟——即使是增量索引，也需要几秒到几分钟。对于<strong>股票价格、实时库存、当前系统状态</strong>这类秒级更新的数据，RAG 不适合。<br><br>
+          正确方案：<strong>Tool Calling + 数据库直查</strong>。让 LLM 生成 SQL 或调用 API，实时查询数据库。这是 RAG 和 Agent 的边界——静态知识用 RAG，动态数据用 Tool。详见概念手册的"实时性"部分。
+        </div>
+
+        <!-- Self Check -->
+        <details class="self-check">
+          <summary>
+            <span class="check-label">自测</span>
+            语义缓存和精确缓存（Redis key-value）的区别？
+            <span class="toggle-hint">点击查看答案 ↓</span>
+          </summary>
+          <div class="self-check-answer">
+            <strong>精确缓存（Redis key-value）：</strong>以完整的问题字符串为 key。"RAG 分块多大"和"RAG分块多大"（少个空格）是不同的 key，不会命中。只有一字不差才能命中。<br><br>
+            <strong>语义缓存：</strong>先把问题 Embedding 成向量，在缓存向量库中搜索语义相似的历史问题。"RAG 分块推荐用多大"和"RAG chunk size 推荐是多少"虽然措辞完全不同，但向量相似度 &gt; 阈值（如 0.85），可以命中同一条缓存。<br><br>
+            <strong>适用场景：</strong>用户提问措辞多变时，语义缓存命中率远高于精确缓存，但需要多一次向量查询的开销。
+          </div>
+        </details>
+
+        <!-- 无 next-ep，最后一集 -->
+        <div style="margin-top:24px;padding:20px;background:#f5f4f0;border-radius:10px;text-align:center">
+          <div style="font-family:'SF Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#888780;margin-bottom:8px">系列完结</div>
+          <div style="font-size:15px;font-weight:600;color:#1a1a18;margin-bottom:6px">你已走完 RAG 核心路径</div>
+          <div style="font-size:13px;color:#5f5e5a">从两个缺陷出发 → 四层架构 → 检索优化 → 量化评估 → 生产化</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="page-footer">
+        <p>学完这 5 集，你已经走完了 RAG 的核心路径：理解了为什么需要 RAG、它的四层架构是什么、检索为什么失败以及如何修复、如何量化评估系统好坏、以及 Demo 和生产之间的差距。</p>
+        <br>
+        <p>想深入某个具体概念？查向量数据库选型、Embedding 模型对比、RAGAS 各指标的计算细节？→ <a href="rag-5d.html">概念手册（rag-5d.html）</a></p>
+      </div>
+
+    </div><!-- /container -->
+  </main>
+</div><!-- /layout -->
+
+</body>
+</html>

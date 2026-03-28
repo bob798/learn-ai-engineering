@@ -4,3 +4,7 @@
 .venv
 __pycache__
 settings.local.json
+
+# Generated result files (re-created by running the scripts)
+*_result.json
+rag_traces.jsonl

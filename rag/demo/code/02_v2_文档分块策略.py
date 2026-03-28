@@ -16,6 +16,16 @@
 运行：python 02_v2_文档分块策略.py
 """
 
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  📺 讲师注释                                                  ║
+# ║  对应集数：01_理解RAG.html · Ep2「RAG 怎么运作」延伸         ║
+# ║  核心代码：第 119~145 行（chunk_by_sentence，三种策略中的    ║
+# ║            胜者），第 168~192 行（retrieve）                  ║
+# ║  可跳过：第 61~116 行（固定分块变体，理解对比思路即可）      ║
+# ║  本集关键数字：句子感知分块 Recall@3 最高，                  ║
+# ║               chunk_size=300 为推荐起点                      ║
+# ╚══════════════════════════════════════════════════════════════╝
+
 import re
 import numpy as np
 from importlib.util import module_from_spec, spec_from_file_location

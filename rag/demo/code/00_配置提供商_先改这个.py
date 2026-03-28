@@ -137,9 +137,14 @@ def _build_client() -> "OpenAI":
         )
     if cfg["sdk"] == "openai_compat":
         from openai import OpenAI
+        import httpx
         kwargs: dict = {"api_key": api_key}
         if cfg.get("base_url"):
             kwargs["base_url"] = cfg["base_url"]
+        # trust_env=False：跳过系统代理（如 Clash/V2Ray）
+        # 国内 API（siliconflow/qwen）不需要代理，走代理反而 TLS 握手超时
+        # 如果你使用 OpenAI 官方且需要代理，请改为 trust_env=True
+        kwargs["http_client"] = httpx.Client(trust_env=False, timeout=30.0)
         return OpenAI(**kwargs)
     elif cfg["sdk"] == "zhipu":
         try:
