@@ -11,7 +11,7 @@
   - 每轮独立评估：对照 key_points 打分，写入 logs/ JSONL
   - 全程保留对话历史，面试官记得每一轮的问答
 
-依赖：pip install chromadb openai numpy python-dotenv langchain-text-splitters
+依赖：pip install chromadb openai numpy python-dotenv langchain-text-splitters bs4 prompt_toolkit
 运行：python 11_模拟面试官.py
 退出：Ctrl+C
 """
@@ -28,9 +28,15 @@ import datetime
 import json
 import random
 import re
-import readline  # noqa: F401 — 仅 import 即可启用方向键/历史/行编辑
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+
+try:
+    from prompt_toolkit import prompt as pt_prompt
+    from prompt_toolkit.history import InMemoryHistory
+    _PT_AVAILABLE = True
+except ImportError:
+    _PT_AVAILABLE = False
 
 try:
     from langchain_text_splitters import HTMLHeaderTextSplitter, RecursiveCharacterTextSplitter
@@ -584,9 +590,16 @@ def main():
 
     # 交互循环
     _ansi_escape = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+    _pt_history   = InMemoryHistory() if _PT_AVAILABLE else None
 
     def read_answer() -> str:
-        """读取用户输入，过滤终端转义字符（方向键等产生的 ANSI 序列）"""
+        """
+        读取用户输入。
+        - 有 prompt_toolkit：支持历史翻阅(↑↓)、行编辑(Ctrl+A/E)、中文输入
+        - 无 prompt_toolkit：降级到 input()，过滤 ANSI 转义字符
+        """
+        if _PT_AVAILABLE:
+            return pt_prompt("你：", history=_pt_history).strip()
         raw = input("你：")
         return _ansi_escape.sub('', raw).strip()
 
