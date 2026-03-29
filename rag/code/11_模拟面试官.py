@@ -430,31 +430,68 @@ def load_qa_dataset(shuffle: bool = True) -> list[dict]:
     return qa_list
 
 
+def _extract_json(content: str) -> dict | None:
+    """从 LLM 输出中提取 JSON（兼容 ``` 包裹和裸 JSON）"""
+    content = content.strip()
+    if "```" in content:
+        parts = content.split("```")
+        content = parts[1].lstrip("json").strip() if len(parts) > 1 else content
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        return None
+
+
 def evaluate_answer(qa: dict, user_answer: str) -> dict:
     """
-    独立 LLM 调用，对照 qa.key_points 评估用户回答。
+    P0 评估方案：QAG 语义覆盖 + Prometheus CoT 推理 + 错误扣分
+
+    改进点（相比旧方案）：
+    1. 先推理再打分（Prometheus 模式）：强制 LLM 逐条分析后再出分，一致性更高
+    2. 语义等价判断（QAG 模式）：不要求原文，换个说法说对了也算命中
+    3. 错误惩罚：明显错误陈述扣分，不只看覆盖率
+    4. analysis 字段：每条要点有独立推理，可追溯
+
     不加入面试对话历史，不影响面试官上下文。
-    返回: {score, max_score, key_points_hit, key_points_missed, feedback}
     """
-    key_points_str = "\n".join(f"- {kp}" for kp in qa["key_points"])
-    prompt = f"""你是一位严格的面试评估员，根据评分要点对候选人回答打分。
+    n = len(qa["key_points"])
+    key_points_numbered = "\n".join(
+        f"{i+1}. {kp}" for i, kp in enumerate(qa["key_points"])
+    )
+
+    prompt = f"""你是一位严格的面试评估员。
 
 面试题：{qa['question']}
+参考答案（满分示例）：{qa['reference_answer']}
 
-参考答案：{qa['reference_answer']}
-
-评分要点（每项 1 分，共 {len(qa['key_points'])} 分）：
-{key_points_str}
+评分要点（共 {n} 条，每条 1 分）：
+{key_points_numbered}
 
 候选人回答：{user_answer}
 
-请评估，以 JSON 格式返回（只返回 JSON，不要其他文字）：
+【第一步：逐条分析】
+对每条评分要点，判断候选人回答是否表达了该要点的核心含义。
+判断标准：语义等价即可，不要求原文，换个说法说对了也算命中。
+候选人额外说的正确内容不影响得分。
+
+【第二步：错误检测】
+候选人是否有与参考答案明显矛盾的错误陈述？（答"不会"或"不知道"不算错误，只是未覆盖）
+
+【第三步：计算得分】
+score = 命中要点数 - 错误陈述条数（最低 0，最高 {n}）
+
+以 JSON 格式返回（只返回 JSON，不要其他文字）：
 {{
-  "key_points_hit": ["命中的要点（原文）"],
-  "key_points_missed": ["遗漏的要点（原文）"],
-  "score": <命中要点数>,
-  "max_score": {len(qa['key_points'])},
-  "feedback": "简短点评（1-2 句中文，说明对了什么、漏了什么）"
+  "analysis": [
+    {{"point": "要点原文", "hit": true, "reason": "候选人说了...等价于此"}},
+    {{"point": "要点原文", "hit": false, "reason": "未提及"}}
+  ],
+  "errors": ["错误陈述1（如有）"],
+  "key_points_hit":    ["命中的要点原文"],
+  "key_points_missed": ["未命中的要点原文"],
+  "score":     <命中数 - 错误数，最低0>,
+  "max_score": {n},
+  "feedback":  "1-2句中文点评：说对了什么、关键遗漏是什么"
 }}"""
 
     resp = _client.chat.completions.create(
@@ -463,21 +500,23 @@ def evaluate_answer(qa: dict, user_answer: str) -> dict:
         temperature=0,
     )
     content = (resp.choices[0].message.content or "").strip()
+    result = _extract_json(content)
 
-    # 提取 JSON（可能被 ``` 包裹）
-    if "```" in content:
-        parts = content.split("```")
-        content = parts[1].lstrip("json").strip() if len(parts) > 1 else content
-    try:
-        return json.loads(content)
-    except json.JSONDecodeError:
+    if result is None:
         return {
             "score":             0,
-            "max_score":         len(qa["key_points"]),
+            "max_score":         n,
+            "analysis":          [],
+            "errors":            [],
             "key_points_hit":    [],
             "key_points_missed": qa["key_points"],
             "feedback":          content[:200],
         }
+
+    # 保证 errors 字段存在（旧格式兼容）
+    result.setdefault("errors",   [])
+    result.setdefault("analysis", [])
+    return result
 
 
 def record_turn(
@@ -497,6 +536,8 @@ def record_turn(
         "user_answer":       user_answer,
         "key_points_hit":    eval_result.get("key_points_hit",    []),
         "key_points_missed": eval_result.get("key_points_missed", []),
+        "errors":            eval_result.get("errors",            []),
+        "analysis":          eval_result.get("analysis",          []),
         "score":             eval_result.get("score",     0),
         "max_score":         eval_result.get("max_score", len(qa["key_points"])),
         "feedback":          eval_result.get("feedback",  ""),
