@@ -367,7 +367,10 @@ def interview_turn(user_content: str, messages: list) -> tuple[str, list]:
         # LLM 调用工具 → 执行后把结果追加回 messages
         messages.append(msg)
         for tc in msg.tool_calls:
-            args   = json.loads(tc.function.arguments)
+            args = json.loads(tc.function.arguments)
+            # 部分 provider 会二次序列化，args 可能是字符串
+            if isinstance(args, str):
+                args = json.loads(args)
             result = search_kb(
                 query=args.get("query", ""),
                 topic=args.get("topic", ""),
