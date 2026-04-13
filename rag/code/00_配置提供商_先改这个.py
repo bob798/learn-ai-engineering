@@ -69,7 +69,7 @@ PROVIDER_CONFIG = {
         "base_url":     "https://api.siliconflow.cn/v1",
         "api_key_env":  "SILICONFLOW_API_KEY",
         "embed_model":  "BAAI/bge-m3",           # 中英文最佳，1024维
-        "chat_model":   "Qwen/Qwen2.5-7B-Instruct",
+        "chat_model":   "Qwen/Qwen3.5-27B",
         "sdk":          "openai_compat",
     },
     "zhipu": {

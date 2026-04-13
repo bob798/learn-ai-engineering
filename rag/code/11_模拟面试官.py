@@ -24,10 +24,12 @@
 # ║    不推荐：zhipu（Tool Calling 接口与 OpenAI 有差异）         ║
 # ╚══════════════════════════════════════════════════════════════╝
 
+import concurrent.futures
 import datetime
 import json
 import random
 import re
+import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
@@ -73,7 +75,10 @@ _client    = _provider_module._get_client()
 #   "deepseek-ai/DeepSeek-V3"
 EVAL_MODELS: list[str] = [
     _cfg["chat_model"],          # 默认：主模型（来自 .env）
-    # "Qwen/Qwen2.5-7B-Instruct",  # 取消注释即可启用第二个评估模型
+    "Pro/zai-org/GLM-5",
+    "deepseek-ai/DeepSeek-V3.2",
+    # "Qwen/Qwen3.5-27B",
+    "Pro/MiniMaxAI/MiniMax-M2.5",
 ]
 
 
@@ -324,6 +329,27 @@ SEARCH_TOOL_DEF = {
 
 
 # ══════════════════════════════════════════════════════════════
+# API 错误处理工具函数
+# ══════════════════════════════════════════════════════════════
+
+def _handle_api_error(exc: Exception) -> None:
+    """
+    识别常见 API 错误并打印友好提示。
+    调用方自行决定是否继续 raise。
+    """
+    msg = str(exc).lower()
+    if "403" in str(exc) or "permissiondenied" in type(exc).__name__.lower() or "balance" in msg:
+        print("\n  ❌  账户余额不足，请登录 siliconflow.cn 充值后重新运行。")
+        print(f"     ({type(exc).__name__}: {str(exc)[:120]})\n")
+        sys.exit(1)
+    if "401" in str(exc) or "authentication" in msg or "api key" in msg:
+        print("\n  ❌  API Key 无效或未设置，请检查 .env 中的 API_KEY 配置。\n")
+        sys.exit(1)
+    if "timeout" in msg or "timed out" in msg:
+        print(f"\n  ⚠  请求超时（{type(exc).__name__}），可能是网络问题，请稍后重试。\n")
+
+
+# ══════════════════════════════════════════════════════════════
 # 面试官 System Prompt
 # ══════════════════════════════════════════════════════════════
 
@@ -369,13 +395,17 @@ def interview_turn(user_content: str, messages: list) -> tuple[str, list]:
     messages.append({"role": "user", "content": user_content})
 
     for _ in range(6):   # 最多 6 次工具调用（一轮通常 1~2 次即可）
-        resp = _client.chat.completions.create(
-            model=_cfg["chat_model"],
-            messages=messages,
-            tools=[SEARCH_TOOL_DEF],
-            tool_choice="auto",
-            temperature=0.3,
-        )
+        try:
+            resp = _client.chat.completions.create(
+                model=_cfg["chat_model"],
+                messages=messages,
+                tools=[SEARCH_TOOL_DEF],
+                tool_choice="auto",
+                temperature=0.3,
+            )
+        except Exception as exc:
+            _handle_api_error(exc)
+            raise
         msg = resp.choices[0].message
 
         # LLM 不调用工具 → 直接输出回答
@@ -497,34 +527,53 @@ score = 命中要点数 - 错误陈述条数（最低 0，最高 {n}）
 }}"""
 
 
+_EVAL_TIMEOUT = 30   # 单模型评估超时（秒）
+
+
 def _evaluate_with_model(qa: dict, user_answer: str, model: str) -> dict:
-    """用指定模型评估一次，返回结果并附 model 字段"""
+    """用指定模型评估一次，返回结果并附 model 字段。超时或失败时返回 error 占位。"""
     n      = len(qa["key_points"])
     prompt = _build_eval_prompt(qa, user_answer)
 
-    resp = _client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0,
-    )
-    content = (resp.choices[0].message.content or "").strip()
-    result  = _extract_json(content)
+    try:
+        resp = _client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            timeout=_EVAL_TIMEOUT,
+        )
+        content = (resp.choices[0].message.content or "").strip()
+        result  = _extract_json(content)
 
-    if result is None:
-        result = {
-            "score":             0,
+        if result is None:
+            result = {
+                "score":             0,
+                "max_score":         n,
+                "analysis":          [],
+                "errors":            [],
+                "key_points_hit":    [],
+                "key_points_missed": qa["key_points"],
+                "feedback":          content[:200],
+            }
+
+        result.setdefault("errors",   [])
+        result.setdefault("analysis", [])
+        result["model"] = model
+        return result
+
+    except Exception as exc:
+        short = str(exc)[:80]
+        return {
+            "score":             -1,   # -1 表示评估失败，排除在均值之外
             "max_score":         n,
             "analysis":          [],
             "errors":            [],
             "key_points_hit":    [],
-            "key_points_missed": qa["key_points"],
-            "feedback":          content[:200],
+            "key_points_missed": [],
+            "feedback":          f"[评估失败] {short}",
+            "model":             model,
+            "error":             str(exc),
         }
-
-    result.setdefault("errors",   [])
-    result.setdefault("analysis", [])
-    result["model"] = model
-    return result
 
 
 def evaluate_answer_multi(qa: dict, user_answer: str) -> dict:
@@ -535,15 +584,25 @@ def evaluate_answer_multi(qa: dict, user_answer: str) -> dict:
     - 综合得分 = 各模型得分均值（四舍五入）
     - 返回结构包含 model_evals（逐模型结果）和聚合字段
     """
-    n           = len(qa["key_points"])
-    model_evals = [_evaluate_with_model(qa, user_answer, m) for m in EVAL_MODELS]
+    n = len(qa["key_points"])
+    print(f"  [正在评估，共 {len(EVAL_MODELS)} 个模型并行...]", end="", flush=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(EVAL_MODELS)) as pool:
+        futures = {pool.submit(_evaluate_with_model, qa, user_answer, m): m for m in EVAL_MODELS}
+        model_evals = []
+        for fut in concurrent.futures.as_completed(futures):
+            model_evals.append(fut.result())
+            print(".", end="", flush=True)
+    print()  # 换行
+    # 保持与 EVAL_MODELS 顺序一致（as_completed 是乱序的）
+    order = {m: i for i, m in enumerate(EVAL_MODELS)}
+    model_evals.sort(key=lambda e: order.get(e["model"], 99))
 
-    # 综合得分：均值，保留一位小数
-    scores    = [e["score"] for e in model_evals]
-    avg_score = round(sum(scores) / len(scores), 1)
+    # 综合得分：只计入成功的模型（score != -1），保留一位小数
+    valid_scores = [e["score"] for e in model_evals if e["score"] >= 0]
+    avg_score    = round(sum(valid_scores) / len(valid_scores), 1) if valid_scores else 0
 
-    # 主裁判：EVAL_MODELS[0] 的 key_points_hit/missed/feedback 作为主要字段
-    primary = model_evals[0]
+    # 主裁判：优先用第一个成功的模型（score >= 0）；全部失败时 fallback 到 [0]
+    primary = next((e for e in model_evals if e["score"] >= 0), model_evals[0])
 
     return {
         "score":             avg_score,
@@ -555,6 +614,34 @@ def evaluate_answer_multi(qa: dict, user_answer: str) -> dict:
         "feedback":          primary.get("feedback",          ""),
         "model_evals":       model_evals,
     }
+
+
+def _save_insight(note: str, log_path: Path) -> None:
+    """
+    将用户在题后输入的收获追加到两个地方：
+    1. 当次面试 JSONL（与题目关联）
+    2. pis/daily/YYYY-MM-DD.md（跨会话积累）
+    """
+    # 追加到 JSONL（type=insight 行）
+    record = {
+        "type":      "insight",
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "note":      note,
+    }
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    # 追加到 daily log
+    daily_dir  = Path.home() / "workspace/pis/daily"
+    daily_dir.mkdir(parents=True, exist_ok=True)
+    today      = datetime.datetime.now().strftime("%Y-%m-%d")
+    daily_file = daily_dir / f"{today}.md"
+    ts         = datetime.datetime.now().strftime("%H:%M")
+
+    if not daily_file.exists():
+        daily_file.write_text(f"# Daily Log {today}\n\n")
+    with open(daily_file, "a", encoding="utf-8") as f:
+        f.write(f"- `{ts}` [面试收获] {note}\n")
 
 
 def record_turn(
@@ -620,6 +707,61 @@ def print_session_summary(records: list[dict], log_path: Path) -> None:
 
 
 # ══════════════════════════════════════════════════════════════
+# 模型自检（每次启动时验证 EVAL_MODELS 可用性）
+# ══════════════════════════════════════════════════════════════
+
+_SELFTEST_TIMEOUT = 15   # 自检超时（秒），比评估更短
+
+
+def _selftest_models() -> list[str]:
+    """
+    对 EVAL_MODELS 中的每个模型发一条极短测试请求，
+    验证连通性 + 能否返回 JSON。
+    返回：通过自检的模型列表（失败的跳过，不影响主流程）。
+    """
+    test_prompt = '请只返回 JSON：{"ok": true}'
+    passed, failed = [], []
+
+    print(f"\n{'═'*60}")
+    print(f" 自检评估模型（共 {len(EVAL_MODELS)} 个）")
+    print(f"{'═'*60}")
+
+    for model in EVAL_MODELS:
+        name = model.split("/")[-1]
+        try:
+            resp = _client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": test_prompt}],
+                temperature=0,
+                timeout=_SELFTEST_TIMEOUT,
+            )
+            content = (resp.choices[0].message.content or "").strip()
+            parsed  = _extract_json(content)
+            if parsed is not None:
+                print(f"  ✓ {name}")
+                passed.append(model)
+            else:
+                print(f"  ✗ {name}  （返回非 JSON：{content[:60]}）")
+                failed.append(model)
+        except Exception as exc:
+            short = str(exc)[:80]
+            print(f"  ✗ {name}  （{short}）")
+            failed.append(model)
+
+    if failed:
+        print(f"\n  跳过 {len(failed)} 个不可用模型，本次面试用 {len(passed)} 个模型评估。")
+    else:
+        print(f"\n  所有 {len(passed)} 个模型均可用。")
+
+    if not passed:
+        # 兜底：至少保留主模型
+        print(f"  ⚠  全部模型自检失败，回退到主模型：{_cfg['chat_model']}")
+        passed = [_cfg["chat_model"]]
+
+    return passed
+
+
+# ══════════════════════════════════════════════════════════════
 # 主流程
 # ══════════════════════════════════════════════════════════════
 
@@ -637,6 +779,10 @@ def main():
         print("\n  ⚠️  ZhipuAI SDK 的 Tool Calling 接口与 OpenAI 有差异，面试官无法正常工作。")
         print("  请将 .env 中的 PROVIDER 改为 siliconflow 或 openai 后重新运行。\n")
         return
+
+    # ── STEP 0：评估模型自检 ──────────────────────────────────
+    global EVAL_MODELS
+    EVAL_MODELS = _selftest_models()
 
     # ── STEP 1：知识库 ───────────────────────────────────────
     print(f"\n{'═'*60}")
@@ -658,7 +804,8 @@ def main():
 
     # ── STEP 3：面试 ─────────────────────────────────────────
     print(f"\n{'═'*60}")
-    print(" STEP 3 ／ 面试开始（Ctrl+C 退出）")
+    print(" STEP 3 ／ 面试开始")
+    print(" 输入 /exit 或按 Ctrl+C 结束面试并查看总结")
     print(f"{'═'*60}\n")
 
     # 初始化对话历史（system prompt 只加一次）
@@ -691,12 +838,17 @@ def main():
         raw = input("你：")
         return _ansi_escape.sub('', raw).strip()
 
+    _EXIT_CMDS = {"/exit", "/quit", "/q", "退出", "结束面试"}
+
     turn = 0
     try:
         while True:
             answer = read_answer()
             if not answer:
                 continue
+            if answer.lower() in _EXIT_CMDS:
+                print("\n  面试结束，正在生成总结...\n")
+                break
             turn += 1
             print()
 
@@ -714,6 +866,10 @@ def main():
                 for e in evals:
                     name = e["model"].split("/")[-1]
                     s    = e["score"]
+                    if s < 0:
+                        reason = e.get("error", e.get("feedback", "未知原因"))[:80]
+                        print(f"  {name:<{m_width}}  ✗ 评估失败  ({reason})")
+                        continue
                     bar  = "█" * int(s) + "░" * (max_s - int(s))
                     err  = f"  ⚠ {len(e['errors'])}处错误" if e.get("errors") else ""
                     print(f"  {name:<{m_width}}  {bar}  {s}/{max_s}{err}")
@@ -724,14 +880,26 @@ def main():
                     print(f"  {'综合':<{m_width}}  {bar}  {avg}/{max_s}")
                 print()
 
+            # ── 题后暂停：等用户确认 + 可选记录收获 ──────
+            print("  按 Enter 继续下一题，或输入一句收获后按 Enter（输入 /exit 结束）")
+            try:
+                note = read_answer()
+            except KeyboardInterrupt:
+                print()
+                break
+            if note.lower() in _EXIT_CMDS:
+                print("\n  面试结束，正在生成总结...\n")
+                break
+            if note:
+                _save_insight(note, log_path)
+                print(f"  ✓ 已记录\n")
+
             # ── 切换到下一题 ──────────────────────────────
             qa_idx += 1
             if qa_list and qa_idx < len(qa_list):
-                # QA 题库还有题：注入结构化题目
                 current_qa  = qa_list[qa_idx]
                 next_q_hint = f"\n\n[下一题] {current_qa['question']}"
             else:
-                # QA 题库耗尽：转向向量库自由出题
                 current_qa  = None
                 next_q_hint = "\n\n[继续出题] 请用 search_kb 检索一个知识点，出一道未问过的新题继续面试"
             user_msg = answer + next_q_hint
@@ -741,6 +909,8 @@ def main():
             print(f"面试官：{response}\n")
 
     except KeyboardInterrupt:
+        print()
+    finally:
         print_session_summary(session_records, log_path)
 
 
