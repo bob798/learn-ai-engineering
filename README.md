@@ -226,7 +226,7 @@ Claude Desktop 配置见 [demo/README.md](mcp/demo/README.md)。
 
 ## 关于作者
 
-8年 ToB 预售 / 售前工程师（支付 & 金融科技），现在转型 AI 应用工程师，做 [AI 开发日记](https://bob798.github.io) 系列内容。
+AI 应用工程师，做 [AI 开发日记](https://bob798.github.io) 系列内容。
 
 这个仓库是我边学边记的过程，不是整理好的教程。如果你发现错误或者有更好的理解，欢迎开 Issue。
 
