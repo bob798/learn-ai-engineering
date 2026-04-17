@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/bob/workspace/ai-handbook && python3 -m pytest rag/code/tests/test_mock_interviewer.py -q 2>&1 | tail -5"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/bob/workspace/ai-handbook/.claude/hooks/daily-log.py"
+          }
+        ]
+      }
+    ]
+  }
+}
