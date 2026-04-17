@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OMC 深度拆解 · oh-my-claudecode</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* === Hero === */
+.hero{position:relative;padding:2.5rem 1rem 1.5rem;text-align:center;background:linear-gradient(135deg,#0d1525,#1a1510,#0d1525);overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(239,159,39,.12),transparent 70%)}
+.hero-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:6px;position:relative}
+.hero-sub{font-size:13px;color:#6b7b8d;position:relative;max-width:520px;margin:0 auto}
+
+/* === Lens badges === */
+.lens{display:inline-block;font-size:9px;font-weight:600;padding:1px 7px;border-radius:10px;letter-spacing:.04em;vertical-align:middle;margin-left:4px}
+.lens-dev{background:rgba(46,204,113,.12);color:#2ecc71;border:.5px solid rgba(46,204,113,.3)}
+.lens-team{background:rgba(55,138,221,.12);color:#378ADD;border:.5px solid rgba(55,138,221,.3)}
+.lens-eng{background:rgba(239,159,39,.12);color:#EF9F27;border:.5px solid rgba(239,159,39,.3)}
+.lens-gen{background:rgba(147,51,234,.12);color:#c084fc;border:.5px solid rgba(147,51,234,.3)}
+.lens-ret{background:rgba(55,138,221,.12);color:#378ADD;border:.5px solid rgba(55,138,221,.3)}
+.lens-arch{background:rgba(239,159,39,.12);color:#EF9F27;border:.5px solid rgba(239,159,39,.3)}
+
+/* === Architecture Diagram === */
+.arch{background:#0d1117;border-radius:12px;padding:20px;margin:.85rem 0;border:1px solid #1e293b;overflow-x:auto}
+.arch-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#EF9F27;margin-bottom:12px}
+.layer{border:1.5px solid;border-radius:8px;padding:12px;margin-bottom:8px;position:relative}
+.layer-label{position:absolute;top:-8px;left:12px;background:#0d1117;padding:0 6px;font-size:10px;font-weight:600;letter-spacing:.04em}
+.boxes{display:flex;gap:6px;flex-wrap:wrap}
+.box{padding:5px 10px;border-radius:6px;font-size:10px;font-weight:500;border:1px solid;white-space:nowrap}
+.arrow-down{text-align:center;font-size:16px;color:#2d3a4d;margin:4px 0;line-height:1}
+.flow-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0}
+.flow-h .node{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:500;border:1px solid #1e293b;background:#111827;white-space:nowrap;color:#c9d1d9}
+.flow-h .arr{color:#2d3a4d;font-size:14px;flex-shrink:0}
+.flow-h .node.haiku{border-color:rgba(46,204,113,.3);background:rgba(46,204,113,.06);color:#7dcea0}
+.flow-h .node.sonnet{border-color:rgba(55,138,221,.3);background:rgba(55,138,221,.06);color:#b8d4f0}
+.flow-h .node.opus{border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a}
+.flow-h .node.core{border-color:rgba(239,159,39,.2);background:#111827}
+.flow-h .node.infra{border-color:#1e293b;background:#0d1117;color:#6b7b8d}
+.flow-v{display:flex;flex-direction:column;align-items:center;gap:2px;margin:10px 0}
+.flow-v .node{padding:6px 16px;border-radius:6px;font-size:11px;font-weight:500;border:1px solid #1e293b;background:#111827;min-width:200px;text-align:center;color:#c9d1d9}
+.flow-v .arr{color:#2d3a4d;font-size:14px}
+.flow-v .branch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.flow-v .branch .node{min-width:auto;font-size:10px;padding:4px 10px}
+
+/* === Module Tree === */
+.mtree{font-family:'SF Mono',Menlo,monospace;font-size:11px;line-height:1.8;color:#6b7b8d;background:#0d1117;border-radius:8px;padding:14px 16px;margin:.85rem 0;border:1px solid #1e293b;overflow-x:auto;white-space:pre}
+.mtree strong{color:#c9d1d9;font-weight:600}
+.mtree .hl{color:#EF9F27;font-weight:600}
+.mtree .dim{color:#2d3a4d}
+
+/* === VS Comparison (3-column) === */
+.vs-wrap{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;margin:.85rem 0;align-items:stretch}
+@media(max-width:640px){.vs-wrap{grid-template-columns:1fr;gap:10px}}
+.vs-side{background:#111827;border-radius:10px;padding:16px;border:1px solid #1e293b}
+.vs-side h3{font-size:13px;font-weight:600;margin-bottom:10px;letter-spacing:-.2px}
+.vs-mid{display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#2d3a4d}
+@media(max-width:640px){.vs-mid{display:none}}
+.vs-item{font-size:12px;color:#8b949e;line-height:1.8;padding-left:12px;border-left:2px solid;margin-bottom:6px}
+
+/* === Colored boxes (dark theme) === */
+.gbox{border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.7;border:1px solid rgba(46,204,113,.2);background:rgba(46,204,113,.05);color:#7dcea0}
+.gbox strong{color:#a8e6c4}
+.rbox{border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.7;border:1px solid rgba(231,76,60,.2);background:rgba(231,76,60,.05);color:#e88}
+.rbox strong{color:#f0a0a0}
+.obox{border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.7;border:1px solid rgba(239,159,39,.2);background:rgba(239,159,39,.05);color:#d4b88a}
+.obox strong{color:#EF9F27}
+.pbox{border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.7;border:1px solid rgba(147,51,234,.2);background:rgba(147,51,234,.05);color:#c9b3e6}
+.pbox strong{color:#c084fc}
+.bbox{border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.7;border:1px solid rgba(55,138,221,.2);background:rgba(55,138,221,.05);color:#b8d4f0}
+.bbox strong{color:#378ADD}
+
+/* === Row grids === */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:.85rem 0}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:.85rem 0}
+@media(max-width:580px){.row,.row3{grid-template-columns:1fr}}
+
+/* === Meta tags === */
+.meta-bar{display:flex;gap:8px;margin:.85rem 0;flex-wrap:wrap}
+.meta-tag{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid}
+
+/* === Quiz === */
+.quiz-q{margin-bottom:16px}
+.quiz-stem{font-size:13px;font-weight:600;color:#f0f6fc;margin-bottom:8px;padding:10px 14px;background:rgba(239,159,39,.06);border-radius:8px 8px 0 0;border:1px solid rgba(239,159,39,.2)}
+.quiz-opts{list-style:none}
+.quiz-opts li{padding:8px 14px;font-size:12px;color:#8b949e;cursor:pointer;border:1px solid #1e293b;border-top:none;background:#111827;transition:background .12s;line-height:1.6}
+.quiz-opts li:last-child{border-radius:0 0 8px 8px}
+.quiz-opts li:hover{background:#1a2535}
+.quiz-opts li.correct{background:rgba(46,204,113,.08);color:#7dcea0;border-color:rgba(46,204,113,.2)}
+.quiz-opts li.wrong{background:rgba(231,76,60,.08);color:#e88;border-color:rgba(231,76,60,.2)}
+.quiz-opts li.disabled{pointer-events:none}
+.quiz-exp{display:none;padding:8px 14px;font-size:11px;color:#6b7b8d;background:#0d1117;border:1px solid #1e293b;border-top:none;border-radius:0 0 8px 8px;line-height:1.7}
+.quiz-exp.show{display:block}
+.quiz-score{text-align:center;padding:20px;background:#111827;border-radius:10px;border:1px solid #1e293b;margin:.85rem 0}
+.quiz-score .big{font-size:32px;font-weight:700;color:#EF9F27}
+.quiz-score .label{font-size:12px;color:#6b7b8d;margin-top:4px}
+
+/* === inline code === */
+.ic{font-family:'SF Mono',Menlo,monospace;font-size:11px;background:#1e293b;padding:1px 5px;border-radius:3px;color:#F5BA5A}
+</style>
+</head>
+<body>
+
+<!-- Back nav -->
+<div class="back-nav">
+  <a href="index.html">&larr; AI 编程总览</a>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-title">OMC 深度拆解</div>
+  <div class="hero-sub">oh-my-claudecode 多 Agent 编排框架 &mdash; 架构解剖、核心机制、协作模式与工程纪律</div>
+</div>
+
+<!-- Nav -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <div class="nav-tab active" onclick="switchTab(0)"><span class="tn">1</span> 全景</div>
+    <div class="nav-tab" onclick="switchTab(1)"><span class="tn">2</span> 架构</div>
+    <div class="nav-tab" onclick="switchTab(2)"><span class="tn">3</span> 核心机制</div>
+    <div class="nav-tab" onclick="switchTab(3)"><span class="tn">4</span> 协作</div>
+    <div class="nav-tab" onclick="switchTab(4)"><span class="tn">5</span> 工程纪律</div>
+    <div class="nav-tab" onclick="switchTab(5)"><span class="tn">6</span> Skill 机制</div>
+    <div class="nav-tab" onclick="switchTab(6)"><span class="tn">7</span> 误解雷达</div>
+    <div class="nav-tab" onclick="switchTab(7)"><span class="tn">8</span> 理解验证</div>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 1: 全景                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card active" id="c0">
+  <div class="card-head">
+    <span class="card-icon">&#x1F5FA;</span>
+    <div class="card-text">
+      <div class="card-title">全景 &mdash; 项目概览与三维视角</div>
+      <div class="card-sub">OMC 是什么、学它的角度、以及电影剧组类比</div>
+    </div>
+    <span class="badge">L4 &rarr; L5</span>
+  </div>
+  <div class="card-body">
+
+    <div class="icard ic-orange">
+      <div class="icard-lbl">核心论点</div>
+      OMC 证明了一个关键洞察 —— <b>Agent 系统本质是软件架构问题，不是 AI 问题。</b>模型能力是基座，但系统能力来自编排、分工和工程纪律。19 个专精 Agent 协作的效果，远超 1 个通用 Agent 的独白。
+    </div>
+
+    <div class="sl">项目概览</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">oh-my-claudecode（OMC）</div>
+      GitHub 26k+ stars &middot; Claude Code 多 Agent 编排框架 &middot; TypeScript &middot; MIT<br>
+      <b>19+ 专业 Agent</b>（构建 / 分析 / 审核 / 领域专家 / 产品 五大通道）<br>
+      <b>4 种执行模式</b>（Team / Autopilot / Ralph / Ultrawork）<br>
+      <b>Skill 系统</b>：自动从问题解决过程中提取可复用能力<br>
+      <b>HUD 仪表盘</b>：实时 Agent 状态、Token 消耗、编排进度<br>
+      <b>智能模型路由</b>：Haiku / Sonnet / Opus 按任务复杂度分流，省 30-50% Token
+    </div>
+
+    <div class="sl">D3 类比 &middot; 电影剧组模型</div>
+    <div class="obox">
+      OMC 不是一个「超级 AI」，而是一个<b>电影剧组</b>：<br>
+      &middot; <b>导演</b>（Planner Agent）—— 拆解任务、分配角色、把控节奏<br>
+      &middot; <b>摄影 / 灯光 / 美术</b>（Domain Agents）—— 各司其职的专业执行者<br>
+      &middot; <b>剪辑师</b>（Review Agents）—— 独立审核，不是拍摄者自己剪片<br>
+      &middot; <b>场记</b>（HUD + Git Trailers）—— 记录每个决策，下一场能接上<br>
+      关键洞察：好电影不靠单一天才，靠的是<b>专业分工 + 流程纪律</b>。
+    </div>
+
+    <div class="sl">三种视角标签说明</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">学习视角</div>
+      本文内容按<b>学习层次递进</b>组织（架构 → 协作 → 工程 → 误解 → 验证），每个知识点只出现一次，用彩色标签标注与哪些视角相关：<br><br>
+      <span class="lens lens-dev">开发</span> AI 开发项目角度 — 架构设计、设计模式、可扩展性<br>
+      <span class="lens lens-team">协同</span> AI 团队协同角度 — 团队流程、知识传递、协作纪律<br>
+      <span class="lens lens-eng">工程</span> AI 工程角度 — 可靠性、成本控制、可观测性<br><br>
+      OMC 处于 <b>L4 金丹境</b>和 <b>L5 元婴境</b>的交汇处。学它不是学命令，而是学<b>架构决策背后的 why</b>。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 2: 架构                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c1">
+  <div class="card-head">
+    <span class="card-icon">&#x1F3D7;</span>
+    <div class="card-text">
+      <div class="card-title">架构 &mdash; 系统分层与设计模式</div>
+      <div class="card-sub">四层架构图、五大 Agent 通道、模型路由策略、执行模式矩阵</div>
+    </div>
+    <span class="badge">架构解剖</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">四层架构总览 <span class="lens lens-dev">开发</span></div>
+    <div class="arch">
+      <div class="arch-title">OMC System Architecture</div>
+
+      <div class="layer" style="border-color:rgba(239,159,39,.4);background:rgba(239,159,39,.04)">
+        <div class="layer-label" style="color:#EF9F27">L4 编排层 &middot; Orchestration</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Magic Keywords</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Delegation Enforcer</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Continuation Enforcement</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Mode Controller</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">System Prompt Assembly</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+
+      <div class="layer" style="border-color:rgba(55,138,221,.4);background:rgba(55,138,221,.04)">
+        <div class="layer-label" style="color:#378ADD">L3 Agent 层 &middot; Agents</div>
+        <div style="margin-bottom:6px">
+          <div style="font-size:9px;color:#6b7b8d;margin-bottom:4px">构建通道</div>
+          <div class="boxes">
+            <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">explore <sup>H</sup></div>
+            <div class="box" style="border-color:rgba(239,159,39,.3);color:#d4b88a">analyst <sup>O</sup></div>
+            <div class="box" style="border-color:rgba(239,159,39,.3);color:#d4b88a">planner <sup>O</sup></div>
+            <div class="box" style="border-color:rgba(239,159,39,.3);color:#d4b88a">architect <sup>O</sup></div>
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">debugger <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">executor <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">verifier <sup>S</sup></div>
+          </div>
+        </div>
+        <div style="margin-bottom:6px">
+          <div style="font-size:9px;color:#6b7b8d;margin-bottom:4px">审核通道</div>
+          <div class="boxes">
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">security-reviewer <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(239,159,39,.3);color:#d4b88a">code-reviewer <sup>O</sup></div>
+          </div>
+        </div>
+        <div style="margin-bottom:6px">
+          <div style="font-size:9px;color:#6b7b8d;margin-bottom:4px">领域通道</div>
+          <div class="boxes">
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">test-engineer <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">designer <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">writer <sup>H</sup></div>
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">git-master <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(239,159,39,.3);color:#d4b88a">code-simplifier <sup>O</sup></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:#6b7b8d;margin-bottom:4px">产品通道 + 协调</div>
+          <div class="boxes">
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">product-manager <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">ux-researcher <sup>S</sup></div>
+            <div class="box" style="border-color:rgba(239,159,39,.3);color:#d4b88a">critic <sup>O</sup></div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:#484f58;margin-top:6px"><sup>H</sup>=Haiku &nbsp; <sup>S</sup>=Sonnet &nbsp; <sup>O</sup>=Opus</div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+
+      <div class="layer" style="border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04)">
+        <div class="layer-label" style="color:#2ecc71">L2 能力层 &middot; Skills &amp; Config</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Skill Auto-Extract</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Builtin Skills</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Plugin Dir</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">CLAUDE.md Loader</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Config (Zod)</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+
+      <div class="layer" style="border-color:#1e293b;background:rgba(255,255,255,.02)">
+        <div class="layer-label" style="color:#6b7b8d">L1 基础设施层 &middot; Infrastructure</div>
+        <div class="boxes">
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">HUD Renderer</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Job State DB (SQLite)</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">MCP Servers</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Background Tasks</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Git Worktree</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Atomic Write</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">File Lock</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">五大 Agent 通道 &mdash; 为什么这么分？ <span class="lens lens-dev">开发</span> <span class="lens lens-team">协同</span></div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">设计理念</div>
+      OMC 的 19+ Agent 不是随意堆砌，而是按<b>软件开发生命周期</b>分为五个通道。每个通道对应开发中的一个「职能部门」，通道之间有明确的输入输出契约。这不是 AI 的创新，而是<b>经典软件工程组织理论</b>在 Agent 系统中的复现。
+    </div>
+    <table class="dtable">
+      <thead><tr><th>通道</th><th>Agent 角色</th><th>职能类比</th></tr></thead>
+      <tr><td><b>构建通道</b></td><td>explore, planner, architect, executor</td><td>产品 → 设计 → 开发</td></tr>
+      <tr><td><b>分析通道</b></td><td>analyst, debugger, researcher</td><td>技术调研 &amp; 问题诊断</td></tr>
+      <tr><td><b>审核通道</b></td><td>style / code / api / security / perf reviewer</td><td>独立 QA 部门</td></tr>
+      <tr><td><b>领域通道</b></td><td>dependency-expert, test-engineer, git-master</td><td>专项技术专家</td></tr>
+      <tr><td><b>产品通道</b></td><td>product-manager, ux-researcher, info-architect</td><td>产品 &amp; 用户研究</td></tr>
+    </table>
+
+    <div class="sl">设计模式识别 <span class="lens lens-dev">开发</span></div>
+    <div class="row">
+      <div class="icard ic-blue" style="margin-bottom:0">
+        <div class="icard-lbl">关注点分离</div>
+        创作 Agent 和审核 Agent <b>永远不是同一个角色</b>。这是刻意设计 —— 防止「自己审自己」的确认偏误。就像代码作者不能自己通过 Code Review。
+      </div>
+      <div class="icard ic-blue" style="margin-bottom:0">
+        <div class="icard-lbl">策略模式</div>
+        4 种执行模式是<b>可互换的编排策略</b>。同一个任务可以用 Team 模式协作，也可以切 Autopilot 自主执行。策略取决于<b>任务确定性</b>，不取决于任务类型。
+      </div>
+    </div>
+    <div class="row">
+      <div class="icard ic-blue" style="margin-bottom:0">
+        <div class="icard-lbl">插件架构</div>
+        Skill 系统是<b>运行时可扩展的能力注入</b>。新能力不改核心代码，只添加 Skill 定义。社区贡献和自动提取的 Skill 用同一套机制。
+      </div>
+      <div class="icard ic-blue" style="margin-bottom:0">
+        <div class="icard-lbl">观察者模式</div>
+        HUD 仪表盘是<b>被动监控</b>，观察 Agent 状态但不干预执行。拔掉 HUD，系统照常运转 —— 可观测性不引入耦合。
+      </div>
+    </div>
+
+    <div class="sl">架构级团队契约 <span class="lens lens-team">协同</span> <span class="lens lens-dev">开发</span></div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">关键架构决策 &middot; CLAUDE.md 不只是配置文件</div>
+      共享的 CLAUDE.md 是团队的<b>编码规范 + 架构决策 + 行为约束</b>的单一事实来源。新成员（人类或 Agent）读完它就知道「这里怎么做事」。<br><br>
+      这是一个<b>架构决策</b>，不只是团队协作工具 —— 它决定了 Agent 的行为边界和质量基线。没有它，19 个 Agent 各行其是；有了它，19 个 Agent 像同一个团队。
+    </div>
+
+    <div class="sl">模型路由策略图 <span class="lens lens-eng">工程</span></div>
+    <div class="arch">
+      <div class="arch-title">Model Routing Pipeline</div>
+      <div class="flow-v">
+        <div class="node" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06)">User Task Input</div>
+        <div class="arr">&darr;</div>
+        <div class="node">Delegation Enforcer &middot; 检查 Agent 定义中的 model 字段</div>
+        <div class="arr">&darr;</div>
+        <div class="node">Model Normalization &middot; claude-sonnet-4-6 &rarr; sonnet</div>
+        <div class="arr">&darr;</div>
+        <div class="branch">
+          <div class="node haiku">Haiku<br><span style="font-size:9px">explore, writer<br>分类 / 搜索 / 文档</span></div>
+          <div class="node sonnet">Sonnet<br><span style="font-size:9px">executor, debugger, test-eng<br>编码 / 调试 / 测试</span></div>
+          <div class="node opus">Opus<br><span style="font-size:9px">architect, analyst, critic<br>架构 / 分析 / 审核</span></div>
+        </div>
+        <div class="arr">&darr;</div>
+        <div class="node" style="border-color:#1e293b;background:#0d1117;font-size:10px">Force Inherit 模式（Bedrock/Vertex）：剥离 model 参数，继承用户配置</div>
+      </div>
+    </div>
+
+    <div class="sl">执行模式矩阵</div>
+    <div class="arch">
+      <div class="arch-title">Execution Modes</div>
+      <table class="dtable" style="margin:0">
+        <thead><tr><th>模式</th><th>触发关键词</th><th>编排策略</th><th>并发模型</th><th>状态文件</th></tr></thead>
+        <tr><td><b>Team</b></td><td class="td-m">team</td><td>管线式多 Agent 协作</td><td>Worker 池 + Dispatch Queue</td><td class="td-m">.omc/state/team-state.json</td></tr>
+        <tr><td><b>Autopilot</b></td><td class="td-m">autopilot</td><td>单 Agent 自主执行</td><td>顺序执行</td><td class="td-m">.omc/state/autopilot-state.json</td></tr>
+        <tr><td><b>Ralph</b></td><td class="td-m">ralph</td><td>执行 + 验证循环</td><td>顺序 + 回溯</td><td class="td-m">.omc/state/ralph-state.json</td></tr>
+        <tr><td><b>Ultrawork</b></td><td class="td-m">ulw, uw</td><td>最大并行处理</td><td>BackgroundTaskManager (max 5)</td><td class="td-m">.omc/state/ultrawork-state.json</td></tr>
+        <tr><td><b>Ralplan</b></td><td class="td-m">ralplan</td><td>规划导向模式</td><td>Planner &rarr; Executor 链</td><td class="td-m">.omc/state/ralplan-state.json</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 3: 核心机制                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c2">
+  <div class="card-head">
+    <span class="card-icon">&#x2699;</span>
+    <div class="card-text">
+      <div class="card-title">核心机制 &mdash; 六大工程特性</div>
+      <div class="card-sub">Magic Keywords、委派执行器、任务续跑、后台任务、验证系统、提示词组装</div>
+    </div>
+    <span class="badge">源码级拆解</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">机制 1 &middot; Magic Keywords 魔法关键词</div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">src/features/magic-keywords.ts (18.5 KB)</div>
+      <b>作用</b>：拦截用户输入，检测关键词，激活对应模式增强。<br><br>
+      <b>实现细节</b>：<br>
+      &middot; 代码感知模式匹配 —— 先剥离反引号代码块，防止代码中的变量名误触发<br>
+      &middot; 80 字符上下文窗口 —— 过滤教育类查询（"what is", "how to", "explain"）<br>
+      &middot; 正则转义防注入 —— 用户不能通过构造关键词注入指令<br>
+      &middot; 多语言支持 —— 10+ 种语言的关键词匹配
+    </div>
+    <table class="dtable">
+      <thead><tr><th>关键词</th><th>激活模式</th><th>注入行为</th></tr></thead>
+      <tr><td class="td-m">ultrawork / ulw</td><td>Ultrawork</td><td>注入 "MUST LEVERAGE ALL AVAILABLE AGENTS" + 启用后台任务</td></tr>
+      <tr><td class="td-m">search / find</td><td>Search</td><td>并行启动 explore + document-specialist</td></tr>
+      <tr><td class="td-m">analyze / investigate</td><td>Analyze</td><td>先 gather context，再 deep investigation</td></tr>
+      <tr><td class="td-m">ultrathink / think</td><td>Ultrathink</td><td>激活 extended reasoning，跳过简单查询</td></tr>
+    </table>
+
+    <div class="sl">机制 2 &middot; Delegation Enforcer 委派执行器</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">src/features/delegation-enforcer.ts (10.1 KB)</div>
+      <b>作用</b>：拦截所有 Agent 调用，注入正确的模型参数。<br><br>
+      <b>工作流</b>：<br>
+      1. 拦截 Task/Agent 调用<br>
+      2. 检查是否已有 model 参数<br>
+      3. 若缺失 &rarr; 从 Agent 定义中读取默认模型<br>
+      4. 标准化模型名 &rarr; <span class="ic">claude-sonnet-4-6</span> &rarr; <span class="ic">sonnet</span><br>
+      5. 检测 Bedrock/Vertex 环境 &rarr; 启用 Force Inherit（剥离 model 参数）<br>
+      6. 应用 modelAliases 配置（如有）<br><br>
+      <b>缓存策略</b>：按环境变量状态缓存配置，环境变化时重新生成。
+    </div>
+
+    <div class="sl">机制 3 &middot; Continuation Enforcement 任务续跑</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">src/features/continuation-enforcement.ts (7.1 KB)</div>
+      <b>作用</b>：防止 Agent 在任务未完成时停止。<br><br>
+      <b>工作流</b>：<br>
+      1. Hook 拦截 "Stop" 事件<br>
+      2. 检查任务完成状态（所有 todo 是否 completed）<br>
+      3. 若有未完成项 &rarr; 阻止停止，注入持续提醒<br>
+      4. 验证清单：todo 全完成 + 功能已验证 + 测试通过 + 无报错 + 代码质量可接受
+    </div>
+
+    <div class="sl">机制 4 &middot; Background Task Manager 后台任务</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">src/features/background-tasks.ts (10.7 KB)</div>
+      <b>并发模型</b>：最大 5 个并行后台任务。<br><br>
+      <b>决策逻辑</b>（模式匹配判断操作类型）：<br>
+      &middot; 长运行操作（npm install / docker build / 大型测试）&rarr; <span class="ic">run_in_background: true</span><br>
+      &middot; 快速操作（git status / ls / cat）&rarr; 立即执行<br>
+      &middot; 结果获取 &rarr; <span class="ic">TaskOutput</span> 工具轮询<br><br>
+      <b>状态持久化</b>：<span class="ic">.omc/state/jobs.db</span>（SQLite WAL 模式），按 worktree 隔离，24 小时自动清理终态任务。
+    </div>
+
+    <div class="sl">机制 5 &middot; Verification System 验证系统</div>
+    <div class="icard ic-green">
+      <div class="icard-lbl">src/verification/tier-selector.ts (3.8 KB) + 测试 (11.2 KB)</div>
+      <b>作用</b>：根据任务复杂度选择验证等级。<br><br>
+      &middot; 验证 Agent（verifier）收集完成证据<br>
+      &middot; 测试代码量是实现代码的 3 倍 —— 说明验证逻辑本身被严格测试<br>
+      &middot; 与 Continuation Enforcement 联动：验证不通过 &rarr; 阻止停止
+    </div>
+
+    <div class="sl">机制 6 &middot; Prompt Assembly 提示词组装</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">src/agents/prompt-helpers.ts (8.6 KB) + prompt-sections/</div>
+      <b>分层组装流程</b>：<br>
+      1. 基础编排指令（XML 分隔）<br>
+      2. 文件上下文（标注 untrusted 警告）<br>
+      3. 用户提示词（主请求）<br>
+      4. 以双换行拼接<br><br>
+      <b>安全机制</b>：<br>
+      &middot; XML 标签转义（防止 prompt injection）<br>
+      &middot; 截断到 4000 字符（untrusted 内容）<br>
+      &middot; Surrogate pair 校验<br>
+      &middot; Agent 名称只允许字母数字 + 连字符（防止路径穿越）
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 4: 协作                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c3">
+  <div class="card-head">
+    <span class="card-icon">&#x1F91D;</span>
+    <div class="card-text">
+      <div class="card-title">协作 &mdash; 四种执行模式与协作机制</div>
+      <div class="card-sub">审核分离、Git Trailers、Skill 提取、Human-in-the-Loop</div>
+    </div>
+    <span class="badge">协作机制</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">四种执行模式 <span class="lens lens-team">协同</span> <span class="lens lens-dev">开发</span></div>
+    <table class="dtable">
+      <thead><tr><th>模式</th><th>工作方式</th><th>团队类比</th><th>适用场景</th></tr></thead>
+      <tr><td><b>Team</b></td><td>多 Agent 管线式协作</td><td>结对编程 Driver/Navigator</td><td>复杂功能，需要实时协调</td></tr>
+      <tr><td><b>Autopilot</b></td><td>自主执行 + 定期汇报</td><td>自主开发 + 定期 Standup</td><td>需求明确、验收标准清晰</td></tr>
+      <tr><td><b>Ralph</b></td><td>持久执行 + 验证循环</td><td>导师带教 + Tech Lead Review</td><td>高风险变更、学习场景</td></tr>
+      <tr><td><b>Ultrawork</b></td><td>并行处理独立任务</td><td>多个独立冲刺小队</td><td>大批量无依赖的工作流</td></tr>
+    </table>
+
+    <div class="sl">审核分离：创作 ≠ 审核 <span class="lens lens-team">协同</span> <span class="lens lens-dev">开发</span></div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">为什么 OMC 强制分离创作和审核角色？</div>
+      即使是独立开发者，OMC 也<b>绝不允许创作 Agent 审核自己的输出</b>。这不是流程开销 —— 这是质量保障的底线。<br><br>
+      <b>原理</b>：确认偏误（Confirmation Bias）是人类和 LLM 共有的弱点。写代码的人（或 Agent）天然倾向于认为自己的代码是对的。换一个视角（独立审核 Agent），才能发现盲区。<br><br>
+      <b>工程实现</b>：executor 完成编码后，输出交给 code-reviewer / security-reviewer，它们从未参与创作过程，带着「挑毛病」的 System Prompt 工作。
+    </div>
+
+    <div class="sl">Git Trailers：异步协作的决策链 <span class="lens lens-team">协同</span> <span class="lens lens-eng">工程</span></div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">为什么 Commit Message 不够？</div>
+      Commit Message 记录<b>做了什么</b>，但异步协作的真正痛点是<b>为什么这么做</b>。<br><br>
+      OMC 在每次 Commit 附带结构化 Trailer：约束条件、被拒绝的方案、置信度评分。这样下一个接手的人（人类或 Agent）不需要猜测前任的意图 —— 决策理由就在代码旁边。<br><br>
+      <b>类比</b>：病历本不只记录「开了什么药」，还记录「为什么排除了其他方案」，留给下一班医生看。
+    </div>
+
+    <div class="sl">Skill 自动提取：一人解题 → 团队能力 <span class="lens lens-team">协同</span> <span class="lens lens-dev">开发</span></div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">为什么不用人工总结最佳实践？</div>
+      OMC 从问题解决过程中<b>自动提取</b> Skill，不依赖人工总结。一个工程师解决了数据库迁移难题，Skill 自动提取后，全团队遇到类似问题都有现成方案。<br><br>
+      <b>关键区分</b>：这不是知识管理（存文档），而是<b>能力沉淀</b>（存可执行的方案）。团队成员甚至不需要知道某个 Skill 存在 —— 编排层会在合适时机自动调用。
+    </div>
+
+    <div class="sl">D3 类比 &middot; 医院协作模型</div>
+    <div class="obox">
+      OMC 的协同模式像一家<b>运转良好的医院</b>：<br>
+      &middot; 外科医生（创作 Agent）做手术，但<b>不自签手术报告</b> —— 必须由主治医师（审核 Agent）独立复核<br>
+      &middot; 病历本（Git Trailers）记录每个决策和用药理由，<b>留给下一班医生</b>看<br>
+      &middot; 科室会诊（Team 模式）处理复杂病例；门诊（Autopilot）处理常规病症<br>
+      &middot; 护士长（HUD）监控所有病房状态，但不干预具体治疗方案
+    </div>
+
+    <div class="sl">Human-in-the-Loop <span class="lens lens-team">协同</span> <span class="lens lens-eng">工程</span></div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">核心设计</div>
+      OMC 的 human-in-the-loop 不是可选项，而是<b>核心设计</b>。当系统对输出的置信度低于阈值时，强制人工介入 —— 这是系统安全的最后一道防线。<br><br>
+      <b>设计智慧</b>：不是「AI 做不了的才找人」，而是「AI 不确定的必须找人」。这个区分很微妙但极其重要。
+    </div>
+
+    <div class="sl">Team 模式架构图 <span class="lens lens-dev">开发</span></div>
+    <div class="arch">
+      <div class="arch-title">Team Mode Coordination Architecture</div>
+
+      <div class="layer" style="border-color:rgba(239,159,39,.4);background:rgba(239,159,39,.04)">
+        <div class="layer-label" style="color:#EF9F27">协调层 &middot; Coordination</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Phase Controller</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Dispatch Queue</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Message Router</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Allocation Policy</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Leader Nudge</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:rgba(55,138,221,.4);background:rgba(55,138,221,.04)">
+        <div class="layer-label" style="color:#378ADD">Worker 层 &middot; Execution</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Worker Bootstrap</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Runtime v2</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Inbox / Outbox</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Task Router</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04)">
+        <div class="layer-label" style="color:#2ecc71">隔离层 &middot; Isolation</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Git Worktree (per worker)</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Merge Coordinator</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">State Paths (distributed)</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:#1e293b;background:rgba(255,255,255,.02)">
+        <div class="layer-label" style="color:#6b7b8d">观测层 &middot; Observability</div>
+        <div class="boxes">
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Worker Health + Heartbeat</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Activity Log</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Audit Log</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Team Status</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Monitor</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">Team 模式运行流程</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">1</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">Worker Bootstrap</div><div class="step-p">创建 Git worktree（每个 Worker 独立目录），初始化状态文件</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">2</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">任务分发</div><div class="step-p">Dispatch Queue 接收任务 &rarr; Message Router 按角色分配 &rarr; Allocation Policy 按能力 + 负载均衡</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">3</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">并行执行</div><div class="step-p">每个 Worker 获取任务切片，Heartbeat 监控存活，Activity Log 记录进度</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">4</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">阶段协调</div><div class="step-p">Phase Controller 控制顺序阶段完成，Merge Coordinator 解决 Git 冲突</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">5</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">状态汇聚</div><div class="step-p">Inbox/Outbox 分发状态更新 &rarr; 持久化到共享状态文件 &rarr; Team-Job Convergence 检查</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">6</div></div>
+        <div class="step-c"><div class="step-t">完成</div><div class="step-p">Audit Log 生成 &rarr; Status Report 编译 &rarr; 结果聚合</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 5: 工程纪律                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c4">
+  <div class="card-head">
+    <span class="card-icon">&#x1F527;</span>
+    <div class="card-text">
+      <div class="card-title">工程纪律 &mdash; 模型路由与质量控制</div>
+      <div class="card-sub">成本优化、可观测性三支柱、质量控制流水线、生产风险</div>
+    </div>
+    <span class="badge">工程实践</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">模型路由：核心工程创新 <span class="lens lens-eng">工程</span></div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">智能模型路由 = 30-50% Token 成本节省</div>
+      OMC 不是「全用最贵的模型」，而是按任务复杂度智能分流：<br>
+      &middot; <b>Haiku</b> &rarr; 分类、分诊、简单格式化（快且便宜）<br>
+      &middot; <b>Sonnet</b> &rarr; 标准编码、文档生成、常规分析（性价比最优）<br>
+      &middot; <b>Opus</b> &rarr; 复杂推理、架构决策、跨文件重构（贵但值得）<br>
+      路由决策由编排层自动完成，开发者无需手动选模型。
+    </div>
+
+    <div class="sl">D3 类比 &middot; 医院分诊系统</div>
+    <div class="obox">
+      模型路由就像<b>医院分诊</b>：<br>
+      &middot; <b>护士</b>（Haiku）—— 挂号分诊，判断病情紧急程度，3 秒完成<br>
+      &middot; <b>全科医生</b>（Sonnet）—— 处理 80% 的常规病例，能力够用且高效<br>
+      &middot; <b>专科主任</b>（Opus）—— 只接疑难杂症，不浪费在感冒发烧上<br>
+      <b>关键：不是所有病人都需要找主任。</b>过度使用 Opus 不会提升质量，只会增加等待和费用。
+    </div>
+
+    <div class="sl">可观测性三支柱 <span class="lens lens-eng">工程</span></div>
+    <div class="row">
+      <div class="icard ic-blue" style="margin-bottom:0">
+        <div class="icard-lbl">HUD 实时状态</div>
+        Agent 名称、当前模式、Token 消耗、任务进度，一屏可见。像驾驶舱仪表盘 —— 不需要时不看，出问题时救命。
+      </div>
+      <div class="icard ic-blue" style="margin-bottom:0">
+        <div class="icard-lbl">Git Trailers 决策溯源</div>
+        每个 Commit 记录约束条件、被拒方案、置信度，形成决策链。事后复盘不靠记忆，靠数据。
+      </div>
+    </div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">结构化日志</div>
+      按 Agent 角色分类，可按时间 / 角色 / 任务粒度过滤。当 5 个 Agent 串联执行出了问题，日志告诉你<b>断在哪一步</b>。
+    </div>
+
+    <div class="sl">质量控制流水线 <span class="lens lens-eng">工程</span> <span class="lens lens-dev">开发</span></div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">1</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">创作 Agent 生产输出</div><div class="step-p">executor / architect 完成编码或设计</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">2</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">独立审核 Agent 评估</div><div class="step-p">code-reviewer / security-reviewer 独立检查（永远不是同一个 Agent）</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">3</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">置信度评分</div><div class="step-p">系统输出置信度分数，低于阈值触发人工升级</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">4</div></div>
+        <div class="step-c"><div class="step-t">Git Trailer 归档</div><div class="step-p">决策链完整记录：做了什么、为什么、拒绝了什么、谁审核的</div></div>
+      </div>
+    </div>
+
+    <div class="sl">模块拆解 &middot; 源码目录结构 <span class="lens lens-dev">开发</span></div>
+    <div class="mtree"><strong class="hl">src/</strong>
+├── <strong>index.ts</strong> (11.7KB)          <span class="dim">← 主入口 createOmcSession()</span>
+│
+├── <strong class="hl">agents/</strong>                     <span class="dim">← Agent 系统（20+ 角色）</span>
+│   ├── types.ts (4.3KB)         <span class="dim">AgentConfig / FullAgentConfig 类型</span>
+│   ├── definitions.ts (16.2KB)  <span class="dim">所有 Agent 配置（模型/工具/触发器）</span>
+│   ├── utils.ts (11.4KB)        <span class="dim">加载 / 委派表 / 深度合并</span>
+│   ├── prompt-helpers.ts (8.6KB)<span class="dim">提示词组装 + 安全清理</span>
+│   ├── prompt-sections/         <span class="dim">模块化提示词片段</span>
+│   └── [agent].ts               <span class="dim">各 Agent 的专属逻辑</span>
+│
+├── <strong class="hl">features/</strong>                   <span class="dim">← 核心特性模块</span>
+│   ├── magic-keywords.ts (18.5KB)     <span class="dim">关键词检测 + 模式激活</span>
+│   ├── delegation-enforcer.ts (10.1KB)<span class="dim">模型路由注入</span>
+│   ├── continuation-enforcement.ts    <span class="dim">任务续跑保障</span>
+│   ├── background-tasks.ts (10.7KB)   <span class="dim">后台任务管理</span>
+│   └── auto-update.ts (37.9KB)        <span class="dim">版本管理（最大文件）</span>
+│
+├── <strong class="hl">hud/</strong>                        <span class="dim">← 仪表盘系统（最复杂子系统）</span>
+│   ├── index.ts (19.3KB)       <span class="dim">主入口 + 状态聚合</span>
+│   ├── types.ts (26.4KB)       <span class="dim">30+ 可配置元素 + 5 种预设</span>
+│   ├── usage-api.ts (29.7KB)   <span class="dim">Rate limit 双路径上报</span>
+│   ├── transcript.ts (24.4KB)  <span class="dim">Session 解析（Agent/Skill/Token）</span>
+│   └── render.ts (18KB)        <span class="dim">3 区域渲染（line1/main/detail）</span>
+│
+├── <strong class="hl">team/</strong>                       <span class="dim">← Team 模式协调（20+ 文件）</span>
+│   ├── runtime[-v2].ts          <span class="dim">Worker 生命周期</span>
+│   ├── dispatch-queue.ts        <span class="dim">任务分发队列</span>
+│   ├── inbox-outbox.ts          <span class="dim">异步消息</span>
+│   ├── phase-controller.ts      <span class="dim">阶段控制器</span>
+│   ├── worker-health.ts         <span class="dim">健康监控 + 心跳</span>
+│   └── merge-coordinator.ts     <span class="dim">Git 合并冲突解决</span>
+│
+└── <strong class="hl">mcp/</strong>                        <span class="dim">← MCP 协议层</span>
+    ├── job-management.ts (27KB) <span class="dim">核心复杂度（最大单文件）</span>
+    ├── standalone-server.ts     <span class="dim">单机部署</span>
+    └── prompt-injection.ts      <span class="dim">注入防护</span></div>
+
+    <div class="sl">生产风险警示 <span class="lens lens-eng">工程</span></div>
+    <div class="icard ic-red">
+      <div class="icard-lbl">多 Agent 系统的三大生产风险</div>
+      <b>1. Rate Limit 级联</b> —— 一个 Agent 触发限流，下游全部阻塞。OMC 用 auto-resume 缓解，但不能完全避免。<br>
+      <b>2. Session 状态恢复</b> —— Agent 中途崩溃，如何断点续跑？Ralph 模式部分解决了这个问题。<br>
+      <b>3. Agent 死循环</b> —— 两个 Agent 互相触发无限循环。需要<b>最大迭代次数 + 超时熔断</b>。
+    </div>
+
+    <div class="sl">安全架构 <span class="lens lens-eng">工程</span></div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">多层防御体系</div>
+      &middot; <b>输入层</b> — XML 标签转义 + Surrogate pair 校验 + 4000 字符截断<br>
+      &middot; <b>Agent 层</b> — 名称白名单（字母数字+连字符）+ 路径穿越检测 + 解析后路径校验<br>
+      &middot; <b>MCP 层</b> — Prompt injection 防护（<span class="ic">mcp/prompt-injection.ts</span>）+ Untrusted 内容标记<br>
+      &middot; <b>配置层</b> — Zod schema 校验 + 环境变量控制 + 文件锁并发保护<br>
+      &middot; <b>隔离层</b> — Per-worktree 状态隔离 + Team 模式用户隔离 + Session 边界
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 6: Skill 机制                            -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c5">
+  <div class="card-head">
+    <span class="card-icon">&#x1F4E6;</span>
+    <div class="card-text">
+      <div class="card-title">Skill 机制 &mdash; Auto-Extract vs Recommend</div>
+      <div class="card-sub">全景对比、提取架构、推荐引擎、统一模型</div>
+    </div>
+    <span class="badge">Skill 深度拆解</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">一句话区分</div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">核心区别</div>
+      <b>Auto-Extract</b> = 师傅做完一道菜，厨房自动把过程变成菜谱，存进家庭食谱本。<br>
+      <b>Recommend</b> = 走进厨房，冰箱里有什么菜，推荐你今天该做什么。
+    </div>
+
+    <div class="sl">核心问题域对比 <span class="lens lens-gen">生成式</span> <span class="lens lens-ret">检索式</span></div>
+    <div class="vs-wrap">
+      <div class="vs-side" style="border-left:3px solid rgba(147,51,234,.5)">
+        <h3 style="color:#c084fc">OMC Skill Auto-Extract <span class="lens lens-gen">生成式</span></h3>
+        <div class="vs-item" style="border-color:rgba(147,51,234,.3)"><b>问题</b>：隐性经验如何变成可复用的显性能力？</div>
+        <div class="vs-item" style="border-color:rgba(147,51,234,.3)"><b>输入</b>：用户解决问题的完整 Transcript</div>
+        <div class="vs-item" style="border-color:rgba(147,51,234,.3)"><b>输出</b>：一个新的可执行 SKILL.md</div>
+        <div class="vs-item" style="border-color:rgba(147,51,234,.3)"><b>类比</b>：公司的知识萃取 &rarr; SOP 沉淀</div>
+        <div class="vs-item" style="border-color:rgba(147,51,234,.3)"><b>消费者</b>：Agent 运行时（机器消费）</div>
+      </div>
+      <div class="vs-mid">VS</div>
+      <div class="vs-side" style="border-left:3px solid rgba(55,138,221,.5)">
+        <h3 style="color:#378ADD">skill-recommend <span class="lens lens-ret">检索式</span></h3>
+        <div class="vs-item" style="border-color:rgba(55,138,221,.3)"><b>问题</b>：面对当前项目，哪些已有能力最匹配？</div>
+        <div class="vs-item" style="border-color:rgba(55,138,221,.3)"><b>输入</b>：项目目录的静态特征 + git diff</div>
+        <div class="vs-item" style="border-color:rgba(55,138,221,.3)"><b>输出</b>：按相关度排序的推荐列表</div>
+        <div class="vs-item" style="border-color:rgba(55,138,221,.3)"><b>类比</b>：App Store 的"为你推荐"</div>
+        <div class="vs-item" style="border-color:rgba(55,138,221,.3)"><b>消费者</b>：用户（人类消费）</div>
+      </div>
+    </div>
+
+    <div class="sl">七维对比矩阵</div>
+    <table class="dtable">
+      <thead><tr><th>维度</th><th>OMC Auto-Extract <span class="lens lens-gen">生成</span></th><th>skill-recommend <span class="lens lens-ret">检索</span></th></tr></thead>
+      <tr><td><b>设计模式</b></td><td>Knowledge Distillation（知识蒸馏）</td><td>Context-Aware Recommendation（上下文推荐）</td></tr>
+      <tr><td><b>智能类型</b></td><td><b>生成式</b> &mdash; 从过程抽象出新模式</td><td><b>检索式</b> &mdash; 从已有目录匹配</td></tr>
+      <tr><td><b>数据流</b></td><td>Transcript &rarr; LLM 抽象 &rarr; SKILL.md</td><td>文件系统 &rarr; 规则引擎 &rarr; stdout</td></tr>
+      <tr><td><b>触发时机</b></td><td>Session 结束 / 任务完成后</td><td>Session 启动时（SessionStart hook）</td></tr>
+      <tr><td><b>作用域</b></td><td>两级：项目级 + 用户级</td><td>三层：本地 &rarr; 精选 &rarr; 全网</td></tr>
+      <tr><td><b>安全模型</b></td><td>强制 &mdash; allowed-tools 白名单 + Zod 校验</td><td>无约束 &mdash; 只推荐不执行</td></tr>
+      <tr><td><b>失败影响</b></td><td>严重 &mdash; 生成低质 Skill 会误导 Agent</td><td>无感 &mdash; 推荐不准只是浪费一行文字</td></tr>
+    </table>
+
+    <div class="sl">Auto-Extract 核心架构 <span class="lens lens-gen">生成式</span></div>
+    <div class="arch">
+      <div class="arch-title">OMC Skill Auto-Extract Architecture</div>
+      <div class="layer" style="border-color:rgba(239,159,39,.4);background:rgba(239,159,39,.04)">
+        <div class="layer-label" style="color:#EF9F27">输入层 &middot; Input</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Session Transcript</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Tool Call Trace</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">File Diff History</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Task Completion State</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:rgba(147,51,234,.4);background:rgba(147,51,234,.04)">
+        <div class="layer-label" style="color:#c084fc">提取层 &middot; Extraction (LLM-powered)</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(147,51,234,.3);color:#c084fc">Pattern Recognition</div>
+          <div class="box" style="border-color:rgba(147,51,234,.3);color:#c084fc">Step Sequencing</div>
+          <div class="box" style="border-color:rgba(147,51,234,.3);color:#c084fc">Variable Generalization</div>
+          <div class="box" style="border-color:rgba(147,51,234,.3);color:#c084fc">Error Path Pruning</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04)">
+        <div class="layer-label" style="color:#2ecc71">输出层 &middot; Output</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">SKILL.md (Frontmatter + Steps)</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">allowed-tools Declaration</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Scope Assignment (project/user)</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:#1e293b;background:rgba(255,255,255,.02)">
+        <div class="layer-label" style="color:#6b7b8d">注册层 &middot; Registry</div>
+        <div class="boxes">
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">config/loader.ts (Zod)</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Skill Registry (Runtime)</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">Intent Matching (编排层)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">Auto-Extract 提取流程 &middot; 7 步管线</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">1</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">Transcript 捕获</div><div class="step-p"><span class="ic">hud/transcript.ts</span>（24.4KB）解析整个 Session：活跃 Agent、Skill 调用、Tool Call 序列、Token 消耗、Task 完成状态</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">2</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">完成信号触发</div><div class="step-p">Continuation Enforcement 确认所有 todo completed + 验证通过 &rarr; 触发提取分析</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">3</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">模式识别</div><div class="step-p">从 transcript 中识别可复用的操作序列：哪些 tool 被调用？什么顺序？关键判断条件是什么？</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">4</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">试错路径剪枝</div><div class="step-p">过滤掉失败分支和回溯路径，只保留最终成功的操作链</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">5</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">变量泛化</div><div class="step-p">把具体的文件名、表名、变量名替换为 <span class="ic">$ARGUMENTS</span> 占位符。例如 <span class="ic">users_table</span> &rarr; <span class="ic">$TABLE_NAME</span></div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">6</div><div class="step-r"></div></div>
+        <div class="step-c"><div class="step-t">Skill 生成</div><div class="step-p">LLM 组装 SKILL.md：frontmatter（name + description + allowed-tools）+ 步骤化 Markdown 指令</div></div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">7</div></div>
+        <div class="step-c"><div class="step-t">作用域写入</div><div class="step-p">根据任务性质决定写入位置：项目通用 &rarr; <span class="ic">.claude/skills/</span>（团队共享），个人偏好 &rarr; <span class="ic">~/.claude/skills/</span>（个人沉淀）</div></div>
+      </div>
+    </div>
+
+    <div class="sl">Recommend 核心架构 <span class="lens lens-ret">检索式</span></div>
+    <div class="arch">
+      <div class="arch-title">skill-recommend.py Architecture (509 lines)</div>
+      <div class="layer" style="border-color:rgba(55,138,221,.4);background:rgba(55,138,221,.04)">
+        <div class="layer-label" style="color:#378ADD">信号采集层 &middot; Signal Collection</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">语言标志文件</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Python import 扫描</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">产品/设计文件名</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Git diff 变更</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">目录名推断</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">依赖状态检测</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr; set[str] 信号集合</div>
+      <div class="layer" style="border-color:rgba(239,159,39,.4);background:rgba(239,159,39,.04)">
+        <div class="layer-label" style="color:#EF9F27">匹配引擎 &middot; Matching Engine</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Tag Fuzzy Match</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Category Bonus (+2)</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Star Weighting (max +5)</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Dedup Filter</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr; scored &amp; ranked</div>
+      <div class="layer" style="border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04)">
+        <div class="layer-label" style="color:#2ecc71">渐进降级漏斗 &middot; Progressive Fallback</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(46,160,80,.4);background:rgba(46,160,80,.08);color:#7dcea0">L1 本地已装 (9)</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);background:rgba(55,138,221,.06);color:#b8d4f0">L2 已启用插件 (16)</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">L3 精选目录 (42)</div>
+          <div class="box" style="border-color:#1e293b;color:#6b7b8d">L4 GitHub API 兜底</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">统一模型架构图 <span class="lens lens-arch">架构</span></div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">设计理念</div>
+      Auto-Extract 解决<b>能力生成</b>（供给侧），Recommend 解决<b>能力发现</b>（需求侧）。将两者统一，就是一个完整的 Skill 平台 —— npm 的注册/加载 + App Store 的推荐算法。
+    </div>
+    <div class="arch">
+      <div class="arch-title">Unified Skill Platform Architecture</div>
+      <div class="layer" style="border-color:rgba(147,51,234,.4);background:rgba(147,51,234,.04)">
+        <div class="layer-label" style="color:#c084fc">供给侧 &middot; Supply</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(147,51,234,.3);color:#c084fc">Auto-Extract (内部沉淀)</div>
+          <div class="box" style="border-color:rgba(147,51,234,.3);color:#c084fc">Manual Author (人工编写)</div>
+          <div class="box" style="border-color:rgba(147,51,234,.3);color:#c084fc">Community Publish (社区发布)</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04)">
+        <div class="layer-label" style="color:#2ecc71">注册中心 &middot; Registry</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Schema Validation (Zod)</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Security Audit</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Quality Scoring</div>
+          <div class="box" style="border-color:rgba(46,204,113,.3);color:#7dcea0">Version Management</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:rgba(55,138,221,.4);background:rgba(55,138,221,.04)">
+        <div class="layer-label" style="color:#378ADD">需求侧 &middot; Demand</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Context Signal Collector</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Intent Matching (编排层)</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Recommendation Engine</div>
+          <div class="box" style="border-color:rgba(55,138,221,.3);color:#b8d4f0">Auto Install / Invoke</div>
+        </div>
+      </div>
+      <div class="arrow-down">&darr;</div>
+      <div class="layer" style="border-color:rgba(239,159,39,.4);background:rgba(239,159,39,.04)">
+        <div class="layer-label" style="color:#EF9F27">反馈环 &middot; Feedback Loop</div>
+        <div class="boxes">
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Usage Analytics</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Success/Fail Tracking</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Quality Decay Detection</div>
+          <div class="box" style="border-color:rgba(239,159,39,.3);background:rgba(239,159,39,.06);color:#d4b88a">Auto Deprecation</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">统一模型 vs 当前状态 &middot; Gap 分析</div>
+    <table class="dtable">
+      <thead><tr><th>能力</th><th>当前状态</th><th>统一模型需要</th><th>Gap</th></tr></thead>
+      <tr><td><b>供给：内部沉淀</b></td><td>OMC Auto-Extract 实现</td><td>已有</td><td class="td-g">-</td></tr>
+      <tr><td><b>供给：外部引入</b></td><td>skill-recommend 推荐</td><td>已有（但需要 auto-install）</td><td class="td-y">中</td></tr>
+      <tr><td><b>注册：Schema 校验</b></td><td>OMC config/loader.ts + Zod</td><td>已有</td><td class="td-g">-</td></tr>
+      <tr><td><b>注册：质量评分</b></td><td>recommend 用 star 代理</td><td>需要基于使用数据的评分</td><td class="td-r">大</td></tr>
+      <tr><td><b>需求：上下文匹配</b></td><td>recommend 的信号采集</td><td>需要融合 transcript 意图</td><td class="td-y">中</td></tr>
+      <tr><td><b>需求：自动调用</b></td><td>OMC 编排层意图匹配</td><td>已有</td><td class="td-g">-</td></tr>
+      <tr><td><b>反馈：Usage Analytics</b></td><td>OMC transcript 有调用记录</td><td>需要跨系统聚合</td><td class="td-r">大</td></tr>
+      <tr><td><b>反馈：Auto Deprecation</b></td><td>不存在</td><td>长期无人用 &rarr; 自动降权/归档</td><td class="td-r">大</td></tr>
+    </table>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 7: 误解雷达                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c6">
+  <div class="card-head">
+    <span class="card-icon">&#x26A0;</span>
+    <div class="card-text">
+      <div class="card-title">误解雷达 &mdash; OMC + Skill 机制的常见误区</div>
+      <div class="card-sub">Agent 设计误解、团队协作误解、工程实践误解、Skill 机制误解</div>
+    </div>
+    <span class="badge">D4 Debug</span>
+  </div>
+  <div class="card-body">
+
+    <div class="icard ic-blue">
+      <div class="icard-lbl">说明</div>
+      以下误解来自对 OMC 的表面理解，分为 OMC 系统误解和 Skill 机制误解两组。每个都附带视角标签，帮你判断它与哪些工作场景相关。
+    </div>
+
+    <div class="sl">Agent 设计误解 <span class="lens lens-dev">开发</span></div>
+    <div class="row">
+      <div class="rbox">
+        <b>&#x2717; Agent 越多越好</b><br>
+        OMC 有 19 个 Agent，但每个都有清晰边界。盲目增加 Agent 只会增加通信开销和冲突概率。<b>角色清晰度比数量重要得多。</b>
+      </div>
+      <div class="rbox">
+        <b>&#x2717; Agent 应该通用化</b><br>
+        OMC 的 Agent 刻意窄化专精 —— security-reviewer 只看安全，不碰功能逻辑。<b>窄化 = 高质量</b>，通用化 = 什么都不精。
+      </div>
+    </div>
+
+    <div class="sl">团队协作误解 <span class="lens lens-team">协同</span></div>
+    <div class="row">
+      <div class="rbox">
+        <b>&#x2717; AI 团队工具替代人类判断</b><br>
+        OMC 的 human-in-the-loop 是<b>核心设计而非可选项</b>。置信度低于阈值时强制人工介入 —— 这是系统安全的最后一道防线，不是效率的妥协。
+      </div>
+      <div class="rbox">
+        <b>&#x2717; 共享 Skill = 共享上下文</b><br>
+        Skill 传递的是<b>能力</b>（how to），CLAUDE.md 传递的是<b>上下文</b>（why &amp; what）。新成员有 Skill 但没读 CLAUDE.md，照样会做出错误决策。
+      </div>
+    </div>
+
+    <div class="sl">工程实践误解 <span class="lens lens-eng">工程</span></div>
+    <div class="row">
+      <div class="rbox">
+        <b>&#x2717; 永远用最好的模型</b><br>
+        OMC 的实践证明：智能路由<b>既更便宜又更快</b>。Haiku 处理分类任务的速度是 Opus 的 10 倍+，准确率几乎相同。
+      </div>
+      <div class="rbox">
+        <b>&#x2717; 可观测性是锦上添花</b><br>
+        没有 HUD 级的实时可见性，多 Agent 系统就是<b>无法调试的黑盒</b>。5 个 Agent 串联执行，问题可能在任何环节 —— 没有可观测性只能盲猜。
+      </div>
+    </div>
+
+    <div class="sl">Skill 机制误解 <span class="lens lens-dev">开发</span></div>
+    <div class="rbox" style="margin-bottom:10px">
+      <b>&#x2717; Auto-Extract 就是"扫描目录注册 Skill"</b><br>
+      扫描目录注册是 <span class="ic">config/loader.ts</span> 的工作，那只是 Skill <b>加载</b>机制。Auto-Extract 的核心是从用户的问题解决<b>过程中生成新 Skill</b> —— 输入是 transcript，输出是 SKILL.md 文件。加载是装弹，提取是造弹。
+    </div>
+    <div class="rbox" style="margin-bottom:10px">
+      <b>&#x2717; Skill 等于文档/最佳实践</b><br>
+      Skill 传递的是<b>能力</b>（how to do），不是知识（what to know）。CLAUDE.md 传递上下文（why &amp; what），Skill 传递可执行方案。一个是地图，一个是导航指令。文档需要人理解后行动，Skill 可以被 Agent 直接执行。
+    </div>
+    <div class="rbox" style="margin-bottom:10px">
+      <b>&#x2717; Recommend 和 Auto-Extract 是同一类系统</b><br>
+      一个是<b>检索</b>问题（从已有集合中找最匹配的），一个是<b>生成</b>问题（从经验中创造新的）。复杂度差一个数量级 —— Recommend 是 509 行 Python 规则引擎，Auto-Extract 需要 LLM + Transcript 分析 + 泛化推理。
+    </div>
+    <div class="rbox" style="margin-bottom:10px">
+      <b>&#x2717; Star 数 = Skill 质量</b><br>
+      skill-recommend 用 GitHub star 做质量代理指标，但 star 反映的是<b>知名度</b>而非<b>适用性</b>。142k star 的 superpowers 未必适合你的 RAG 项目。真正的质量信号应该来自<b>使用数据</b> —— 调用频率、成功率、用户留存。
+    </div>
+
+    <div class="sl">元模式 —— 误解的共性是什么？</div>
+    <div class="icard ic-green">
+      <div class="icard-lbl">元模式</div>
+      所有误解都犯了同一个错误：<b>用「量」替代「结构」</b>。更多 Agent、更通用的 Agent、更贵的模型、更多自动化 —— 这些都是「量」的思维。而 OMC 的核心设计理念恰恰相反：<b>用精确的结构（角色边界、路由规则、审核纪律）替代粗暴的堆砌。</b>
+    </div>
+
+    <div class="sl">正确心智模型</div>
+    <div class="row">
+      <div class="gbox">
+        <b>&#x2713; Auto-Extract = 组织记忆</b><br>
+        每个 Skill 是组织的"肌肉记忆"。就像骑自行车 —— 一旦学会，身体自动执行，不需要每次重新思考。Agent 调用 Skill 时，就是在使用组织沉淀的肌肉记忆。
+      </div>
+      <div class="gbox">
+        <b>&#x2713; Recommend = 环境感知</b><br>
+        像走进一个新房间，快速扫描环境（文件、代码、git状态），判断"这里需要什么能力"。不创造能力，只连接需求和已有供给。
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 8: 理解验证                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c7">
+  <div class="card-head">
+    <span class="card-icon">&#x2705;</span>
+    <div class="card-text">
+      <div class="card-title">理解验证 &mdash; 自测题</div>
+      <div class="card-sub">6 道选择题，覆盖三种视角，答后显示得分和评级</div>
+    </div>
+    <span class="badge">D5 检验</span>
+  </div>
+  <div class="card-body">
+
+    <div class="icard ic-blue">
+      <div class="icard-lbl">说明</div>
+      6 道选择题，覆盖开发、协同、工程三种视角。答案选择后不可更改，完成后显示得分和评级。进度自动保存。
+    </div>
+
+    <div id="quiz-area"></div>
+    <div class="quiz-score" id="quiz-result" style="display:none">
+      <div class="big" id="quiz-num">0/6</div>
+      <div class="label" id="quiz-level"></div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<div class="footer">AI 修炼册 &middot; bob798/ai-handbook &middot; OMC 深度拆解</div>
+
+<!-- Drawer (keyword detail) -->
+<div class="dov" id="dov" onclick="closeKw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-h">
+    <span class="drw-ic" id="dIc"></span>
+    <div style="flex:1"><div class="drw-ti" id="dTi"></div><div class="drw-en" id="dEn"></div></div>
+    <span class="drw-x" onclick="closeKw()">&times;</span>
+  </div>
+  <div class="drw-body" id="dBd"></div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+/* ── Quiz Data ── */
+var QZ = [
+  {
+    q: 'OMC 的 security-reviewer Agent 为什么不能同时负责功能逻辑审核？',
+    opts: ['因为它能力不够', '因为关注点分离 —— 防止确认偏误，每个 Agent 只审一个维度', '因为运行太慢', '因为 Token 成本太高'],
+    ans: 1,
+    exp: '关注点分离是 OMC 的核心设计原则。窄化专精不是能力限制，而是质量保障 —— 每个审核 Agent 带着不同的「挑毛病视角」工作。',
+    lens: 'dev'
+  },
+  {
+    q: 'CLAUDE.md 和 Skill 系统分别传递什么？',
+    opts: ['都传递能力', 'CLAUDE.md 传递上下文（why/what），Skill 传递能力（how）', 'CLAUDE.md 传递代码，Skill 传递文档', 'Skill 比 CLAUDE.md 更重要'],
+    ans: 1,
+    exp: '这是协同视角最容易混淆的概念。CLAUDE.md 定义「做事的规矩和背景」，Skill 定义「怎么做某件具体的事」。二者缺一不可。',
+    lens: 'team'
+  },
+  {
+    q: '什么情况下应该让 Opus 处理简单的分类任务？',
+    opts: ['当预算充足时', '当需要最高准确率时', '永远不应该 —— Haiku 处理分类更快且准确率相当', '当任务很紧急时'],
+    ans: 2,
+    exp: '这是模型路由的核心思想。Haiku 处理分类任务速度是 Opus 的 10 倍+，准确率几乎相同。过度使用 Opus 是浪费，不是保障。',
+    lens: 'eng'
+  },
+  {
+    q: 'Ralph 模式最适合下列哪种场景？',
+    opts: ['大批量无依赖的并行任务', '需求明确的独立开发', '高风险变更 + 需要持续验证循环的场景', '简单的代码格式化'],
+    ans: 2,
+    exp: 'Ralph 模式的特点是持久执行 + 验证循环，类似 Tech Lead 不断 Review 的工作方式。适合学习场景和高风险变更。Ultrawork 适合并行，Autopilot 适合独立开发。',
+    lens: 'team'
+  },
+  {
+    q: 'OMC 的 human-in-the-loop 机制何时触发？',
+    opts: ['每次任务完成后', '只在出错时', '当置信度低于阈值时', '从不触发，完全自动化'],
+    ans: 2,
+    exp: '置信度阈值是 OMC 的安全防线。不是「做不了才找人」，而是「不确定时必须找人」。这个区分决定了系统的安全性。',
+    lens: 'eng'
+  },
+  {
+    q: '以下哪个最能概括 OMC 所有设计决策的共性？',
+    opts: ['用更多的 Agent 解决更多问题', '用精确的结构替代粗暴的堆砌', '用最贵的模型保证质量', '尽量减少人工干预'],
+    ans: 1,
+    exp: '这是误解雷达 Tab 的元模式：所有常见误解都犯了「用量替代结构」的错误。OMC 的核心理念恰恰相反 —— 用角色边界、路由规则、审核纪律这些「结构」来保证质量。',
+    lens: 'dev'
+  }
+];
+
+var KEY = 'omc-quiz-v2';
+
+function initQuiz() {
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+  var area = document.getElementById('quiz-area');
+  area.innerHTML = '';
+
+  QZ.forEach(function(q, qi) {
+    var div = document.createElement('div');
+    div.className = 'quiz-q';
+    var lensClass = 'lens-' + q.lens;
+    var lensLabel = q.lens === 'dev' ? '开发' : q.lens === 'team' ? '协同' : '工程';
+    var html = '<div class="quiz-stem">Q' + (qi+1) + '. ' + q.q + ' <span class="lens ' + lensClass + '">' + lensLabel + '</span></div>';
+    html += '<ul class="quiz-opts" id="qo-' + qi + '">';
+    q.opts.forEach(function(o, oi) {
+      html += '<li onclick="pick(' + qi + ',' + oi + ')">' + String.fromCharCode(65+oi) + '. ' + o + '</li>';
+    });
+    html += '</ul>';
+    html += '<div class="quiz-exp" id="qe-' + qi + '">' + q.exp + '</div>';
+    div.innerHTML = html;
+    area.appendChild(div);
+
+    if (saved && saved[qi] !== undefined) {
+      applyAnswer(qi, saved[qi], true);
+    }
+  });
+
+  if (saved) { updateScore(); }
+}
+
+function pick(qi, oi) {
+  if (document.querySelectorAll('#qo-' + qi + ' li.disabled').length > 0) return;
+  applyAnswer(qi, oi, false);
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e) {}
+  saved[qi] = oi;
+  localStorage.setItem(KEY, JSON.stringify(saved));
+  updateScore();
+}
+
+function applyAnswer(qi, oi, isRestore) {
+  var lis = document.querySelectorAll('#qo-' + qi + ' li');
+  lis.forEach(function(li, j) {
+    li.classList.add('disabled');
+    if (j === QZ[qi].ans) li.classList.add('correct');
+    if (j === oi && oi !== QZ[qi].ans) li.classList.add('wrong');
+  });
+  document.getElementById('qe-' + qi).classList.add('show');
+}
+
+function updateScore() {
+  var total = QZ.length;
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e) {}
+  var count = 0, correct = 0;
+  for (var k in saved) { count++; if (saved[k] === QZ[parseInt(k)].ans) correct++; }
+  if (count === total) {
+    var el = document.getElementById('quiz-result');
+    el.style.display = 'block';
+    document.getElementById('quiz-num').textContent = correct + '/' + total;
+    var lv = correct >= 5 ? '深度理解 — 可以开始设计自己的多 Agent 系统' :
+             correct >= 3 ? '基本理解 — 建议回顾误解雷达和工程纪律 Tab' :
+                            '需要复习 — 建议从全景 Tab 重新阅读';
+    document.getElementById('quiz-level').textContent = lv;
+  }
+}
+
+initQuiz();
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@
 __pycache__/
 *.pyc
 .venv/
+.pytest_cache/
 
 # Editor
 .obsidian/
@@ -15,3 +16,17 @@ __pycache__/
 # Environment
 .env
 settings.local.json
+
+# Build output
+ai-programming/dist/
+
+# OMC / Claude runtime state
+.omc/
+.claude/settings.local.json
+.claude/projects/
+
+# RAG runtime artifacts
+rag/code/logs/
+rag/code/interview_kb/
+rag/code/*_result.json
+rag/code/baseline.json

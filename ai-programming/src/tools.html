@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 编程工具篇 · 终端与窗口管理</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* === Page-specific: Hero === */
+.hero{position:relative;padding:2.5rem 1rem 1.5rem;text-align:center;background:linear-gradient(135deg,#0d1525,#1a1510,#0d1525);overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(239,159,39,.12),transparent 70%)}
+.hero-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:6px;position:relative}
+.hero-sub{font-size:13px;color:#6b7b8d;position:relative;max-width:500px;margin:0 auto}
+
+/* === Shortcut grid === */
+.sc-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:.85rem 0;align-items:center}
+.sc-grid kbd{justify-self:end}
+.sc-grid .sc-desc{font-size:12.5px;color:#8b949e}
+</style>
+</head>
+<body>
+
+<!-- Back nav -->
+<div class="back-nav">
+  <a href="index.html">&larr; AI 编程总览</a>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-title">AI 编程工具篇</div>
+  <div class="hero-sub">tmux + iTerm2 + Claude Code &mdash; 构建高效的 AI 编程终端环境</div>
+</div>
+
+<!-- Nav -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <div class="nav-tab active" onclick="switchTab(0)"><span class="tn">1</span> tmux 核心</div>
+    <div class="nav-tab" onclick="switchTab(1)"><span class="tn">2</span> iTerm2 配置</div>
+    <div class="nav-tab" onclick="switchTab(2)"><span class="tn">3</span> Claude Code 窗口</div>
+    <div class="nav-tab" onclick="switchTab(3)"><span class="tn">4</span> 实战工作流</div>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 1: tmux 核心                            -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card active" id="c0">
+  <div class="card-head">
+    <span class="card-icon">&#x1F5A5;</span>
+    <div class="card-text">
+      <div class="card-title">tmux &mdash; 终端复用器</div>
+      <div class="card-sub">一个终端窗口里管理多个会话、窗口和窗格</div>
+    </div>
+    <span class="badge">必备工具</span>
+  </div>
+  <div class="card-body">
+
+    <div class="goal">
+      <span class="goal-icon">&#x1F3AF;</span>
+      <div>
+        <div class="goal-lbl">WHY TMUX</div>
+        <div class="goal-txt">SSH 断连不丢进程、一屏多窗格并行工作、Claude Code 多 Agent 分屏协作的基础设施。AI 编程场景下，tmux 是把"一个终端"变成"一个工作台"的关键。</div>
+      </div>
+    </div>
+
+    <div class="sl">核心概念 &middot; 三层结构</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">S</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">Session（会话）</div>
+          <div class="step-p">最外层容器。断开终端后 Session 继续运行，重新连接即可恢复。每个项目一个 Session 是好习惯。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">W</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">Window（窗口）</div>
+          <div class="step-p">Session 里的"标签页"。底部状态栏显示所有 Window，用编号切换。类比浏览器的 Tab。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">P</div></div>
+        <div class="step-c">
+          <div class="step-t">Pane（窗格）</div>
+          <div class="step-p">Window 内的分屏区域。左右分、上下分、随意组合。AI 编程最常用：左边代码，右边 Claude Code。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">前缀键 &middot; 所有快捷键的入口</div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">IMPORTANT</div>
+      tmux 所有快捷键都需要先按<b>前缀键</b>，松开后再按功能键。默认前缀是 <kbd>Ctrl+b</kbd>，但很多配置改为 <kbd>Ctrl+a</kbd> 或 <kbd>Ctrl+s</kbd>。<br><br>
+      查看你的前缀键：<code style="color:#F5BA5A">tmux show -g prefix</code><br>
+      如果前缀键被终端吞掉（按了没反应），运行 <code style="color:#F5BA5A">stty -ixon</code> 禁用流控制。
+    </div>
+
+    <div class="sl">会话管理</div>
+    <table class="dtable">
+      <thead><tr><th>命令 / 快捷键</th><th>说明</th></tr></thead>
+      <tr><td class="td-m">tmux new -s name</td><td>创建命名会话</td></tr>
+      <tr><td class="td-m">tmux ls</td><td>列出所有会话</td></tr>
+      <tr><td class="td-m">tmux attach -t name</td><td>连接到会话</td></tr>
+      <tr><td class="td-m">tmux kill-session -t name</td><td>关闭会话</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>d</kbd></td><td>分离（detach）当前会话，回到原终端</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>s</kbd></td><td>会话列表，交互式切换</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>$</kbd></td><td>重命名当前会话</td></tr>
+    </table>
+
+    <div class="sl">窗口（Window）操作</div>
+    <table class="dtable">
+      <thead><tr><th>快捷键</th><th>说明</th></tr></thead>
+      <tr><td><kbd>prefix</kbd> + <kbd>c</kbd></td><td>新建窗口</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>,</kbd></td><td>重命名窗口</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>w</kbd></td><td>窗口列表（可预览）</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>n</kbd> / <kbd>p</kbd></td><td>下一个 / 上一个窗口</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>0-9</kbd></td><td>跳转到第 N 个窗口</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>&amp;</kbd></td><td>关闭当前窗口</td></tr>
+    </table>
+
+    <div class="sl">窗格（Pane）操作 &middot; 最高频</div>
+    <table class="dtable">
+      <thead><tr><th>快捷键</th><th>说明</th></tr></thead>
+      <tr><td><kbd>prefix</kbd> + <kbd>%</kbd></td><td>左右分屏（注意：<kbd>%</kbd> = <kbd>Shift+5</kbd>）</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>"</kbd></td><td>上下分屏（<kbd>"</kbd> = <kbd>Shift+'</kbd>）</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>方向键</kbd></td><td>切换窗格焦点</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>z</kbd></td><td>当前窗格全屏 / 还原（zoom toggle）</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>x</kbd></td><td>关闭当前窗格</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>{</kbd> / <kbd>}</kbd></td><td>交换窗格位置</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>Space</kbd></td><td>循环切换布局</td></tr>
+    </table>
+
+    <div class="icard ic-yellow">
+      <div class="icard-lbl">GOTCHA</div>
+      <kbd>%</kbd> 和 <kbd>"</kbd> 都需要 <kbd>Shift</kbd> 键！很多新手按不出来就是忘了 Shift。正确操作：先按 prefix 松开，再按 <kbd>Shift+5</kbd>（即 <kbd>%</kbd>）。
+    </div>
+
+    <div class="sl">复制模式 &middot; 滚动和搜索</div>
+    <table class="dtable">
+      <thead><tr><th>快捷键</th><th>说明</th></tr></thead>
+      <tr><td><kbd>prefix</kbd> + <kbd>[</kbd></td><td>进入复制模式（可上下滚动、搜索）</td></tr>
+      <tr><td><kbd>q</kbd></td><td>退出复制模式</td></tr>
+      <tr><td><kbd>/</kbd></td><td>在复制模式中搜索</td></tr>
+      <tr><td><kbd>Space</kbd> &rarr; 选择 &rarr; <kbd>Enter</kbd></td><td>选中并复制文本</td></tr>
+      <tr><td><kbd>prefix</kbd> + <kbd>]</kbd></td><td>粘贴</td></tr>
+    </table>
+
+    <div class="sl">实用命令</div>
+    <div class="code-wrap" id="cw1">
+      <div class="code-toggle" onclick="toggleCode('cw1')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">tmux-useful-commands.sh</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm"># 调整窗格大小</span>
+<span class="hl-kw">prefix</span> + : &rarr; resize-pane -D 10   <span class="cm"># 向下扩展 10 行</span>
+<span class="hl-kw">prefix</span> + : &rarr; resize-pane -R 20   <span class="cm"># 向右扩展 20 列</span>
+
+<span class="cm"># 同步输入到所有窗格（批量操作多台机器）</span>
+<span class="hl-kw">prefix</span> + : &rarr; setw synchronize-panes on
+
+<span class="cm"># 保存窗格输出到文件</span>
+<span class="hl-kw">prefix</span> + : &rarr; capture-pane -S -3000 ; save-buffer ~/tmux.log
+
+<span class="cm"># 查看所有快捷键绑定</span>
+tmux list-keys
+
+<span class="cm"># 查看分屏相关绑定</span>
+tmux list-keys | grep split</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 2: iTerm2 配置                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c1">
+  <div class="card-head">
+    <span class="card-icon">&#x1F4BB;</span>
+    <div class="card-text">
+      <div class="card-title">iTerm2 &mdash; macOS 终端增强</div>
+      <div class="card-sub">让 iTerm2 和 tmux 完美配合的关键配置</div>
+    </div>
+    <span class="badge">macOS</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">常见坑 &middot; 快捷键被吞</div>
+    <div class="icard ic-red">
+      <div class="icard-lbl">PROBLEM</div>
+      iTerm2 可能拦截 tmux 的前缀键（如 <kbd>Ctrl+s</kbd> 或 <kbd>Ctrl+b</kbd>），导致 tmux 收不到指令。<br><br>
+      <b>症状</b>：按前缀键后终端无反应，或屏幕冻住（<kbd>Ctrl+s</kbd> 触发了 XOFF 流控制）。
+    </div>
+
+    <div class="sl">排查步骤</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">1</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">验证按键是否到达终端</div>
+          <div class="step-p">运行 <code style="color:#F5BA5A">cat -v</code>，按 <kbd>Ctrl+b</kbd>。如果显示 <b>^B</b> 说明终端收到了；如果没输出，说明被 iTerm2 拦截。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">2</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">检查 iTerm2 快捷键设置</div>
+          <div class="step-p"><b>Settings &rarr; Profiles &rarr; Keys</b> &mdash; 看是否有绑定冲突。<br><b>Settings &rarr; Keys &rarr; Key Bindings</b> &mdash; 全局快捷键也要检查。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">3</div></div>
+        <div class="step-c">
+          <div class="step-t">禁用流控制（针对 Ctrl+s）</div>
+          <div class="step-p">运行 <code style="color:#F5BA5A">stty -ixon</code>。永久生效：加到 <code style="color:#F5BA5A">~/.zshrc</code>。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">推荐 iTerm2 设置</div>
+    <table class="dtable">
+      <thead><tr><th>设置项</th><th>位置</th><th>建议值</th></tr></thead>
+      <tr><td>Unlimited scrollback</td><td>Profiles &rarr; Terminal</td><td>开启，方便回查长输出</td></tr>
+      <tr><td>Option as Meta</td><td>Profiles &rarr; Keys &rarr; General</td><td>Left Option = Esc+，支持 Alt 快捷键</td></tr>
+      <tr><td>Shell Integration</td><td>Install Shell Integration</td><td>开启，显示命令标记和执行时间</td></tr>
+      <tr><td>Natural Text Editing</td><td>Profiles &rarr; Keys &rarr; Presets</td><td>按需，让 Option+方向键按单词跳转</td></tr>
+    </table>
+
+    <div class="sl">iTerm2 原生分屏 vs tmux</div>
+    <div class="vs">
+      <div class="vs-i vs-a">
+        <div class="vs-lbl">ITERM2 原生分屏</div>
+        <b>优点</b>：<kbd>Cmd+D</kbd> 左右、<kbd>Cmd+Shift+D</kbd> 上下，更直觉<br>
+        <b>缺点</b>：SSH 断连后分屏丢失，不可复用
+      </div>
+      <div class="vs-i vs-b">
+        <div class="vs-lbl">TMUX 分屏</div>
+        <b>优点</b>：断连不丢、可脚本化、跨机器一致<br>
+        <b>缺点</b>：需要记前缀键，初学门槛稍高
+      </div>
+    </div>
+    <div class="icard ic-green">
+      <div class="icard-lbl">RECOMMENDATION</div>
+      <b>本地开发用 iTerm2 原生分屏就够了</b>，简单直觉。需要 SSH 远程、Claude Code 多 Agent 分屏、或持久化会话时，用 tmux。两者可以混用 &mdash; iTerm2 开多个 Tab，其中一个 Tab 跑 tmux。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 3: Claude Code 窗口管理                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c2">
+  <div class="card-head">
+    <span class="card-icon">&#x1F916;</span>
+    <div class="card-text">
+      <div class="card-title">Claude Code &mdash; AI 编程窗口管理</div>
+      <div class="card-sub">管理多个 Claude Code 实例的四种方式</div>
+    </div>
+    <span class="badge">L4 金丹境</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">方式 1 &middot; Agent Teams（最强大）</div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">AGENT TEAMS</div>
+      多个 Claude Code 实例协作，每个成员有独立窗格。<br><br>
+      <b>Tmux 分屏模式</b>：每个团队成员一个 tmux pane，可同时看到所有人的进展。<br>
+      <b>In-process 模式</b>：同一终端内，按 <kbd>Shift+Down</kbd> 切换成员。<br>
+      <b>自动协调</b>：成员共享任务列表，可互相通信。
+    </div>
+    <div class="code-wrap" id="cw2">
+      <div class="code-toggle" onclick="toggleCode('cw2')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">settings.json &mdash; 启用 Agent Teams</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body">{
+  <span class="st">"env"</span>: {
+    <span class="st">"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"</span>: <span class="st">"1"</span>
+  }
+}</div>
+    </div>
+
+    <div class="sl">方式 2 &middot; Subagents（轻量并行）</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">SUBAGENTS</div>
+      主会话中并行派出多个子代理，结果汇总回主会话。<br>
+      无需 tmux 配置，适合并行分析、安全扫描、测试执行等场景。<br>
+      Token 成本高于单 Agent，但速度快。
+    </div>
+
+    <div class="sl">方式 3 &middot; Git Worktrees（独立开发）</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">WORKTREES</div>
+      每个 worktree 对应独立的 git 分支和工作目录。<br>
+      适合多功能并行开发，文件互不干扰。<br>
+      可手动在不同 tmux pane 中各跑一个 Claude Code 实例。
+    </div>
+
+    <div class="sl">方式 4 &middot; Sessions（会话持久化）</div>
+    <table class="dtable">
+      <thead><tr><th>命令</th><th>说明</th></tr></thead>
+      <tr><td class="td-m">/resume</td><td>恢复历史会话</td></tr>
+      <tr><td class="td-m">/compact</td><td>压缩当前上下文，释放 token 空间</td></tr>
+    </table>
+
+    <div class="sl">场景选择矩阵</div>
+    <table class="dtable">
+      <thead><tr><th>场景</th><th>推荐方式</th><th>原因</th></tr></thead>
+      <tr><td>多视角代码审查</td><td class="td-g">Agent Teams + Tmux</td><td>多个 Agent 同时审查不同维度</td></tr>
+      <tr><td>并行测试/分析</td><td class="td-g">Subagents</td><td>轻量快速，无需额外配置</td></tr>
+      <tr><td>多功能并行开发</td><td class="td-g">Git Worktrees</td><td>文件隔离，互不干扰</td></tr>
+      <tr><td>长期研究任务</td><td class="td-g">Sessions</td><td>断点续跑，保持上下文</td></tr>
+    </table>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 4: 实战工作流                            -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c3">
+  <div class="card-head">
+    <span class="card-icon">&#x26A1;</span>
+    <div class="card-text">
+      <div class="card-title">实战工作流</div>
+      <div class="card-sub">把工具串起来 &mdash; 日常 AI 编程的终端布局</div>
+    </div>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">布局 1 &middot; 日常开发（iTerm2 原生）</div>
+    <div class="code-wrap open" id="cw3">
+      <div class="code-toggle" onclick="toggleCode('cw3')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">日常开发布局</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body">┌─────────────────────┬──────────────────────┐
+│                     │                      │
+│   Claude Code       │   Editor / Code      │
+│   (主工作区)         │   (VSCode / Vim)     │
+│                     │                      │
+│                     │                      │
+├─────────────────────┴──────────────────────┤
+│  Terminal  (git / test / server)            │
+└────────────────────────────────────────────┘
+
+<span class="cm">iTerm2 操作：</span>
+<span class="cm">  Cmd+D        → 左右分屏</span>
+<span class="cm">  Cmd+Shift+D  → 上下分屏</span>
+<span class="cm">  Cmd+[/]      → 切换窗格</span></div>
+    </div>
+
+    <div class="sl">布局 2 &middot; 多 Agent 协作（tmux）</div>
+    <div class="code-wrap open" id="cw4">
+      <div class="code-toggle" onclick="toggleCode('cw4')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">tmux 多 Agent 布局</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body">┌──────────────┬──────────────┬──────────────┐
+│  Agent 1     │  Agent 2     │  Agent 3     │
+│  (executor)  │  (reviewer)  │  (tester)    │
+│              │              │              │
+├──────────────┴──────────────┴──────────────┤
+│  Leader Agent / 主控 Claude Code            │
+└────────────────────────────────────────────┘
+
+<span class="cm">tmux 操作（假设 prefix = Ctrl+s）：</span>
+<span class="cm">  Ctrl+s  %     → 左右分屏</span>
+<span class="cm">  Ctrl+s  "     → 上下分屏</span>
+<span class="cm">  Ctrl+s  方向键 → 切换窗格</span>
+<span class="cm">  Ctrl+s  z     → 放大/还原某个 Agent</span></div>
+    </div>
+
+    <div class="sl">快速启动脚本</div>
+    <div class="code-wrap" id="cw5">
+      <div class="code-toggle" onclick="toggleCode('cw5')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">ai-workspace.sh &mdash; 一键搭建工作环境</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm">#!/bin/bash</span>
+<span class="cm"># 创建 AI 编程工作区</span>
+
+SESSION=<span class="st">"ai-dev"</span>
+
+<span class="cm"># 创建新会话</span>
+tmux new-session -d -s <span class="bi">$SESSION</span>
+
+<span class="cm"># 窗口 1: Claude Code</span>
+tmux rename-window -t <span class="bi">$SESSION</span>:0 <span class="st">"claude"</span>
+
+<span class="cm"># 窗口 2: 代码编辑</span>
+tmux new-window -t <span class="bi">$SESSION</span> -n <span class="st">"code"</span>
+
+<span class="cm"># 窗口 3: Git + 测试</span>
+tmux new-window -t <span class="bi">$SESSION</span> -n <span class="st">"git"</span>
+
+<span class="cm"># 回到第一个窗口</span>
+tmux select-window -t <span class="bi">$SESSION</span>:0
+
+<span class="cm"># 连接</span>
+tmux attach -t <span class="bi">$SESSION</span></div>
+    </div>
+
+    <div class="sl">日常高频操作速查</div>
+    <div class="sc-grid">
+      <kbd>prefix</kbd> + <kbd>%</kbd>  <span class="sc-desc">左右分屏（需要 Shift）</span>
+      <kbd>prefix</kbd> + <kbd>"</kbd>  <span class="sc-desc">上下分屏（需要 Shift）</span>
+      <kbd>prefix</kbd> + <kbd>方向键</kbd>  <span class="sc-desc">切换窗格</span>
+      <kbd>prefix</kbd> + <kbd>z</kbd>  <span class="sc-desc">全屏/还原当前窗格</span>
+      <kbd>prefix</kbd> + <kbd>d</kbd>  <span class="sc-desc">分离会话（后台运行）</span>
+      <kbd>Cmd</kbd> + <kbd>D</kbd>     <span class="sc-desc">iTerm2 左右分屏</span>
+      <kbd>Cmd</kbd> + <kbd>Shift+D</kbd>  <span class="sc-desc">iTerm2 上下分屏</span>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<div class="footer">AI 修炼册 &middot; bob798/ai-handbook &middot; AI 编程工具篇</div>
+
+<!-- Drawer (keyword detail) -->
+<div class="dov" id="dov" onclick="closeKw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-h">
+    <span class="drw-ic" id="dIc"></span>
+    <div style="flex:1"><div class="drw-ti" id="dTi"></div><div class="drw-en" id="dEn"></div></div>
+    <span class="drw-x" onclick="closeKw()">&times;</span>
+  </div>
+  <div class="drw-body" id="dBd"></div>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

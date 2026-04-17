@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iTerm2 使用指导 · AI 编程知识库</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* === Hero === */
+.hero{position:relative;padding:2.5rem 1rem 1.5rem;text-align:center;background:linear-gradient(135deg,#0d1525,#1a1510,#0d1525);overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(239,159,39,.12),transparent 70%)}
+.hero-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:6px;position:relative}
+.hero-sub{font-size:13px;color:#6b7b8d;position:relative;max-width:500px;margin:0 auto;line-height:1.6}
+
+/* === Feature card grid === */
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:.85rem 0}
+@media(max-width:540px){.feat-grid{grid-template-columns:1fr}}
+.feat{background:rgba(255,255,255,.03);border:1px solid #1e293b;border-radius:10px;padding:.75rem 1rem;transition:border-color .2s}
+.feat:hover{border-color:rgba(239,159,39,.3)}
+.feat-t{font-size:13px;font-weight:600;color:#f0f6fc;margin-bottom:4px}
+.feat-p{font-size:12px;color:#6b7b8d;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- Back nav -->
+<div class="back-nav">
+  <a href="index.html">&larr; AI 编程总览</a>
+  <a href="tools.html" style="margin-left:16px">&larr; 工具篇</a>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-title">iTerm2 使用指导</div>
+  <div class="hero-sub">macOS 上最强大的终端模拟器 &mdash; 从入门到高效</div>
+</div>
+
+<!-- Nav -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <div class="nav-tab active" onclick="switchTab(0)"><span class="tn">1</span> 安装与基础</div>
+    <div class="nav-tab" onclick="switchTab(1)"><span class="tn">2</span> 分屏与 Profile</div>
+    <div class="nav-tab" onclick="switchTab(2)"><span class="tn">3</span> Shell Integration</div>
+    <div class="nav-tab" onclick="switchTab(3)"><span class="tn">4</span> 高级功能</div>
+    <div class="nav-tab" onclick="switchTab(4)"><span class="tn">5</span> tmux 集成</div>
+    <div class="nav-tab" onclick="switchTab(5)"><span class="tn">6</span> 推荐配置</div>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 1: 安装与基础                            -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card active" id="c0">
+  <div class="card-head">
+    <span class="card-icon">&#x1F4E6;</span>
+    <div class="card-text">
+      <div class="card-title">安装与基础操作</div>
+      <div class="card-sub">安装、初始配置、核心快捷键</div>
+    </div>
+    <span class="badge">入门</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">安装</div>
+    <div class="code-wrap open" id="cw-install">
+      <div class="code-toggle" onclick="toggleCode('cw-install')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">安装命令</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm"># Homebrew（推荐）</span>
+brew install --cask iterm2
+
+<span class="cm"># 或从官网下载 https://iterm2.com/downloads.html</span></div>
+    </div>
+
+    <div class="sl">首次启动建议</div>
+    <table class="dtable">
+      <thead><tr><th>设置项</th><th>路径</th><th>推荐值</th></tr></thead>
+      <tr><td>外观主题</td><td>Appearance &rarr; General &rarr; Theme</td><td class="td-g">Minimal</td></tr>
+      <tr><td>字体</td><td>Profiles &rarr; Text &rarr; Font</td><td class="td-g">JetBrains Mono Nerd Font, 14pt</td></tr>
+      <tr><td>配色方案</td><td>Profiles &rarr; Colors &rarr; Color Presets</td><td class="td-g">Catppuccin / Dracula</td></tr>
+      <tr><td>光标样式</td><td>Profiles &rarr; Text &rarr; Cursor</td><td class="td-g">Vertical Bar + Blinking</td></tr>
+      <tr><td>无限回滚</td><td>Profiles &rarr; Terminal &rarr; Scrollback</td><td class="td-g">Unlimited scrollback</td></tr>
+      <tr><td>关闭确认</td><td>Settings &rarr; General &rarr; Closing</td><td class="td-g">取消 Confirm closing</td></tr>
+    </table>
+
+    <div class="icard ic-green">
+      <div class="icard-lbl">NERD FONT</div>
+      使用 Nerd Font 可确保 Oh My Zsh、Starship、Powerlevel10k 等主题的图标正常显示。<br>
+      安装：<code style="color:#7dcea0">brew install font-jetbrains-mono-nerd-font</code>
+    </div>
+
+    <div class="sl">标签页与会话</div>
+    <table class="dtable">
+      <thead><tr><th>操作</th><th>快捷键</th></tr></thead>
+      <tr><td>新建标签页</td><td><kbd>⌘</kbd> + <kbd>T</kbd></td></tr>
+      <tr><td>关闭标签页</td><td><kbd>⌘</kbd> + <kbd>W</kbd></td></tr>
+      <tr><td>切换到第 N 个标签页</td><td><kbd>⌘</kbd> + <kbd>数字</kbd></td></tr>
+      <tr><td>前/后一个标签页</td><td><kbd>⌘</kbd> + <kbd>←</kbd> / <kbd>→</kbd></td></tr>
+      <tr><td>新建窗口</td><td><kbd>⌘</kbd> + <kbd>N</kbd></td></tr>
+    </table>
+
+    <div class="sl">文本操作</div>
+    <table class="dtable">
+      <thead><tr><th>操作</th><th>快捷键</th></tr></thead>
+      <tr><td>复制</td><td><kbd>⌘</kbd> + <kbd>C</kbd>（或开启 Copy on selection）</td></tr>
+      <tr><td>粘贴</td><td><kbd>⌘</kbd> + <kbd>V</kbd></td></tr>
+      <tr><td>粘贴历史</td><td><kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>H</kbd></td></tr>
+      <tr><td>清屏</td><td><kbd>⌘</kbd> + <kbd>K</kbd></td></tr>
+      <tr><td>放大/缩小字号</td><td><kbd>⌘</kbd> + <kbd>+</kbd> / <kbd>-</kbd></td></tr>
+      <tr><td>选词 / 选行</td><td>双击 / 三击</td></tr>
+      <tr><td>矩形选择</td><td><kbd>⌘</kbd> + <kbd>⌥</kbd> + 拖拽</td></tr>
+    </table>
+
+    <div class="icard ic-blue">
+      <div class="icard-lbl">SMART CLICK</div>
+      按住 <kbd>⌘</kbd> 点击文件路径或 URL 可直接打开 &mdash; 这是 iTerm2 的<b>智能点击</b>功能。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 2: 分屏与 Profile                       -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c1">
+  <div class="card-head">
+    <span class="card-icon">&#x1F5A5;</span>
+    <div class="card-text">
+      <div class="card-title">分屏与 Profile 管理</div>
+      <div class="card-sub">窗口布局管理、多环境 Profile 配置</div>
+    </div>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">分屏操作</div>
+    <table class="dtable">
+      <thead><tr><th>操作</th><th>快捷键</th></tr></thead>
+      <tr><td>水平分屏</td><td><kbd>⌘</kbd> + <kbd>D</kbd></td></tr>
+      <tr><td>垂直分屏</td><td><kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>D</kbd></td></tr>
+      <tr><td>在分屏间切换</td><td><kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>方向键</kbd></td></tr>
+      <tr><td>关闭当前面板</td><td><kbd>⌘</kbd> + <kbd>W</kbd></td></tr>
+      <tr><td>最大化当前面板</td><td><kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>Enter</kbd></td></tr>
+      <tr><td>交换面板位置</td><td>拖拽面板标题栏</td></tr>
+      <tr><td>向所有面板广播输入</td><td><kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>I</kbd></td></tr>
+    </table>
+
+    <div class="icard ic-red">
+      <div class="icard-lbl">WARNING</div>
+      <b>广播输入</b>（<kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>I</kbd>）非常适合同时操作多台服务器，但务必注意当前广播范围，避免误操作。可通过菜单 Shell &rarr; Broadcast Input 精确控制范围。
+    </div>
+
+    <div class="sl">Profile &mdash; 多环境管理</div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="feat-t">Default</div>
+        <div class="feat-p">日常开发。深色主题 + 透明度 10% + blur，工作目录设为项目根目录</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">SSH Remote</div>
+        <div class="feat-p">远程服务器专用。红色标签标记 + 不同配色，一眼区分本地/远程</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">Presentation</div>
+        <div class="feat-p">演示/分享屏幕时用。大字号 (20pt) + 高对比度 + 不透明背景</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">Hotkey</div>
+        <div class="feat-p">全局呼出终端。透明度 15% + Blur + Full-Width Top of Screen</div>
+      </div>
+    </div>
+
+    <div class="icard ic-orange">
+      <div class="icard-lbl">QUICK OPEN</div>
+      在 Keys &rarr; Key Bindings 中，添加快捷键 &rarr; Action 选择 "New Tab with Profile"，即可一键打开特定环境。
+    </div>
+
+    <div class="sl">动态 Profile（版本可控）</div>
+    <div class="code-wrap" id="cw-dyn">
+      <div class="code-toggle" onclick="toggleCode('cw-dyn')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">~/Library/Application Support/iTerm2/DynamicProfiles/dev.json</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body">{
+  <span class="st">"Profiles"</span>: [{
+    <span class="st">"Name"</span>: <span class="st">"DevServer"</span>,
+    <span class="st">"Guid"</span>: <span class="st">"dev-server-001"</span>,
+    <span class="st">"Badge Text"</span>: <span class="st">"DEV"</span>,
+    <span class="st">"Initial Text"</span>: <span class="st">"ssh dev-server"</span>,
+    <span class="st">"Tags"</span>: [<span class="st">"remote"</span>, <span class="st">"dev"</span>]
+  }]
+}</div>
+    </div>
+
+    <div class="sl">Hotkey Window &mdash; 全局呼出终端</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">1</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">创建 Hotkey Profile</div>
+          <div class="step-p">新建 Profile（如 "Hotkey"），进入 Keys &rarr; Hotkey Window</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">2</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">配置快捷键</div>
+          <div class="step-p">勾选 "A hotkey opens a dedicated window with this profile"，设置快捷键（推荐 <kbd>⌥</kbd> + <kbd>Space</kbd>）</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">3</div></div>
+        <div class="step-c">
+          <div class="step-t">调整外观</div>
+          <div class="step-p">勾选 Floating window 置顶。Style 设为 Full-Width Top of Screen，行数 25-30，透明度 15-20%，Blur 半径 20</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 3: Shell Integration                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c2">
+  <div class="card-head">
+    <span class="card-icon">&#x1F41A;</span>
+    <div class="card-text">
+      <div class="card-title">Shell Integration</div>
+      <div class="card-sub">iTerm2 最强大的功能，安装后解锁大量高级能力</div>
+    </div>
+    <span class="badge">必备</span>
+  </div>
+  <div class="card-body">
+
+    <div class="code-wrap open" id="cw-si">
+      <div class="code-toggle" onclick="toggleCode('cw-si')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">安装 Shell Integration</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm"># 自动检测 bash/zsh/fish</span>
+curl -L https://iterm2.com/shell_integration/install_shell_integration.sh | bash
+
+<span class="cm"># 或手动：iTerm2 → Install Shell Integration</span></div>
+    </div>
+
+    <div class="sl">解锁的功能</div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="feat-t">命令历史导航</div>
+        <div class="feat-p"><kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>;</kbd> 打开最近命令列表，支持搜索和重新执行</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">目录历史</div>
+        <div class="feat-p"><kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>/</kbd> 打开最近访问的目录列表，快速跳转</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">命令状态标记</div>
+        <div class="feat-p">每条命令旁显示蓝色三角（成功）或红色三角（失败），左侧边栏一目了然</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">上传/下载文件</div>
+        <div class="feat-p">拖拽文件到终端自动上传。远程通过 <code style="color:#F5BA5A">it2dl</code> / <code style="color:#F5BA5A">it2ul</code> 传输</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">捕获命令输出</div>
+        <div class="feat-p"><kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>A</kbd> 选取上一条命令的完整输出，无需手动框选</div>
+      </div>
+      <div class="feat">
+        <div class="feat-t">Alert on Finish</div>
+        <div class="feat-p">Edit &rarr; Marks and Annotations &rarr; Alert on Next Mark，长时间命令结束后弹通知</div>
+      </div>
+    </div>
+
+    <div class="sl">搜索与回滚</div>
+    <table class="dtable">
+      <thead><tr><th>操作</th><th>快捷键</th></tr></thead>
+      <tr><td>搜索终端输出</td><td><kbd>⌘</kbd> + <kbd>F</kbd></td></tr>
+      <tr><td>搜索支持正则</td><td>点击搜索栏右侧 <code style="color:#F5BA5A">.*</code> 图标</td></tr>
+      <tr><td>上翻/下翻搜索结果</td><td><kbd>⌘</kbd> + <kbd>G</kbd> / <kbd>⌘</kbd> + <kbd>⇧</kbd> + <kbd>G</kbd></td></tr>
+      <tr><td>即时回放（Instant Replay）</td><td><kbd>⌘</kbd> + <kbd>⌥</kbd> + <kbd>B</kbd></td></tr>
+      <tr><td>查看时间戳</td><td>View &rarr; Show Timestamps</td></tr>
+    </table>
+
+    <div class="icard ic-orange">
+      <div class="icard-lbl">INSTANT REPLAY</div>
+      像播放视频一样回看终端历史，用方向键逐帧浏览。非常适合回溯刚才错过的输出。<br>
+      默认缓存 4MB，可在 Settings &rarr; General &rarr; Instant Replay 中调大。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 4: 高级功能                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c3">
+  <div class="card-head">
+    <span class="card-icon">&#x2699;</span>
+    <div class="card-text">
+      <div class="card-title">高级功能</div>
+      <div class="card-sub">Triggers、Python API、Badge、快捷键映射</div>
+    </div>
+    <span class="badge">进阶</span>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">Triggers &mdash; 自动化</div>
+    <div class="goal">
+      <span class="goal-icon">&#x1F3AF;</span>
+      <div>
+        <div class="goal-lbl">WHAT ARE TRIGGERS</div>
+        <div class="goal-txt">对终端输出进行正则匹配并自动执行动作。路径：Profiles &rarr; Advanced &rarr; Triggers。</div>
+      </div>
+    </div>
+
+    <table class="dtable">
+      <thead><tr><th>场景</th><th>正则表达式</th><th>Action</th></tr></thead>
+      <tr><td>高亮 ERROR 日志</td><td class="td-m">(?i)\berror\b</td><td>Highlight Text（红色）</td></tr>
+      <tr><td>密码提示自动响应</td><td class="td-m">(?i)password:</td><td>Open Password Manager</td></tr>
+      <tr><td>构建完成通知</td><td class="td-m">BUILD (SUCCESS|FAILED)</td><td>Post Notification</td></tr>
+      <tr><td>标记生产部署</td><td class="td-m">DEPLOY.*(?:prod|production)</td><td>Set Mark + Annotate</td></tr>
+    </table>
+
+    <div class="sl">自定义快捷键映射</div>
+    <table class="dtable">
+      <thead><tr><th>快捷键</th><th>Action</th><th>用途</th></tr></thead>
+      <tr><td><kbd>⌥</kbd> + <kbd>←</kbd></td><td class="td-m">Send Escape Sequence: b</td><td>按词左移光标</td></tr>
+      <tr><td><kbd>⌥</kbd> + <kbd>→</kbd></td><td class="td-m">Send Escape Sequence: f</td><td>按词右移光标</td></tr>
+      <tr><td><kbd>⌥</kbd> + <kbd>Delete</kbd></td><td class="td-m">Send Hex Code: 0x17</td><td>删除前一个词</td></tr>
+    </table>
+
+    <div class="icard ic-yellow">
+      <div class="icard-lbl">SIMPLER WAY</div>
+      更简单的方案：在 Profiles &rarr; Keys &rarr; General 中将 Left/Right Option Key 设为 <b>Esc+</b>，<kbd>⌥</kbd> 就能直接作为 Meta 键使用，兼容性更好。
+    </div>
+
+    <div class="sl">Badge（角标水印）</div>
+    <div class="code-wrap" id="cw-badge">
+      <div class="code-toggle" onclick="toggleCode('cw-badge')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">Profiles → General → Badge</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm"># 显示当前会话名和主机名作为半透明水印</span>
+\(session.name) @ \(hostname)</div>
+    </div>
+
+    <div class="sl">命令补全</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">AUTOCOMPLETE</div>
+      <kbd>⌘</kbd> + <kbd>;</kbd> 根据当前终端内容智能补全，无需安装额外插件。
+    </div>
+
+    <div class="sl">Status Bar</div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">STATUS BAR</div>
+      Profiles &rarr; Session &rarr; Status bar enabled。可添加组件：当前目录、Git 分支、CPU/内存占用、当前任务（running job）、用户名@主机名、自定义脚本组件（通过 Python API）。
+    </div>
+
+    <div class="sl">Python API</div>
+    <div class="code-wrap" id="cw-api">
+      <div class="code-toggle" onclick="toggleCode('cw-api')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">自动创建开发布局</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm"># 启用：iTerm2 → Settings → General → Magic → Enable Python API</span>
+<span class="cm"># pip install iterm2</span>
+
+<span class="hl-kw">import</span> iterm2
+
+<span class="hl-kw">async def</span> <span class="fn">main</span>(connection):
+    app = <span class="hl-kw">await</span> iterm2.async_get_app(connection)
+    window = app.current_terminal_window
+
+    <span class="cm"># 创建标签页</span>
+    tab = <span class="hl-kw">await</span> window.async_create_tab()
+    session = tab.current_session
+
+    <span class="cm"># 水平分屏</span>
+    right = <span class="hl-kw">await</span> session.async_split_pane(vertical=<span class="bi">True</span>)
+
+    <span class="cm"># 左侧运行编辑器</span>
+    <span class="hl-kw">await</span> session.async_send_text(<span class="st">'nvim .\n'</span>)
+
+    <span class="cm"># 右侧再垂直分两栏</span>
+    bottom_right = <span class="hl-kw">await</span> right.async_split_pane(vertical=<span class="bi">False</span>)
+
+    <span class="cm"># 右上：dev server</span>
+    <span class="hl-kw">await</span> right.async_send_text(<span class="st">'npm run dev\n'</span>)
+
+    <span class="cm"># 右下：git log</span>
+    <span class="hl-kw">await</span> bottom_right.async_send_text(<span class="st">'git log --oneline -20\n'</span>)
+
+iterm2.run_until_complete(main)</div>
+    </div>
+
+    <div class="icard ic-green">
+      <div class="icard-lbl">SCRIPTS</div>
+      通过 Scripts &rarr; Manage &rarr; New Python Script 创建自动加载脚本。<br>
+      "Basic" = 一次性脚本，"Long-Running Daemon" = 常驻后台服务。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 5: tmux 集成                             -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c4">
+  <div class="card-head">
+    <span class="card-icon">&#x1F4BB;</span>
+    <div class="card-text">
+      <div class="card-title">tmux 集成</div>
+      <div class="card-sub">把 tmux 面板映射为原生 iTerm2 标签页和分屏</div>
+    </div>
+    <span class="badge">推荐</span>
+  </div>
+  <div class="card-body">
+
+    <div class="goal">
+      <span class="goal-icon">&#x1F3AF;</span>
+      <div>
+        <div class="goal-lbl">KEY IDEA</div>
+        <div class="goal-txt">iTerm2 的 <b>-CC 集成模式</b>将 tmux 的面板/窗口映射为原生的标签页和分屏，获得原生体验同时保留 tmux 的持久化能力。</div>
+      </div>
+    </div>
+
+    <div class="code-wrap open" id="cw-tmux">
+      <div class="code-toggle" onclick="toggleCode('cw-tmux')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">tmux 集成模式命令</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm"># 以集成模式启动（关键是 -CC 参数）</span>
+tmux -CC
+
+<span class="cm"># 连接已有 session</span>
+tmux -CC attach -t mysession
+
+<span class="cm"># 远程服务器上也可以</span>
+ssh myserver -t <span class="st">'tmux -CC attach || tmux -CC'</span></div>
+    </div>
+
+    <div class="sl">普通 tmux vs 集成模式</div>
+    <div class="vs">
+      <div class="vs-i vs-a">
+        <div class="vs-lbl">PLAIN TMUX</div>
+        <b>状态栏占空间</b><br>
+        需记忆 prefix 快捷键<br>
+        无法原生滚动回看<br>
+        复制粘贴繁琐<br>
+        断开即不可见
+      </div>
+      <div class="vs-i vs-b">
+        <div class="vs-lbl">ITERM2 -CC 集成</div>
+        <b>映射为原生标签页</b><br>
+        用 <kbd>⌘</kbd>+<kbd>D</kbd> / <kbd>⌘</kbd>+<kbd>T</kbd> 操作<br>
+        原生滚动 + 搜索<br>
+        原生 <kbd>⌘</kbd>+<kbd>C</kbd> / <kbd>⌘</kbd>+<kbd>V</kbd><br>
+        断开后重连恢复所有窗口
+      </div>
+    </div>
+
+    <div class="icard ic-green">
+      <div class="icard-lbl">CONFIG</div>
+      在 Settings &rarr; General &rarr; tmux 中配置集成行为，如 "Automatically bury the tmux client session" 隐藏控制会话。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 6: 推荐配置清单                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c5">
+  <div class="card-head">
+    <span class="card-icon">&#x2705;</span>
+    <div class="card-text">
+      <div class="card-title">推荐配置清单</div>
+      <div class="card-sub">开箱即用的最佳实践 + 配置同步方案</div>
+    </div>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">核心配置</div>
+    <table class="dtable">
+      <thead><tr><th>配置项</th><th>路径</th><th>推荐值</th></tr></thead>
+      <tr><td>Option 键行为</td><td>Profiles &rarr; Keys &rarr; General</td><td class="td-g">Left Option: Esc+</td></tr>
+      <tr><td>选中即复制</td><td>Settings &rarr; General &rarr; Selection</td><td class="td-g">Copy to pasteboard on selection</td></tr>
+      <tr><td>焦点跟随鼠标</td><td>Settings &rarr; Pointer</td><td class="td-g">Focus follows mouse</td></tr>
+      <tr><td>Tab 标题</td><td>Profiles &rarr; General &rarr; Title</td><td class="td-g">Profile + Session Name</td></tr>
+      <tr><td>语义历史</td><td>Profiles &rarr; Advanced</td><td class="td-g">Open with editor + 你的编辑器</td></tr>
+      <tr><td>GPU 渲染</td><td>Settings &rarr; General &rarr; Magic</td><td class="td-g">GPU Rendering（默认已开）</td></tr>
+      <tr><td>Dock 隐藏</td><td>Appearance &rarr; General</td><td class="td-g">Exclude from Dock（Hotkey Profile）</td></tr>
+    </table>
+
+    <div class="icard ic-orange">
+      <div class="icard-lbl">HIDDEN GEM</div>
+      <b>Semantic History</b>：按住 <kbd>⌘</kbd> 点击终端中出现的文件路径（如编译错误中的 <code style="color:#F5BA5A">src/app.ts:42</code>），iTerm2 会用你配置的编辑器直接打开该文件并跳到对应行号。
+    </div>
+
+    <div class="sl">配置导入导出</div>
+    <div class="code-wrap" id="cw-sync">
+      <div class="code-toggle" onclick="toggleCode('cw-sync')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">配置同步方案</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="cm"># 方式 1：手动导出</span>
+cp ~/Library/Preferences/com.googlecode.iterm2.plist ~/dotfiles/
+
+<span class="cm"># 方式 2：设置自动同步（推荐）</span>
+<span class="cm"># Settings → General → Preferences</span>
+<span class="cm"># 勾选 "Load preferences from a custom folder or URL"</span>
+<span class="cm"># 设为 Git 仓库路径，实现团队统一配置</span></div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<div class="footer">AI 修炼册 &middot; bob798/ai-handbook &middot; iTerm2 使用指导</div>
+
+<!-- Drawer -->
+<div class="dov" id="dov" onclick="closeKw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-h">
+    <span class="drw-ic" id="dIc"></span>
+    <div style="flex:1"><div class="drw-ti" id="dTi"></div><div class="drw-en" id="dEn"></div></div>
+    <span class="drw-x" onclick="closeKw()">&times;</span>
+  </div>
+  <div class="drw-body" id="dBd"></div>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

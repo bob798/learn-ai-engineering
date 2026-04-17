@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 编程知识库 · 总览</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* === Hero === */
+.hero{position:relative;padding:2.5rem 1rem 1.5rem;text-align:center;background:linear-gradient(135deg,#0d1525,#1a1510,#0d1525);overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(239,159,39,.14),transparent 70%)}
+.hero-title{font-size:26px;font-weight:800;color:#fff;margin-bottom:6px;position:relative}
+.hero-sub{font-size:13px;color:#6b7b8d;position:relative;max-width:520px;margin:0 auto;line-height:1.6}
+
+/* === Nav link cards (Tab 1) === */
+.nav-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:.85rem}
+@media(max-width:540px){.nav-cards{grid-template-columns:1fr}}
+.nav-card{display:flex;flex-direction:column;gap:6px;padding:1rem 1.1rem;background:#0d1117;border:1px solid #1e293b;border-radius:12px;text-decoration:none;transition:border-color .2s,background .2s;cursor:pointer}
+.nav-card:hover{border-color:rgba(239,159,39,.35);background:#111827}
+.nav-card-icon{font-size:22px}
+.nav-card-title{font-size:14px;font-weight:700;color:#f0f6fc}
+.nav-card-desc{font-size:12px;color:#6b7b8d;line-height:1.6}
+.nav-card-arrow{font-size:11px;color:#EF9F27;margin-top:auto;padding-top:6px}
+
+/* === Intro block === */
+.intro-block{background:rgba(239,159,39,.04);border:1px solid rgba(239,159,39,.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem;font-size:13px;color:#b0b8c4;line-height:1.8}
+.intro-block b{color:#d4b88a}
+
+/* === Learning path steps (Tab 3) === */
+.path-step{display:flex;gap:14px;padding-bottom:20px}
+.path-step:last-child{padding-bottom:0}
+.ps-m{display:flex;flex-direction:column;align-items:center}
+.ps-d{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#EF9F27,#F5BA5A);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ps-r{width:2px;flex:1;background:linear-gradient(180deg,rgba(239,159,39,.3),rgba(239,159,39,.05));margin-top:4px}
+.path-step:last-child .ps-r{display:none}
+.ps-c{flex:1;padding-top:5px}
+.ps-t{font-size:14px;font-weight:600;color:#f0f6fc;margin-bottom:4px}
+.ps-p{font-size:13px;color:#8b949e;line-height:1.7}
+.ps-p b{color:#c9d1d9}
+.ps-link{display:inline-block;margin-top:6px;font-size:11.5px;color:#EF9F27;border:1px solid rgba(239,159,39,.25);border-radius:6px;padding:2px 10px;text-decoration:none;transition:background .15s}
+.ps-link:hover{background:rgba(239,159,39,.08)}
+
+/* ===================================================
+   六境修炼 — Timeline (Tab 2)
+   Adapted from ai-xiulian-ce.html for dark theme
+=================================================== */
+.xlian-wrap{margin:-0.5rem -0.25rem}
+
+.tl{position:relative}
+.tl-line{position:absolute;left:15px;top:0;bottom:0;width:1.5px;background:#1e293b;z-index:0}
+
+.lvl{position:relative;z-index:1;margin-bottom:0}
+.lvl-row{display:flex;gap:12px;align-items:flex-start}
+.lvl-dot{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;
+  margin-top:10px;cursor:pointer;transition:transform .18s;border:1.5px solid;
+  position:relative;z-index:2;background:#0a0e17;
+}
+.lvl-dot:hover{transform:scale(1.12)}
+.lvl-card{
+  flex:1;border:1px solid #1e293b;border-radius:12px;padding:.85rem 1rem;
+  cursor:pointer;transition:background .18s,border-color .18s;margin:.4rem 0;
+  background:#111827;
+}
+.lvl-card:hover{background:#131c2e}
+.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.realm-pill{
+  font-size:10px;font-weight:500;padding:2px 9px;border-radius:20px;
+  border:1px solid;letter-spacing:.04em;flex-shrink:0;
+}
+.topic-name{font-size:15px;font-weight:500;color:#c9d1d9}
+.stars-row{margin-left:auto;display:flex;gap:2px;align-items:center}
+.star{
+  width:9px;height:9px;
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  background:#1e293b;transition:background .2s;
+}
+.star.on{background:#EF9F27}
+.x-flavor{font-size:12px;color:#4b5a6b;margin-top:6px;font-style:italic;line-height:1.6}
+.meta-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.entry-tag{
+  font-size:11px;padding:2px 8px;border-radius:20px;
+  border:1px solid #1e293b;color:#4b5a6b;background:#0d1117;
+}
+.pulse-wrap{display:flex;align-items:center;gap:6px;margin-left:auto}
+.x-pulse{width:7px;height:7px;border-radius:50%;background:#EF9F27;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.pulse-label{font-size:11px;color:#d4a56a;font-weight:500}
+.lock-row{display:flex;align-items:center;gap:5px;margin-top:6px}
+.lock-icon{width:11px;height:13px;border:1.5px solid #1e293b;border-radius:2px;position:relative;margin-top:-2px}
+.lock-icon::before{content:'';position:absolute;width:5px;height:4px;border:1.5px solid #1e293b;border-radius:3px 3px 0 0;bottom:100%;left:1px}
+.lock-text{font-size:11px;color:#4b5a6b}
+
+.quads{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #1e293b}
+.quads.open{display:grid}
+@media(max-width:480px){.quads{grid-template-columns:1fr}}
+.quad{border-radius:8px;padding:10px 12px;background:#0d1117;border:1px solid #1e293b}
+.q-title{font-size:10px;font-weight:600;letter-spacing:.06em;margin-bottom:6px;text-transform:uppercase}
+.q-list{list-style:none;display:flex;flex-direction:column;gap:3px}
+.q-list li{font-size:11.5px;color:#8b949e;padding-left:10px;position:relative;line-height:1.55}
+.q-list li::before{content:'·';position:absolute;left:0;color:#4b5a6b}
+
+.ms{display:flex;align-items:center;gap:8px;padding:3px 0 3px 42px;z-index:1;position:relative}
+.ms-line{width:16px;height:1px;background:#1e293b}
+.ms-text{font-size:10.5px;color:#4b5a6b;border:1px dashed #1e293b;border-radius:8px;padding:3px 9px}
+
+/* Legend */
+.xlian-legend{display:flex;gap:16px;margin-bottom:1.25rem;flex-wrap:wrap}
+.xl-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7b8d}
+.xl-dot{width:8px;height:8px;border-radius:50%}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-title">AI 编程知识库</div>
+  <div class="hero-sub">从工具到架构 &mdash; L4 金丹境 AI 工程师的系统性修炼路径</div>
+</div>
+
+<!-- Nav -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <div class="nav-tab active" onclick="switchTab(0)"><span class="tn">1</span> 总览</div>
+    <div class="nav-tab" onclick="switchTab(1)"><span class="tn">2</span> 六境修炼</div>
+    <div class="nav-tab" onclick="switchTab(2)"><span class="tn">3</span> 学习路径</div>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 1: 总览                                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card active" id="c0">
+  <div class="card-head">
+    <span class="card-icon">&#x1F5FA;</span>
+    <div class="card-text">
+      <div class="card-title">AI 编程知识库</div>
+      <div class="card-sub">四个模块覆盖工具、框架、案例与修炼路径</div>
+    </div>
+    <span class="badge">L4 金丹境</span>
+  </div>
+  <div class="card-body">
+
+    <div class="intro-block">
+      AI 编程不只是"让 AI 帮你写代码"，而是<b>重新定义人机协作模式</b>的工程实践。这个知识库聚焦 L4 金丹境的核心能力：<b>工具链掌握、多 Agent 编排理解、实战案例拆解</b>。从 tmux 终端配置到 oh-my-claudecode 框架深度拆解，系统化建立 AI 工程师的技术认知基础。
+    </div>
+
+    <div class="sl">知识模块导航</div>
+    <div class="nav-cards">
+      <a class="nav-card" href="tools.html">
+        <span class="nav-card-icon">&#x1F5A5;</span>
+        <div class="nav-card-title">工具篇</div>
+        <div class="nav-card-desc">tmux + iTerm2 + Claude Code &mdash; 构建高效的 AI 编程终端环境，多窗格并行工作流</div>
+        <div class="nav-card-arrow">tools.html &rarr;</div>
+      </a>
+      <a class="nav-card" href="iterm2.html">
+        <span class="nav-card-icon">&#x1F4BB;</span>
+        <div class="nav-card-title">iTerm2 使用指导</div>
+        <div class="nav-card-desc">macOS 最强终端 &mdash; 分屏、Profile、Shell Integration、tmux 集成、Python API</div>
+        <div class="nav-card-arrow">iterm2.html &rarr;</div>
+      </a>
+      <a class="nav-card" href="omc.html">
+        <span class="nav-card-icon">&#x1F9E0;</span>
+        <div class="nav-card-title">OMC 深度拆解</div>
+        <div class="nav-card-desc">oh-my-claudecode 多 Agent 编排框架 &mdash; 从源码到架构的完整分析</div>
+        <div class="nav-card-arrow">omc.html &rarr;</div>
+      </a>
+      <a class="nav-card" href="cases.html">
+        <span class="nav-card-icon">&#x1F4BC;</span>
+        <div class="nav-card-title">实战案例</div>
+        <div class="nav-card-desc">PM 音频客服 Agent、企业 RAG 落地 &mdash; 真实场景下的工程决策记录</div>
+        <div class="nav-card-arrow">cases.html &rarr;</div>
+      </a>
+      <a class="nav-card" href="#" onclick="switchTab(1);return false;">
+        <span class="nav-card-icon">&#x2728;</span>
+        <div class="nav-card-title">六境修炼路径</div>
+        <div class="nav-card-desc">L0 凡人境 &rarr; L5 元婴境 &mdash; 个人 AI 能力成长的完整地图</div>
+        <div class="nav-card-arrow">本页 Tab 2 &rarr;</div>
+      </a>
+    </div>
+
+    <div class="sl">知识体系</div>
+    <table class="dtable">
+      <thead><tr><th>模块</th><th>核心内容</th><th>境界对应</th></tr></thead>
+      <tr><td>工具篇</td><td>tmux 三层结构、iTerm2 坑排查、Claude Code 多实例管理</td><td class="td-y">L3–L4</td></tr>
+      <tr><td>iTerm2 指导</td><td>安装配置、分屏 Profile、Shell Integration、Triggers、tmux 集成、Python API</td><td class="td-y">L3</td></tr>
+      <tr><td>OMC 拆解</td><td>Agent 编排模式、Executor/Planner 设计、Skill 系统机制</td><td class="td-y">L4–L5</td></tr>
+      <tr><td>实战案例</td><td>音曼客服三角色架构、RAG 知识库生产化、AI 工程踩坑记</td><td class="td-y">L4</td></tr>
+      <tr><td>六境修炼</td><td>六个成长阶段的认知目标、工具清单、项目产出</td><td class="td-y">L0–L5</td></tr>
+    </table>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 2: 六境修炼                             -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c1">
+  <div class="card-head">
+    <span class="card-icon">&#x26A1;</span>
+    <div class="card-text">
+      <div class="card-title">六境修炼路径</div>
+      <div class="card-sub">从凡人到元婴 &mdash; AI 能力成长的完整地图</div>
+    </div>
+    <span class="badge">L4 进行中</span>
+  </div>
+  <div class="card-body">
+
+    <div class="xlian-legend">
+      <div class="xl-item"><div class="xl-dot" style="background:#EF9F27"></div>当前境界</div>
+      <div class="xl-item"><div class="xl-dot" style="background:#AFA9EC"></div>待解锁</div>
+      <div class="xl-item"><div class="xl-dot" style="background:#1e293b"></div>已突破</div>
+    </div>
+
+    <div class="xlian-wrap">
+      <div class="tl" id="tl"><div class="tl-line"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 3: 学习路径                             -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c2">
+  <div class="card-head">
+    <span class="card-icon">&#x1F9ED;</span>
+    <div class="card-text">
+      <div class="card-title">推荐学习顺序</div>
+      <div class="card-sub">按模块依次深入，建立系统性认知</div>
+    </div>
+  </div>
+  <div class="card-body">
+
+    <div class="goal">
+      <span class="goal-icon">&#x1F3AF;</span>
+      <div>
+        <div class="goal-lbl">LEARNING GOAL</div>
+        <div class="goal-txt">四个模块有内在的学习逻辑：先搭好工具环境，再理解编排框架，再看实战落地，最后把自己定位在六境路径上。</div>
+      </div>
+    </div>
+
+    <div class="steps" style="margin-top:1rem">
+      <div class="path-step">
+        <div class="ps-m"><div class="ps-d">1</div><div class="ps-r"></div></div>
+        <div class="ps-c">
+          <div class="ps-t">工具篇 &mdash; tmux + iTerm2 + Claude Code</div>
+          <div class="ps-p">从零搭建 AI 编程的终端工作台。学会 <b>tmux 三层结构</b>（Session / Window / Pane），配置 iTerm2 避开常见坑，理解 Claude Code 多实例管理的四种方式。环境不对，后续一切低效。</div>
+          <a class="ps-link" href="tools.html">打开工具篇 &rarr;</a>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-m"><div class="ps-d">2</div><div class="ps-r"></div></div>
+        <div class="ps-c">
+          <div class="ps-t">OMC 深度拆解 &mdash; 多 Agent 编排框架</div>
+          <div class="ps-p">深入理解 oh-my-claudecode 的<b>架构设计与 Agent 编排模式</b>。从 Executor / Planner / Architect 角色分工，到 Skill 系统机制，到 Ralph / Autopilot 执行模式。是 L4 金丹境最重要的工程框架认知。</div>
+          <a class="ps-link" href="omc.html">打开 OMC 拆解 &rarr;</a>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-m"><div class="ps-d">3</div><div class="ps-r"></div></div>
+        <div class="ps-c">
+          <div class="ps-t">实战案例 &mdash; PM 音频客服等</div>
+          <div class="ps-p">用真实项目检验理论。<b>音曼客服三角色架构</b>（接待 / 专家 / 验收）是多 Agent 协作的完整样本；企业 RAG 落地是 L3 筑基境知识的工程延伸。案例不只是看，要对照自己的项目找共鸣。</div>
+          <a class="ps-link" href="cases.html">打开实战案例 &rarr;</a>
+        </div>
+      </div>
+      <div class="path-step">
+        <div class="ps-m"><div class="ps-d">4</div></div>
+        <div class="ps-c">
+          <div class="ps-t">六境修炼 &mdash; 定位自己，规划突破</div>
+          <div class="ps-p">回到总图，把自己的位置标出来。每个境界有明确的<b>突破条件</b>：能向外行清晰解释、能稳定复现预期输出、能独立上线真实应用、能交付自主完成复杂任务的 Agent。路径清晰，修炼不迷失。</div>
+          <a class="ps-link" href="#" onclick="switchTab(1);return false;">查看六境路径 &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">进阶资源</div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">EXTERNAL</div>
+      <b>ai-handbook 完整知识库</b>覆盖六境全路径 &mdash; RAG（L3 筑基境）、MCP 协议（L4）、Agent 架构与规划推理（L4）、LLM 哲学（L3/L4）均有独立深度文档。AI 编程知识库是其中 L4 的工程实践专区。
+    </div>
+
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<div class="footer">AI 修炼册 &middot; bob798/ai-handbook &middot; AI 编程知识库</div>
+
+<!-- Drawer (keyword detail) -->
+<div class="dov" id="dov" onclick="closeKw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-h">
+    <span class="drw-ic" id="dIc"></span>
+    <div style="flex:1"><div class="drw-ti" id="dTi"></div><div class="drw-en" id="dEn"></div></div>
+    <span class="drw-x" onclick="closeKw()">&times;</span>
+  </div>
+  <div class="drw-body" id="dBd"></div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+/* =====================================================
+   六境修炼 — Timeline JS
+   Ported from ai-xiulian-ce.html, dark theme adapted
+===================================================== */
+const D=[
+  {id:'l0',lv:0,realm:'凡人境',topic:'AI 认知',stars:1,
+   rc:'#2a2d34',bc:'#3a3d44',tc:'#8b949e',bg:'rgba(80,78,72,.12)',bt:'#c9d1d9',
+   flavor:'道可道，非常道。先破幻觉，再立认知。AI 是什么，不是什么。',
+   entries:['所有人的起点'],
+   quads:{
+     cognition:['LLM / AI / AGI 的概念边界','Transformer：不懂数学也能理解','幻觉（Hallucination）的成因','模型 vs 产品：Claude / GPT / Gemini','Token 是什么，为什么要收费'],
+     tools:['Claude.ai：感受最先进的对话 AI','Perplexity：AI 搜索的第一感知','NotebookLM：AI 辅助阅读理解','YouTube / B站：AI 入门视频精选'],
+     projects:['用 AI 回答 10 个真实疑问，记录感受','让 AI 帮你写邮件，逐句对比原文','记录一周内：哪些场景用了 AI，哪些没用'],
+     output:['写：「我眼中的 AI 是什么」500字','向一位朋友解释 ChatGPT 为什么会胡说']
+   }
+  },
+  {id:'l1',lv:1,realm:'入道境',topic:'AI 使用',stars:2,
+   rc:'#1a2233',bc:'#2a4a6e',tc:'#5a9fd4',bg:'rgba(55,138,221,.08)',bt:'#a8d0f0',
+   flavor:'工欲善其事，必先利其器。学会与 AI 对话，是一切修炼的基础。',
+   entries:['产品经理','运营/市场','非技术背景'],
+   quads:{
+     cognition:['什么任务 AI 擅长，什么不擅长','上下文窗口与对话历史的关系','为什么同一问题每次答案不同','如何判断 AI 输出的可信度'],
+     tools:['Claude：写作/分析/长文首选','ChatGPT：通用场景/插件生态','Notion AI：嵌入工作流','Midjourney：图像生成入门体验'],
+     projects:['用 AI 完成一份完整的工作汇报','建立个人 Prompt 收藏夹（20条以上）','用 AI 梳理一个你完全陌生的领域'],
+     output:['分享：「这5个场景 AI 真的帮了我」','整理：我的 AI 工具箱 2025 版']
+   }
+  },
+  {id:'l2',lv:2,realm:'炼气境',topic:'Prompt 工程',stars:3,
+   rc:'#132518',bc:'#2a6e4a',tc:'#4db882',bg:'rgba(46,180,113,.08)',bt:'#7dcea0',
+   flavor:'炼气者，炼的是意图与语言之间的转换精度。说得准，AI 才懂你。',
+   entries:['内容创作者','有 AI 使用经验者'],
+   quads:{
+     cognition:['System Prompt vs User Prompt','Few-shot / Chain-of-thought 提示法','Temperature：创意性与确定性的权衡','角色设定（Persona）的作用机制','结构化输出：控制 JSON / Markdown 格式'],
+     tools:['Anthropic 官方 Prompt 工程文档','PromptPerfect：prompt 自动优化','LangSmith：prompt 测试与版本管理','Obsidian / Notion：个人 prompt 模板库'],
+     projects:['为5个工作场景各写1个可复用模板','测试同一任务的10种写法，对比输出质量','设计一个 AI 写作助手的完整 System Prompt'],
+     output:['写：「我的 Prompt 工程方法论」','开源你的 Prompt 模板库，附使用说明']
+   }
+  },
+  {id:'l3',lv:3,realm:'筑基境',topic:'AI 开发',stars:4,
+   rc:'#172110',bc:'#3a6018',tc:'#6aaa30',bg:'rgba(120,200,60,.08)',bt:'#a0d870',
+   flavor:'筑基者，将 AI 能力嵌入系统。从「会用」到「会做」，跨越最关键的一步。',
+   entries:['后端/全栈工程师','Java / Python 开发者'],
+   quads:{
+     cognition:['API 调用：Messages / Tokens / Streaming','RAG 架构：检索增强生成的核心原理','Embedding 向量化的直觉理解','Function Calling / Tool Use 机制','成本模型：Input / Output / Prompt Cache'],
+     tools:['Anthropic SDK（Python / Node.js）','LangChain / LlamaIndex：RAG 框架','Pinecone / Chroma：向量数据库','Vercel AI SDK：前端 AI 集成'],
+     projects:['调 API 做一个带记忆的聊天机器人','给自己的文档建一个 RAG 问答系统','Speakeasy 语言学习 app（已在进行）'],
+     output:['写：「从零搭建 RAG 系统踩过的坑」','开源一个 RAG Demo，附完整教程']
+   }
+  },
+  {id:'l4',lv:4,realm:'金丹境',topic:'Agent 工程',stars:5,current:true,
+   rc:'#2a1d06',bc:'#EF9F27',tc:'#EF9F27',bg:'rgba(239,159,39,.08)',bt:'#F5BA5A',
+   flavor:'金丹已成，自主决策之力初现。Agent 不是工具，是协作者。',
+   entries:['AI 工程师','有 AI 应用开发经验者'],
+   quads:{
+     cognition:['Agent 三要素：感知 / 决策 / 行动','工具调用链（Tool Chain）的设计','Memory 类型：短期/长期/实体/语义','Rate Limit 与 Session 状态恢复机制','多 Agent 协作：通信协议与拓扑选择'],
+     tools:['Claude Code：agentic coding 核心','oh-my-claudecode（OMC）：多模式编排','LangGraph：有向图状态机框架','claude-auto-retry：rate limit 自动续跑'],
+     projects:['音曼客服 Agent（三角色架构）','OMC 架构分析：案例深度拆解文章','企业 RAG 知识库系统生产化落地'],
+     output:['写：「我理解的 Agent」系列长文','AI 开发日记：Agent 实战（视频/文章双线）']
+   }
+  },
+  {id:'l5',lv:5,realm:'元婴境',topic:'系统架构',stars:6,locked:true,
+   rc:'#1a1830',bc:'#534AB7',tc:'#8b84e0',bg:'rgba(175,169,236,.08)',bt:'#c5c0f0',
+   flavor:'元婴出窍，纵览全局。系统不是工具的堆砌，是工程哲学的具象。',
+   entries:['目标境界'],
+   quads:{
+     cognition:['多 Agent 设计模式：Planner/Worker/Reviewer','可观测性三要素：Trace / Metric / Log','成本治理：模型分级路由与 Token 预算','Human-in-the-loop：置信度阈值触发机制','AI 系统失效模式与降级策略'],
+     tools:['agent-orchestrator：并行 Agent 舰队管理','LangFuse / LangSmith：生产可观测','sortie：issue → agent session 自动化','自建 Planner Agent（CrewAI / LangGraph）'],
+     projects:['设计零人工干预的软件开发流水线','构建 AI 编程团队协同规范（team CLAUDE.md）','将音曼客服扩展为完整产品级系统'],
+     output:['写：「AI 系统架构设计指南」','开课：AI Agent 工程师成长路径']
+   }
+  }
+];
+
+const MS=[
+  '突破：能向外行清晰解释 LLM，且不说错',
+  '突破：AI 成为日常工作真实习惯，不只是新鲜感',
+  '突破：能稳定复现符合预期的输出，不靠运气',
+  '突破：独立上线第一个真实用户能用的 AI 应用',
+  '突破：交付一个自主完成复杂任务的 Agent 系统',
+];
+
+const QT={cognition:'认知目标',tools:'修炼工具',projects:'实战项目',output:'输出沉淀'};
+const tl=document.getElementById('tl');
+let activeId=null;
+
+function xStars(n,max=6){
+  return Array.from({length:max},(_,i)=>'<div class="star'+(i<n?' on':'')+'"></div>').join('');
+}
+function xQuad(key,items,tc){
+  return '<div class="quad">'
+    +'<div class="q-title" style="color:'+tc+'">'+QT[key]+'</div>'
+    +'<ul class="q-list">'+items.map(function(it){return '<li>'+it+'</li>';}).join('')+'</ul>'
+    +'</div>';
+}
+
+D.forEach(function(d,i){
+  var div=document.createElement('div');
+  div.className='lvl';
+  var lockHTML=d.locked
+    ?'<div class="lock-row"><div class="lock-icon"></div><span class="lock-text">修炼中，尚未解锁 &mdash; 当前目标境界</span></div>'
+    :'';
+  var curHTML=d.current
+    ?'<div class="pulse-wrap"><div class="x-pulse"></div><span class="pulse-label">你当前在这里</span></div>'
+    :'';
+
+  div.innerHTML='<div class="lvl-row">'
+    +'<div class="lvl-dot" style="border-color:'+d.bc+';color:'+d.tc+'" onclick="xTog(\''+d.id+'\')">L'+d.lv+'</div>'
+    +'<div class="lvl-card" id="xcard-'+d.id+'" onclick="xTog(\''+d.id+'\')">'
+    +'<div class="card-top">'
+    +'<span class="realm-pill" style="background:'+d.bg+';color:'+d.bt+';border-color:'+d.bc+'">'+d.realm+'</span>'
+    +'<span class="topic-name">'+d.topic+'</span>'
+    +'<div class="stars-row">'+xStars(d.stars)+'</div>'
+    +'</div>'
+    +'<div class="x-flavor">'+d.flavor+'</div>'
+    +'<div class="meta-row">'
+    +d.entries.map(function(e){return '<span class="entry-tag">'+e+'</span>';}).join('')
+    +curHTML
+    +'</div>'
+    +lockHTML
+    +'<div class="quads" id="xq-'+d.id+'">'
+    +['cognition','tools','projects','output'].map(function(k){return xQuad(k,d.quads[k],d.tc);}).join('')
+    +'</div>'
+    +'</div>'
+    +'</div>';
+  tl.appendChild(div);
+
+  if(i<MS.length){
+    var ms=document.createElement('div');
+    ms.className='ms';
+    ms.innerHTML='<div class="ms-line"></div><span class="ms-text">'+MS[i]+'</span>';
+    tl.appendChild(ms);
+  }
+});
+
+function xTog(id){
+  var q=document.getElementById('xq-'+id);
+  var c=document.getElementById('xcard-'+id);
+  var d=D.find(function(x){return x.id===id;});
+  if(activeId===id){
+    q.classList.remove('open');
+    c.style.background='';
+    c.style.borderColor='';
+    activeId=null;
+  } else {
+    if(activeId){
+      document.getElementById('xq-'+activeId).classList.remove('open');
+      var pc=document.getElementById('xcard-'+activeId);
+      pc.style.background='';
+      pc.style.borderColor='';
+    }
+    activeId=id;
+    q.classList.add('open');
+    c.style.background=d.bg;
+    c.style.borderColor=d.bc;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 编程实战案例</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* === Page-specific: Hero === */
+.hero{position:relative;padding:2.5rem 1rem 1.5rem;text-align:center;background:linear-gradient(135deg,#0d1525,#1a1510,#0d1525);overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(239,159,39,.12),transparent 70%)}
+.hero-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:6px;position:relative}
+.hero-sub{font-size:13px;color:#6b7b8d;position:relative;max-width:500px;margin:0 auto}
+
+/* === Status badges for future cases === */
+.status-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;border-radius:20px;padding:2px 10px;margin-top:.5rem}
+.sb-design{background:rgba(55,138,221,.12);border:1px solid rgba(55,138,221,.25);color:#378ADD}
+.sb-wip{background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.25);color:#f0c040}
+.sb-plan{background:rgba(139,148,158,.12);border:1px solid rgba(139,148,158,.25);color:#8b949e}
+
+/* === Future case card grid === */
+.case-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:.85rem 0}
+.case-card{border-radius:12px;padding:1.1rem 1.25rem;transition:all .2s}
+.case-card:hover{transform:translateY(-2px)}
+.case-card-icon{font-size:24px;margin-bottom:.5rem}
+.case-card-title{font-size:14px;font-weight:700;color:#f0f6fc;margin-bottom:4px}
+.case-card-desc{font-size:12.5px;color:#8b949e;line-height:1.6;margin-bottom:.4rem}
+
+@media(max-width:600px){
+  .case-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Back nav -->
+<div class="back-nav">
+  <a href="index.html">&larr; AI 编程总览</a>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-title">AI 编程实战案例</div>
+  <div class="hero-sub">真实场景下 AI 编程工具的应用拆解 &mdash; 从需求到落地的全流程记录</div>
+</div>
+
+<!-- Nav -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <div class="nav-tab active" onclick="switchTab(0)"><span class="tn">1</span> PM 音频客服</div>
+    <div class="nav-tab" onclick="switchTab(1)"><span class="tn">2</span> 案例模板</div>
+    <div class="nav-tab" onclick="switchTab(2)"><span class="tn">3</span> 更多案例</div>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 1: PM 音频客服                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card active" id="c0">
+  <div class="card-head">
+    <span class="card-icon">&#x1F3A7;</span>
+    <div class="card-text">
+      <div class="card-title">OMC 赋能 PM 设计音频客服系统</div>
+      <div class="card-sub">产品经理利用多 Agent 编排，加速音频客服产品的设计全流程</div>
+    </div>
+    <span class="badge">L4 金丹境</span>
+  </div>
+  <div class="card-body">
+
+    <div class="goal">
+      <span class="goal-icon">&#x1F3AF;</span>
+      <div>
+        <div class="goal-lbl">SCENARIO</div>
+        <div class="goal-txt">产品经理利用 oh-my-claudecode（OMC）的多 Agent 编排能力，面向电商售后场景设计音频客服系统，目标是替代 60% 的人工客服通话。</div>
+      </div>
+    </div>
+
+    <div class="sl">OMC 产品通道 Agent</div>
+    <table class="dtable">
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th>能力</th>
+          <th>PM 怎么用</th>
+        </tr>
+      </thead>
+      <tr>
+        <td><code style="color:#F5BA5A">product-manager</code></td>
+        <td>需求拆解、PRD 生成、优先级排序</td>
+        <td>输入模糊想法，输出结构化需求文档</td>
+      </tr>
+      <tr>
+        <td><code style="color:#F5BA5A">ux-researcher</code></td>
+        <td>用户画像、场景分析、竞品调研</td>
+        <td>分析音频客服的用户旅程和痛点</td>
+      </tr>
+      <tr>
+        <td><code style="color:#F5BA5A">information-architect</code></td>
+        <td>信息架构、流程图、状态机设计</td>
+        <td>设计客服对话流转和状态机</td>
+      </tr>
+      <tr>
+        <td><code style="color:#F5BA5A">product-analyst</code></td>
+        <td>数据分析、指标定义、ROI 测算</td>
+        <td>定义客服系统的核心指标和成本模型</td>
+      </tr>
+    </table>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">辅助角色</div>
+      <b>researcher</b>（深度调研）&nbsp;&middot;&nbsp;<b>architect</b>（技术架构建议）&nbsp;&middot;&nbsp;<b>writer</b>（文档输出）&nbsp;&middot;&nbsp;<b>critic</b>（对抗式审核）
+    </div>
+
+    <div class="sl">四阶段操作流程</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">1</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">需求探索 &mdash; Team 模式</div>
+          <div class="step-p">三个 Agent <b>管线式协作</b>，前一个的输出自动流入后一个。PM 不需要分别跟每个 Agent 对话。</div>
+          <div class="code-wrap" id="cw1">
+            <div class="code-toggle" onclick="toggleCode('cw1')">
+              <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+              <span class="code-name">Phase 1 示例</span>
+              <span class="code-arrow">&#x25B6;</span>
+            </div>
+            <div class="code-body"><span class="cm"># PM 输入</span>
+<span class="st">"我要设计一个音频客服系统，面向电商售后场景，
+ 目标是替代 60% 的人工客服通话"</span>
+
+<span class="cm"># OMC 编排</span>
+  ux-researcher   <span class="hl-kw">→</span> 输出用户画像 + 场景地图 + 竞品分析
+  product-analyst <span class="hl-kw">→</span> 输出市场规模 + 成本对比（人工 vs AI）
+  product-manager <span class="hl-kw">→</span> 综合两者，输出需求优先级矩阵</div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">2</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">架构设计 &mdash; Team 模式</div>
+          <div class="step-p">PM 不懂技术细节，但 <b>architect Agent 会用 PM 能理解的语言</b>解释技术方案的取舍。</div>
+          <div class="code-wrap" id="cw2">
+            <div class="code-toggle" onclick="toggleCode('cw2')">
+              <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+              <span class="code-name">Phase 2 示例</span>
+              <span class="code-arrow">&#x25B6;</span>
+            </div>
+            <div class="code-body"><span class="cm"># PM 输入</span>
+<span class="st">"基于上面的需求，设计客服系统的对话流程和角色架构"</span>
+
+<span class="cm"># OMC 编排</span>
+  information-architect <span class="hl-kw">→</span> 输出对话状态机 + 角色分工图
+  architect             <span class="hl-kw">→</span> 输出技术架构建议（ASR → NLU → Agent → TTS）
+  product-manager       <span class="hl-kw">→</span> 审核两者，标注产品风险和 MVP 边界</div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">3</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">PRD 生成 &mdash; Autopilot 模式</div>
+          <div class="step-p">需求明确时，不需要多 Agent 协作。<b>product-manager</b> 在 Autopilot 模式下自主生成完整 PRD。</div>
+          <div class="code-wrap" id="cw3">
+            <div class="code-toggle" onclick="toggleCode('cw3')">
+              <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+              <span class="code-name">Phase 3 示例</span>
+              <span class="code-arrow">&#x25B6;</span>
+            </div>
+            <div class="code-body"><span class="cm"># PM 输入</span>
+<span class="st">"把前两轮的结论整理成 PRD，包含用户故事、验收标准、
+ 技术约束和 MVP 范围"</span>
+
+<span class="cm"># OMC 编排</span>
+  product-manager <span class="hl-kw">→</span> 自主生成完整 PRD
+  （Autopilot 模式：需求明确，不需要多 Agent 协作）</div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">4</div></div>
+        <div class="step-c">
+          <div class="step-t">评审预演 &mdash; Ralph 模式</div>
+          <div class="step-p"><b>持续验证循环</b>。每个 Agent 都带着「挑毛病」的视角审核，PM 在真正上评审会之前就修补了漏洞。</div>
+          <div class="code-wrap" id="cw4">
+            <div class="code-toggle" onclick="toggleCode('cw4')">
+              <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+              <span class="code-name">Phase 4 示例</span>
+              <span class="code-arrow">&#x25B6;</span>
+            </div>
+            <div class="code-body"><span class="cm"># PM 输入</span>
+<span class="st">"帮我预演评审会，找出 PRD 里的漏洞"</span>
+
+<span class="cm"># OMC 编排</span>
+  product-analyst <span class="hl-kw">→</span> 挑战指标定义（<span class="st">"60% 替代率怎么衡量？"</span>）
+  ux-researcher   <span class="hl-kw">→</span> 挑战用户体验（<span class="st">"老年用户语音识别准确率？"</span>）
+  architect       <span class="hl-kw">→</span> 挑战技术可行性（<span class="st">"实时语音延迟能控制在多少？"</span>）
+  critic          <span class="hl-kw">→</span> 综合审核，输出风险清单</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">PM 典型命令示例</div>
+
+    <div class="code-wrap" id="cw5">
+      <div class="code-toggle" onclick="toggleCode('cw5')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">示例 1 &mdash; 竞品调研</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="st">"帮我调研音频客服赛道，重点关注：
+ 1. 现有方案（讯飞/阿里云/AWS Connect）的优劣
+ 2. 用户最痛的 3 个问题
+ 3. AI 客服 vs 人工客服的成本结构"</span>
+
+<span class="cm">→ OMC 自动调度 researcher + product-analyst + ux-researcher</span></div>
+    </div>
+
+    <div class="code-wrap" id="cw6">
+      <div class="code-toggle" onclick="toggleCode('cw6')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">示例 2 &mdash; 对话流程设计</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="st">"设计一个客服对话的状态机，覆盖：
+ 问候 → 意图识别 → 问题处理 → 满意度确认 → 结束"</span>
+
+<span class="cm">→ OMC 调度 information-architect 输出 Mermaid 流程图</span></div>
+    </div>
+
+    <div class="code-wrap" id="cw7">
+      <div class="code-toggle" onclick="toggleCode('cw7')">
+        <div class="code-dots"><span class="d-r"></span><span class="d-y"></span><span class="d-g"></span></div>
+        <span class="code-name">示例 3 &mdash; 对抗式审核</span>
+        <span class="code-arrow">&#x25B6;</span>
+      </div>
+      <div class="code-body"><span class="st">"这个 PRD 有什么漏洞？假设你是技术总监，你会问什么？"</span>
+
+<span class="cm">→ OMC 调度 critic + architect 进行对抗式审核</span></div>
+    </div>
+
+    <div class="sl">效率对比表</div>
+    <table class="dtable">
+      <thead>
+        <tr>
+          <th>PM 工作环节</th>
+          <th>没有 OMC</th>
+          <th>有 OMC</th>
+        </tr>
+      </thead>
+      <tr>
+        <td>竞品调研</td>
+        <td class="td-r">自己搜索整理，2-3 天</td>
+        <td class="td-g">researcher Agent 输出结构化报告，2-3 小时</td>
+      </tr>
+      <tr>
+        <td>用户画像</td>
+        <td class="td-r">找 UX 同事排期，1-2 周</td>
+        <td class="td-g">ux-researcher Agent 基于行业数据生成初版，PM 审核修改</td>
+      </tr>
+      <tr>
+        <td>对话流程设计</td>
+        <td class="td-r">画 Visio/Figma 反复改，1 周</td>
+        <td class="td-g">information-architect 输出状态机，PM 调整业务规则</td>
+      </tr>
+      <tr>
+        <td>PRD 撰写</td>
+        <td class="td-r">写 3-5 天，格式和完整性参差</td>
+        <td class="td-g">product-manager Agent 生成结构化 PRD，PM 填充判断和决策</td>
+      </tr>
+      <tr>
+        <td>评审预演</td>
+        <td class="td-r">找同事模拟，时间难协调</td>
+        <td class="td-g">critic Agent 随时可用，多视角对抗式审核</td>
+      </tr>
+      <tr>
+        <td>技术可行性判断</td>
+        <td class="td-r">等研发评估，1-2 周</td>
+        <td class="td-g">architect Agent 即时给出技术约束和风险</td>
+      </tr>
+    </table>
+
+    <div class="sl">核心价值</div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">调研加速</div>
+      researcher / ux-researcher / product-analyst 把信息收集和结构化的脏活干了，PM 专注于<b>判断和决策</b>。
+    </div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">设计协作</div>
+      information-architect / architect 提供专业视角，PM 不需要等排期就能获得多角色反馈。
+    </div>
+    <div class="icard ic-green">
+      <div class="icard-lbl">质量防线</div>
+      critic Agent 在评审前找漏洞，Ralph 模式持续验证，PM 带着更完善的方案上会。
+    </div>
+    <div class="icard ic-yellow">
+      <div class="icard-lbl">一句话总结</div>
+      OMC 让 PM 拥有了一支随时待命的虚拟产品团队，从调研到 PRD 到评审预演，全流程都有专业角色配合。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 2: 案例模板                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c1">
+  <div class="card-head">
+    <span class="card-icon">&#x1F4CB;</span>
+    <div class="card-text">
+      <div class="card-title">案例分析模板</div>
+      <div class="card-sub">拆解任何 AI 工具应用案例的四步框架</div>
+    </div>
+    <span class="badge">可复用</span>
+  </div>
+  <div class="card-body">
+
+    <div class="goal">
+      <span class="goal-icon">&#x1F4A1;</span>
+      <div>
+        <div class="goal-lbl">HOW TO USE</div>
+        <div class="goal-txt">拿到一个 AI 工具应用案例（无论是别人的还是自己的），用这四步拆解，提炼出可以迁移到你自己项目的洞察。</div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">1</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">目标 &mdash; 它解决了什么问题？</div>
+          <div class="step-p">
+            明确案例的<b>痛点</b>和<b>目标指标</b>。<br><br>
+            问自己：
+            <br>&bull; 没有 AI 工具之前，这件事怎么做的？耗时多久？
+            <br>&bull; 引入 AI 工具后，具体改善了什么环节？
+            <br>&bull; 用什么指标衡量成功？（时间、成本、质量、覆盖率……）
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">2</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">架构 &mdash; 系统是怎么设计的？</div>
+          <div class="step-p">
+            拆解<b>角色分工</b>和<b>信息流向</b>。<br><br>
+            问自己：
+            <br>&bull; 涉及哪些角色（Agent / 人 / 工具）？每个角色的职责边界在哪？
+            <br>&bull; 信息是怎么流动的？谁产出，谁消费，谁决策？
+            <br>&bull; 用了哪种编排模式？（顺序 / 并行 / 管线 / 循环）
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">3</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">关键决策 &mdash; 做了哪些权衡？</div>
+          <div class="step-p">
+            找出案例中的<b>取舍点</b>和<b>边界条件</b>。<br><br>
+            问自己：
+            <br>&bull; 为什么选这个方案，而不是更简单或更复杂的？
+            <br>&bull; 有没有刻意不做的事？（MVP 边界在哪？）
+            <br>&bull; 如果规模扩大 10 倍，这个设计会在哪里撑不住？
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">4</div></div>
+        <div class="step-c">
+          <div class="step-t">经验 &mdash; 什么可以复用到你的项目？</div>
+          <div class="step-p">
+            从案例中提炼<b>可迁移的模式</b>。<br><br>
+            问自己：
+            <br>&bull; 这个案例中哪个角色分工方式可以直接借鉴？
+            <br>&bull; 哪个编排模式适合我当前项目的某个环节？
+            <br>&bull; 有什么坑是案例里踩过的，我可以提前绕开？
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sl">用音频客服案例套模板</div>
+    <div class="icard ic-orange">
+      <div class="icard-lbl">目标</div>
+      PM 独自设计复杂系统效率低，排期依赖重。目标：用 OMC 把竞品调研从 3 天缩到 3 小时，PRD 撰写从 5 天缩到 1 天。
+    </div>
+    <div class="icard ic-blue">
+      <div class="icard-lbl">架构</div>
+      四个专业 Agent（PM / UX / IA / PA）+ 四个辅助角色，Team 模式管线协作 → Autopilot 模式生成文档 → Ralph 模式持续验证。
+    </div>
+    <div class="icard ic-yellow">
+      <div class="icard-lbl">关键决策</div>
+      PM 只做「判断和决策」，Agent 做「信息收集和结构化」。刻意不让 Agent 替代 PM 的业务判断。
+    </div>
+    <div class="icard ic-green">
+      <div class="icard-lbl">经验</div>
+      「对抗式审核」模式（Ralph + critic）可以直接复用到任何需要提前发现漏洞的场景：代码审查、方案评审、风险自查。
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Tab 3: 更多案例                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="card" id="c2">
+  <div class="card-head">
+    <span class="card-icon">&#x1F30F;</span>
+    <div class="card-text">
+      <div class="card-title">更多案例</div>
+      <div class="card-sub">来自 ai-handbook 各境修炼的实战项目案例</div>
+    </div>
+  </div>
+  <div class="card-body">
+
+    <div class="sl">进行中 &amp; 规划中</div>
+
+    <div class="case-grid">
+      <div class="icard ic-blue case-card">
+        <div class="case-card-icon">&#x1F4DE;</div>
+        <div class="case-card-title">音曼客服 Agent</div>
+        <div class="case-card-desc">三角色架构（接待 / 专家 / 验收），基于状态机的对话流转，Python + Claude API + MCP 技术栈。</div>
+        <span class="status-badge sb-design">设计中</span>
+      </div>
+      <div class="icard ic-yellow case-card">
+        <div class="case-card-icon">&#x1F4AC;</div>
+        <div class="case-card-title">Speakeasy 语言学习</div>
+        <div class="case-card-desc">RAG 词典功能，将语料库构建为可检索的向量知识库，Resource 而非 Tool 的架构决策。</div>
+        <span class="status-badge sb-wip">进行中</span>
+      </div>
+    </div>
+
+    <div class="case-grid">
+      <div class="icard ic-orange case-card" style="opacity:.7">
+        <div class="case-card-icon">&#x1F3DB;</div>
+        <div class="case-card-title">企业 RAG 知识库</div>
+        <div class="case-card-desc">生产化落地方案：ChromaDB 持久化、增量 upsert、RAGAS 评估框架、分块策略优化。</div>
+        <span class="status-badge sb-plan">规划中</span>
+      </div>
+    </div>
+
+    <div class="sl">案例收录标准</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-m"><div class="step-d">&#x2713;</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">有真实问题</div>
+          <div class="step-p">不是教程演示，而是真实遇到的需求和痛点。有具体的"没有 AI 工具之前"的对比。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">&#x2713;</div><div class="step-r"></div></div>
+        <div class="step-c">
+          <div class="step-t">架构可拆解</div>
+          <div class="step-p">能用角色分工 + 信息流向的方式描述系统设计，能画出来。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-m"><div class="step-d">&#x2713;</div></div>
+        <div class="step-c">
+          <div class="step-t">经验可迁移</div>
+          <div class="step-p">至少有一个可以直接复用到其他项目的模式或决策。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="icard ic-orange">
+      <div class="icard-lbl">贡献案例</div>
+      如果你有符合标准的 AI 编程实战案例，欢迎提交到 <b>cases/</b> 目录。用 Markdown 写，参考 <code style="color:#F5BA5A">omc-pm-audio-cs.md</code> 的结构。
+    </div>
+
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<div class="footer">AI 修炼册 &middot; bob798/ai-handbook &middot; AI 编程实战案例</div>
+
+<!-- Drawer (keyword detail) -->
+<div class="dov" id="dov" onclick="closeKw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-h">
+    <span class="drw-ic" id="dIc"></span>
+    <div style="flex:1"><div class="drw-ti" id="dTi"></div><div class="drw-en" id="dEn"></div></div>
+    <span class="drw-x" onclick="closeKw()">&times;</span>
+  </div>
+  <div class="drw-body" id="dBd"></div>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>
