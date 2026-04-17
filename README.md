@@ -15,7 +15,7 @@
 
 **MCP · Agent · RAG · AI Programming · Methodology**
 
-**[🌐 在线文档站](https://bob798.github.io/ai-handbook/)** · **[📖 交互笔记合集](./interactive)** · **[💻 Runnable Code](./code)** · **[📮 AI 开发日记](https://bob798.github.io)**
+**[🌐 在线文档站](https://bob798.github.io/learn-ai-engineering/)** · **[📖 交互笔记合集](./interactive)** · **[💻 Runnable Code](./code)** · **[📮 AI 开发日记](https://bob798.github.io)**
 
 </div>
 
@@ -124,8 +124,8 @@ graph LR
 ## 🚀 本地启动 Docs Site
 
 ```bash
-git clone https://github.com/bob798/ai-handbook.git
-cd ai-handbook/web
+git clone https://github.com/bob798/learn-ai-engineering.git
+cd learn-ai-engineering/web
 pnpm install
 pnpm dev                 # → http://localhost:3000
 ```
@@ -153,7 +153,7 @@ Claude Desktop 配置见 [code/mcp-demo/README.md](./code/mcp-demo/README.md)。
 ## 🏗️ 项目结构
 
 ```
-ai-handbook/
+learn-ai-engineering/
 ├── content/          52 篇 Markdown（Next.js 构建目标）
 │   ├── 01-mcp/
 │   ├── 02-agent/
@@ -207,7 +207,7 @@ ai-handbook/
 [@bob798](https://github.com/bob798) · AI 应用工程师
 
 - 📖 [AI 开发日记](https://bob798.github.io) — 技术文章与行业观察
-- 🌐 [在线文档站](https://bob798.github.io/ai-handbook/)
+- 🌐 [在线文档站](https://bob798.github.io/learn-ai-engineering/)
 - 💌 发现错误或有更好理解，欢迎开 Issue
 
 ---

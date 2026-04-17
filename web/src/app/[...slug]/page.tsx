@@ -1,14 +1,15 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   docs,
   sections,
   findDoc,
-  docsBySection,
+  groupSectionDocs,
   interactiveBySection,
 } from "@/lib/docs";
 import { Sidebar } from "@/components/Sidebar";
 import { TOC } from "@/components/TOC";
+import { SectionHero } from "@/components/SectionHero";
+import { DocCard, InteractiveCard } from "@/components/DocCard";
 
 export function generateStaticParams() {
   const paths: { slug: string[] }[] = [];
@@ -27,62 +28,70 @@ export default async function DocPage({ params }: PageProps) {
   // Section index: /mcp, /agent, etc.
   const section = sections.find((s) => s.slug === slug[0]);
   if (slug.length === 1 && section) {
-    const sectionDocs = docsBySection(section.slug);
+    const { readme, groups, loose } = groupSectionDocs(section.slug);
     const viz = interactiveBySection(section.slug);
+    const docCount =
+      (readme ? 1 : 0) + loose.length + groups.reduce((n, g) => n + g.docs.length, 0);
+
+    let cardIndex = 0;
     return (
       <div className="flex">
         <Sidebar activeSection={section.slug} />
-        <main className="flex-1 min-w-0 max-w-4xl px-10 py-12">
-          <header className="mb-10 pb-8 border-b border-zinc-200 dark:border-zinc-800">
-            <div className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 mb-2">
-              Section
-            </div>
-            <h1 className="text-4xl font-bold mb-3">{section.title}</h1>
-            <p className="text-zinc-600 dark:text-zinc-400">{section.description}</p>
-          </header>
+        <main className="flex-1 min-w-0 max-w-5xl px-8 lg:px-12 py-12">
+          <SectionHero
+            section={section.slug}
+            title={section.title}
+            description={section.description}
+            docCount={docCount}
+            vizCount={viz.length}
+          />
 
-          <section className="mb-12">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-4">
-              文档
-            </h2>
-            <ul className="space-y-2">
-              {sectionDocs.map((d) => (
-                <li key={d.slug}>
-                  <Link
-                    href={`/${d.slug}`}
-                    className="block p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:border-orange-500 hover:shadow-sm transition"
-                  >
-                    <div className="font-medium">{d.title}</div>
-                    {d.description && (
-                      <div className="text-sm text-zinc-500 mt-1">{d.description}</div>
-                    )}
-                    <div className="text-xs text-zinc-400 mt-1 font-mono">{d.path}</div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+          {readme && (
+            <article
+              className="prose-doc mb-12 pb-10 border-b border-zinc-200 dark:border-zinc-800"
+              dangerouslySetInnerHTML={{ __html: readme.contentHtml }}
+            />
+          )}
+
+          {groups.map((g) => (
+            <section key={g.key} className="mb-10">
+              <div className="flex items-baseline justify-between mb-4">
+                <h2 className="text-lg font-bold">{g.label}</h2>
+                <span className="text-xs text-zinc-500">{g.docs.length} 篇</span>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {g.docs.map((d) => (
+                  <DocCard key={d.slug} doc={d} index={cardIndex++} />
+                ))}
+              </div>
+            </section>
+          ))}
+
+          {loose.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-lg font-bold mb-4">其他</h2>
+              <div className="grid gap-3 md:grid-cols-2">
+                {loose.map((d) => (
+                  <DocCard key={d.slug} doc={d} index={cardIndex++} />
+                ))}
+              </div>
+            </section>
+          )}
 
           {viz.length > 0 && (
-            <section>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-4">
-                交互笔记（HTML）
-              </h2>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {viz.map((v) => (
-                  <li key={v.file}>
-                    <a
-                      href={v.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:border-orange-500 transition text-sm"
-                    >
-                      <div className="font-medium">{v.name}</div>
-                      <div className="text-xs text-zinc-500 mt-0.5 font-mono">{v.file}</div>
-                    </a>
-                  </li>
+            <section className="mt-14 pt-10 border-t border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-baseline justify-between mb-4">
+                <h2 className="text-lg font-bold">交互笔记（HTML）</h2>
+                <span className="text-xs text-zinc-500">{viz.length} 个</span>
+              </div>
+              <p className="text-sm text-zinc-500 mb-4">
+                浏览器直接打开，含动画、可交互组件，部分主题用动画讲解比文字更直观。
+              </p>
+              <div className="grid gap-2 md:grid-cols-2">
+                {viz.map((v, i) => (
+                  <InteractiveCard key={v.file} asset={v} index={i} />
                 ))}
-              </ul>
+              </div>
             </section>
           )}
         </main>

@@ -62,7 +62,7 @@ export default function HomePage() {
                 从 MCP 开始 <ArrowRight size={16} />
               </Link>
               <a
-                href="https://github.com/bob798/ai-handbook"
+                href="https://github.com/bob798/learn-ai-engineering"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-sm font-medium transition"
@@ -186,7 +186,7 @@ export default function HomePage() {
           </div>
           <div className="flex gap-5">
             <a
-              href="https://github.com/bob798/ai-handbook"
+              href="https://github.com/bob798/learn-ai-engineering"
               className="hover:text-orange-600 transition"
             >
               GitHub
