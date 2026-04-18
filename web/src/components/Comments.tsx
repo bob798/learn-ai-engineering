@@ -5,12 +5,13 @@ import { useEffect, useRef } from "react";
 const GISCUS_CONFIG = {
   repo: "bob798/learn-ai-engineering",
   repoId: process.env.NEXT_PUBLIC_GISCUS_REPO_ID || "",
-  category: "Comments",
+  category: "General",
   categoryId: process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID || "",
   mapping: "pathname",
+  strict: "0",
   reactionsEnabled: "1",
   emitMetadata: "0",
-  inputPosition: "top",
+  inputPosition: "bottom",
   theme: "preferred_color_scheme",
   lang: "zh-CN",
 };
@@ -34,6 +35,7 @@ export function Comments() {
       "data-category": GISCUS_CONFIG.category,
       "data-category-id": GISCUS_CONFIG.categoryId,
       "data-mapping": GISCUS_CONFIG.mapping,
+      "data-strict": GISCUS_CONFIG.strict,
       "data-reactions-enabled": GISCUS_CONFIG.reactionsEnabled,
       "data-emit-metadata": GISCUS_CONFIG.emitMetadata,
       "data-input-position": GISCUS_CONFIG.inputPosition,
