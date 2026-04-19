@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReAct 论文注解 — Synergizing Reasoning and Acting in Language Models</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-card: #171a21;
+    --bg-card-hover: #1d2128;
+    --bg-elevated: #1a1e26;
+    --border: #2a2f3a;
+    --border-strong: #3a4050;
+    --text: #e4e6eb;
+    --text-dim: #9ba3af;
+    --text-muted: #6b7280;
+    --accent: #7c9eff;
+    --accent-2: #a78bfa;
+    --accent-3: #f59e0b;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --code-bg: #0a0c10;
+    --annotation-bg: rgba(124,158,255,0.08);
+    --annotation-border: rgba(124,158,255,0.25);
+    --vocab-bg: rgba(167,139,250,0.08);
+    --vocab-border: rgba(167,139,250,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.85;
+    padding: 0; margin: 0;
+  }
+
+  /* ============ TOP NAV ============ */
+  .top-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,17,21,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-brand { font-size: 0.95rem; color: var(--text); font-weight: 600; }
+  .nav-brand .brand-accent {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav-links a {
+    color: var(--text-dim); text-decoration: none; padding: 6px 14px;
+    border-radius: 6px; font-size: 0.85rem; transition: all 0.15s;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .nav-links a:hover { color: var(--text); background: var(--bg-card); }
+  .nav-links a.active { color: var(--accent); background: rgba(124,158,255,0.1); border-color: rgba(124,158,255,0.3); }
+
+  /* ============ LAYOUT ============ */
+  .page {
+    display: grid; grid-template-columns: 220px 1fr;
+    max-width: 1260px; margin: 0 auto; padding: 40px 32px 80px; gap: 48px;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .toc {
+    position: sticky; top: 80px; align-self: start;
+    max-height: calc(100vh - 100px); overflow-y: auto;
+    padding: 20px 0; border-right: 1px solid var(--border); padding-right: 20px;
+  }
+  .toc-label { font-size: 0.7rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .toc a {
+    display: block; color: var(--text-muted); text-decoration: none;
+    padding: 5px 0; font-size: 0.82rem; transition: color 0.15s;
+    border-left: 2px solid transparent; padding-left: 12px;
+  }
+  .toc a:hover { color: var(--text); }
+  .toc a.active { color: var(--accent); border-left-color: var(--accent); }
+  .toc .toc-h3 { padding-left: 24px; font-size: 0.78rem; }
+
+  /* ============ MAIN ============ */
+  .main { min-width: 0; }
+
+  /* Paper header */
+  .paper-header { margin-bottom: 48px; }
+  .paper-header h1 { font-size: 2rem; font-weight: 700; line-height: 1.3; margin-bottom: 8px; }
+  .paper-header .subtitle {
+    font-size: 1.15rem; color: var(--accent); font-style: italic; margin-bottom: 16px;
+  }
+  .paper-header .meta { color: var(--text-dim); font-size: 0.88rem; line-height: 1.7; }
+  .paper-header .meta a { color: var(--accent); text-decoration: none; }
+  .paper-header .meta a:hover { text-decoration: underline; }
+
+  /* Section */
+  section { margin-bottom: 56px; }
+  section h2 {
+    font-size: 1.4rem; font-weight: 700; margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  section h2 .num { color: var(--accent); margin-right: 8px; }
+  section h3 { font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px; color: var(--accent-2); }
+
+  p { margin-bottom: 16px; }
+
+  /* ============ ANNOTATED BLOCK ============ */
+  .anno-block {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px 28px; margin: 20px 0;
+    position: relative;
+  }
+  .anno-block .en {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 1.02rem; line-height: 2; color: #d1d5db;
+  }
+  .anno-block .zh {
+    margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);
+    font-size: 0.95rem; color: var(--text-dim); line-height: 1.9;
+  }
+  .anno-block .zh::before {
+    content: ""; display: inline-block; width: 3px; height: 14px;
+    background: var(--accent); border-radius: 2px; margin-right: 8px; vertical-align: middle;
+  }
+  .anno-block .note {
+    margin-top: 12px; padding: 10px 14px;
+    background: var(--annotation-bg); border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0; font-size: 0.88rem; color: var(--accent);
+  }
+
+  /* Highlighted phrase */
+  .hl {
+    background: rgba(124,158,255,0.15); padding: 1px 5px; border-radius: 3px;
+    cursor: help; position: relative; border-bottom: 1px dashed var(--accent);
+    transition: background 0.15s;
+  }
+  .hl:hover { background: rgba(124,158,255,0.3); }
+  .hl .tip {
+    display: none; position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%); background: #1e2330; border: 1px solid var(--accent);
+    border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; color: var(--accent);
+    white-space: nowrap; z-index: 50; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .hl .tip::after {
+    content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 6px solid transparent; border-top-color: var(--accent);
+  }
+  .hl:hover .tip { display: block; }
+
+  /* ============ VOCAB TABLE ============ */
+  .vocab-section { margin: 32px 0; }
+  .vocab-table {
+    width: 100%; border-collapse: collapse;
+    background: var(--bg-card); border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .vocab-table th {
+    text-align: left; padding: 12px 16px; background: var(--bg-elevated);
+    color: var(--accent); font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .vocab-table td {
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    font-size: 0.9rem; vertical-align: top;
+  }
+  .vocab-table tr:last-child td { border-bottom: none; }
+  .vocab-table .en-term { font-weight: 600; color: var(--text); font-family: Georgia, serif; }
+  .vocab-table .zh-term { color: var(--accent-2); }
+  .vocab-table .ctx { color: var(--text-muted); font-size: 0.82rem; }
+
+  /* ============ DIAGRAM ============ */
+  .diagram-wrap {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 28px; margin: 24px 0; overflow-x: auto;
+  }
+  .diagram-wrap pre {
+    font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+    font-size: 0.82rem; line-height: 1.7; color: var(--text-dim);
+    overflow-x: auto;
+  }
+
+  /* ============ LOOP VIZ ============ */
+  .loop-viz {
+    display: flex; gap: 0; align-items: stretch; margin: 28px 0;
+    overflow-x: auto; padding: 8px 0;
+  }
+  .loop-step {
+    flex: 0 0 auto; width: 220px; padding: 20px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    transition: all 0.3s; cursor: pointer; position: relative;
+  }
+  .loop-step:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .loop-step.active { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,158,255,0.15); }
+  .loop-step .step-icon { font-size: 1.6rem; margin-bottom: 8px; }
+  .loop-step .step-label {
+    font-size: 0.78rem; color: var(--accent); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .loop-step .step-title { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+  .loop-step .step-desc { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; }
+  .loop-arrow {
+    flex: 0 0 auto; display: flex; align-items: center; padding: 0 6px;
+    font-size: 1.4rem; color: var(--text-muted);
+  }
+  .loop-return {
+    text-align: center; color: var(--text-muted); font-size: 0.85rem;
+    margin-top: 12px; padding: 8px;
+    border: 1px dashed var(--border); border-radius: 8px;
+  }
+  .loop-return span { color: var(--accent); }
+
+  /* ============ COMPARISON TABLE ============ */
+  .cmp-table {
+    width: 100%; border-collapse: collapse; margin: 20px 0;
+    background: var(--bg-card); border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .cmp-table th {
+    padding: 12px 16px; text-align: left; background: var(--bg-elevated);
+    color: var(--accent); font-size: 0.82rem; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmp-table td {
+    padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88rem;
+  }
+  .cmp-table tr:last-child td { border-bottom: none; }
+  .cmp-table .yes { color: var(--success); }
+  .cmp-table .no { color: var(--danger); }
+
+  /* ============ INSIGHT CARD ============ */
+  .insight {
+    background: linear-gradient(135deg, rgba(124,158,255,0.06), rgba(167,139,250,0.06));
+    border: 1px solid var(--annotation-border); border-radius: 10px;
+    padding: 20px 24px; margin: 24px 0;
+  }
+  .insight .tag {
+    display: inline-block; font-size: 0.72rem; color: var(--accent);
+    background: rgba(124,158,255,0.15); padding: 2px 10px; border-radius: 20px;
+    margin-bottom: 10px; letter-spacing: 0.5px;
+  }
+  .insight p { margin: 0; font-size: 0.95rem; }
+
+  /* ============ TIMELINE ============ */
+  .timeline { margin: 24px 0; padding-left: 24px; border-left: 2px solid var(--border); }
+  .timeline-item { margin-bottom: 20px; position: relative; }
+  .timeline-item::before {
+    content: ""; position: absolute; left: -29px; top: 6px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--accent);
+  }
+  .timeline-item.highlight::before { background: var(--accent); }
+  .timeline-item .year { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+  .timeline-item .desc { font-size: 0.9rem; color: var(--text-dim); margin-top: 2px; }
+
+  /* ============ CODE ============ */
+  .code-block {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 18px 22px; margin: 16px 0; overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", monospace; font-size: 0.84rem;
+    line-height: 1.7; color: #a8b2c1;
+  }
+  .code-block .comment { color: #5c6370; }
+  .code-block .keyword { color: #c678dd; }
+  .code-block .string { color: #98c379; }
+  .code-block .func { color: #61afef; }
+  .code-block .param { color: #e5c07b; }
+
+  /* ============ TABS ============ */
+  .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+  .tab-btn {
+    padding: 8px 18px; background: var(--bg-card); border: 1px solid var(--border);
+    border-bottom: none; border-radius: 8px 8px 0 0; color: var(--text-dim);
+    font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); background: var(--bg-elevated); border-color: var(--accent); }
+  .tab-content {
+    display: none; background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 0 10px 10px 10px; padding: 24px;
+  }
+  .tab-content.active { display: block; }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    text-align: center; padding: 40px 20px; color: var(--text-muted);
+    font-size: 0.82rem; border-top: 1px solid var(--border); margin-top: 40px;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 860px) {
+    .page { grid-template-columns: 1fr; gap: 24px; padding: 20px 16px 60px; }
+    .toc { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); padding: 12px 0; }
+    .nav-links { display: none; }
+    .loop-viz { flex-direction: column; }
+    .loop-arrow { transform: rotate(90deg); padding: 4px 0; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="top-nav">
+  <div class="nav-brand"><span class="brand-accent">ReAct</span> Paper Annotated</div>
+  <div class="nav-links">
+    <a href="#abstract" class="active">Abstract</a>
+    <a href="#what">What</a>
+    <a href="#how">How</a>
+    <a href="#results">Results</a>
+    <a href="#vocab">Vocab</a>
+    <a href="#takeaways">Takeaways</a>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="toc">
+  <div class="toc-label">Contents</div>
+  <a href="#abstract">Abstract 注解</a>
+  <a href="#what" class="toc-h3">一、它是什么</a>
+  <a href="#context" class="toc-h3">&nbsp;&nbsp;历史交汇点</a>
+  <a href="#evaluation" class="toc-h3">&nbsp;&nbsp;外界评价</a>
+  <a href="#how">二、做了什么</a>
+  <a href="#four-methods" class="toc-h3">&nbsp;&nbsp;四种方法对比</a>
+  <a href="#findings" class="toc-h3">&nbsp;&nbsp;核心发现</a>
+  <a href="#mechanism">三、如何做的</a>
+  <a href="#prompt-structure" class="toc-h3">&nbsp;&nbsp;Prompt 结构</a>
+  <a href="#the-loop" class="toc-h3">&nbsp;&nbsp;The Loop</a>
+  <a href="#example" class="toc-h3">&nbsp;&nbsp;完整示例</a>
+  <a href="#results">四、实验结果</a>
+  <a href="#vocab">词汇追踪</a>
+  <a href="#takeaways">初学者要点</a>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<main class="main">
+
+<!-- ============ PAPER HEADER ============ -->
+<header class="paper-header" id="top">
+  <h1>ReAct 论文注解</h1>
+  <div class="subtitle">Synergizing Reasoning and Acting in Language Models</div>
+  <div class="meta">
+    <strong>Authors:</strong> Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, Yuan Cao<br>
+    <strong>Affiliations:</strong> Princeton University &amp; Google Research (Brain Team)<br>
+    <strong>Venue:</strong> ICLR 2023 (Oral) &middot; First published Oct 2022<br>
+    <strong>Links:</strong>
+    <a href="https://arxiv.org/abs/2210.03629">arXiv</a> &middot;
+    <a href="https://react-lm.github.io/">Project Page</a> &middot;
+    <a href="https://github.com/ysymyth/ReAct">Code</a>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- ABSTRACT ANNOTATED -->
+<!-- ============================================================ -->
+<section id="abstract">
+<h2><span class="num">&sect;0</span>Abstract 逐句注解</h2>
+
+<p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:24px;">
+  下面是论文 Abstract 的原文，每句配有中文翻译和学习笔记。
+  <span class="hl">高亮词汇<span class="tip">hover 可看释义</span></span> 表示值得记住的学术表达。
+</p>
+
+<!-- Sentence 1 -->
+<div class="anno-block">
+  <div class="en">
+    While large language models (LLMs) have demonstrated
+    <span class="hl">impressive capabilities<span class="tip">令人印象深刻的能力</span></span>
+    across tasks in language understanding and interactive decision making,
+    their abilities for <em>reasoning</em> (e.g. chain-of-thought prompting) and <em>acting</em>
+    (e.g. action plan generation)
+    <span class="hl">have primarily been studied as separate topics<span class="tip">主要被作为独立课题研究</span></span>.
+  </div>
+  <div class="zh">
+    虽然大语言模型在语言理解和交互式决策方面展示了令人印象深刻的能力，但它们的推理能力（如 Chain-of-Thought prompting）和行动能力（如动作计划生成）一直被作为独立课题分开研究。
+  </div>
+  <div class="note">
+    这句定义了论文要解决的"割裂"：推理和行动各自有人做，但没人把它们放在一起。
+  </div>
+</div>
+
+<!-- Sentence 2 -->
+<div class="anno-block">
+  <div class="en">
+    In this paper, we explore the use of LLMs to generate both
+    <span class="hl">reasoning traces<span class="tip">推理轨迹 — 模型用自然语言写出的思考过程</span></span>
+    and task-specific actions in an interleaved manner, allowing for
+    <span class="hl">greater synergy<span class="tip">更大的协同效应</span></span>
+    between the two: reasoning traces help the model
+    <span class="hl">induce, track, and update action plans as well as handle exceptions<span class="tip">归纳、追踪、更新行动计划并处理异常</span></span>,
+    while actions allow it to
+    <span class="hl">interface with external sources<span class="tip">与外部信息源交互</span></span>,
+    such as knowledge bases or environments, to gather additional information.
+  </div>
+  <div class="zh">
+    本文中，我们探索让 LLM 以<strong>交替</strong>的方式同时生成推理轨迹和任务特定的动作，使两者产生更大的协同效应：推理轨迹帮助模型归纳、追踪和更新行动计划并处理异常；而动作则让模型能与知识库或环境等外部信息源交互，获取额外信息。
+  </div>
+  <div class="note">
+    核心主张 — "interleaved manner"（交替方式）是整篇论文的灵魂词。不是"先想完再做"或"先做完再想"，而是每一步都交替。
+  </div>
+</div>
+
+<!-- Sentence 3 -->
+<div class="anno-block">
+  <div class="en">
+    <span class="hl">We apply our approach<span class="tip">我们将此方法应用于</span></span>,
+    named ReAct, to a
+    <span class="hl">diverse set of language and decision making tasks<span class="tip">多样的语言和决策任务集合</span></span>
+    and
+    <span class="hl">demonstrate its effectiveness over state-of-the-art baselines<span class="tip">证明其优于当前最优基线的有效性</span></span>,
+    as well as
+    <span class="hl">improved human interpretability and trustworthiness<span class="tip">提升的人类可解释性与可信度</span></span>
+    over methods without reasoning or acting components.
+  </div>
+  <div class="zh">
+    我们将此方法命名为 ReAct，应用于多样的语言和决策任务集合，证明了其优于当前最优基线的有效性，并且相比没有推理或行动组件的方法，具有更好的人类可解释性和可信度。
+  </div>
+  <div class="note">
+    注意 "interpretability and trustworthiness" — 这不仅是跑分高，而是人能看懂模型在想什么。这是 ReAct 区别于黑箱方法的关键卖点。
+  </div>
+</div>
+
+<!-- Sentence 4 -->
+<div class="anno-block">
+  <div class="en">
+    Concretely, on question answering (HotpotQA) and fact verification (Fever),
+    ReAct overcomes issues of
+    <span class="hl">hallucination and error propagation<span class="tip">幻觉和错误传播</span></span>
+    prevalent in chain-of-thought reasoning by interacting with a simple Wikipedia API,
+    and generates human-like task-solving trajectories that are more
+    <span class="hl">interpretable<span class="tip">可解释的</span></span>
+    than baselines without
+    <span class="hl">reasoning traces<span class="tip">推理轨迹</span></span>.
+  </div>
+  <div class="zh">
+    具体来说，在问答任务（HotpotQA）和事实验证（Fever）上，ReAct 通过与简单的 Wikipedia API 交互，克服了 Chain-of-Thought 推理中普遍存在的幻觉和错误传播问题，并生成了类似人类的任务求解轨迹，比没有推理轨迹的基线更具可解释性。
+  </div>
+</div>
+
+<!-- Sentence 5 -->
+<div class="anno-block">
+  <div class="en">
+    On two interactive decision making benchmarks (ALFWorld and WebShop),
+    ReAct
+    <span class="hl">outperforms<span class="tip">超越 / 优于</span></span>
+    <span class="hl">imitation<span class="tip">模仿（学习）</span></span>
+    and
+    <span class="hl">reinforcement<span class="tip">强化（学习）</span></span>
+    learning methods by an absolute success rate of 34% and 10% respectively,
+    while being prompted with only one or two in-context examples.
+  </div>
+  <div class="zh">
+    在两个交互式决策基准（ALFWorld 和 WebShop）上，ReAct 仅用一到两个上下文示例进行 prompting，就以绝对成功率 34% 和 10% 的优势分别超越了模仿学习和强化学习方法。
+  </div>
+  <div class="note">
+    "only one or two in-context examples" — 对比的是需要大量训练数据的 IL/RL 方法。ReAct 用 few-shot 就赢了，这体现了 LLM + prompting 范式的效率。
+  </div>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: WHAT IS IT -->
+<!-- ============================================================ -->
+<section id="what">
+<h2><span class="num">&sect;1</span>它是什么 — 两条路线的交汇</h2>
+
+<p>
+  2022 年之前，LLM 的能力沿两条独立路线发展。ReAct 的贡献是找到了交叉点。
+</p>
+
+<h3 id="context">历史交汇点</h3>
+
+<div class="diagram-wrap">
+<pre>
+路线 A：推理 (Reasoning)              路线 B：行动 (Acting)
+─────────────────────               ─────────────────────
+CoT  (Wei et al. 2022.01)          WebGPT  (OpenAI 2021.12)
+Self-Consistency (2022.03)          SayCan  (Google 2022.04)
+                                    MRKL    (AI21 2022.05)
+
+            <span style="color:var(--accent)">but these two directions have remained separate.</span>
+
+                     ↘            ↙
+                      <span style="color:var(--accent);font-weight:700">ReAct (2022.10)</span>
+             <span style="color:var(--accent)">ReAct asks, what if these two</span>
+             <span style="color:var(--accent)">fundamental capabilities are combined?</span>
+                     ↙            ↘
+             今天的 Agent 生态         今天的 Tool Use 标准
+</pre>
+</div>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="year">1970s</div>
+    <div class="desc">Sense-Plan-Act (SPA) — 经典 AI 的感知→规划→执行循环</div>
+  </div>
+  <div class="timeline-item">
+    <div class="year">1998</div>
+    <div class="desc">Sutton &amp; Barto — 强化学习的 Agent-Environment Loop (sₜ → aₜ → rₜ₊₁)</div>
+  </div>
+  <div class="timeline-item">
+    <div class="year">2021.12</div>
+    <div class="desc">WebGPT (OpenAI) — 第一次让 LLM 在浏览器中循环行动</div>
+  </div>
+  <div class="timeline-item">
+    <div class="year">2022.01</div>
+    <div class="desc">Chain-of-Thought (Wei et al.) — 让 LLM "想一想再回答"</div>
+  </div>
+  <div class="timeline-item highlight">
+    <div class="year">2022.10 &#x2B50;</div>
+    <div class="desc"><strong>ReAct</strong> — 第一次把 Thought + Action + Observation 统一到一个循环</div>
+  </div>
+  <div class="timeline-item">
+    <div class="year">2023.01+</div>
+    <div class="desc">LangChain / AutoGPT / BabyAGI — ReAct 的工程化爆发</div>
+  </div>
+  <div class="timeline-item">
+    <div class="year">2024-now</div>
+    <div class="desc">Claude Code / Cursor / Aider — loop 成为基础设施</div>
+  </div>
+</div>
+
+<h3 id="evaluation">外界评价</h3>
+
+<table class="cmp-table">
+  <tr><th>维度</th><th>评价</th></tr>
+  <tr><td>学术</td><td>ICLR 2023 Oral，2000+ 引用。后续几乎所有 agent 论文的 baseline</td></tr>
+  <tr><td>工程</td><td>LangChain 第一个 Agent 类型就叫 <code>zero-shot-react</code>；Claude Code / Cursor 的 agent loop 都是 ReAct 变体</td></tr>
+  <tr><td>概念</td><td>"Thought / Action / Observation" 成为 AI Agent 领域的通用术语</td></tr>
+</table>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: WHAT DID IT DO -->
+<!-- ============================================================ -->
+<section id="how">
+<h2><span class="num">&sect;2</span>做了什么 — 四类任务、四种对比</h2>
+
+<h3 id="four-methods">四种方法对比</h3>
+
+<table class="cmp-table">
+  <tr>
+    <th>方法</th><th>Thought?</th><th>Action?</th><th>特点</th>
+  </tr>
+  <tr>
+    <td><strong>Standard</strong></td>
+    <td class="no">&#x2718;</td><td class="no">&#x2718;</td>
+    <td>直接问直接答</td>
+  </tr>
+  <tr>
+    <td><strong>CoT</strong></td>
+    <td class="yes">&#x2714;</td><td class="no">&#x2718;</td>
+    <td>只推理不行动 → 会编造事实 (hallucination)</td>
+  </tr>
+  <tr>
+    <td><strong>Act-only</strong></td>
+    <td class="no">&#x2718;</td><td class="yes">&#x2714;</td>
+    <td>只行动不推理 → 盲目搜索，缺乏策略</td>
+  </tr>
+  <tr>
+    <td><strong>ReAct</strong></td>
+    <td class="yes">&#x2714;</td><td class="yes">&#x2714;</td>
+    <td>推理和行动交替 → 既有策略又有真实信息</td>
+  </tr>
+</table>
+
+<h3 id="findings">五条核心发现</h3>
+
+<div class="insight">
+  <div class="tag">Finding 1</div>
+  <p><strong>ReAct &gt; Act-only</strong>：有 Thought 让模型知道"该搜什么"，而不是乱搜。reasoning traces help the model induce, track, and update action plans.</p>
+</div>
+<div class="insight">
+  <div class="tag">Finding 2</div>
+  <p><strong>ReAct &gt; CoT</strong>：有 Action 让模型拿到真实信息。ReAct overcomes issues of hallucination and error propagation by interacting with a simple Wikipedia API.</p>
+</div>
+<div class="insight">
+  <div class="tag">Finding 3</div>
+  <p><strong>Hallucination 大幅降低</strong>：CoT 在 FEVER 上的主要失败原因是编造事实，ReAct 因为能查 Wikipedia，几乎消除了这类错误。</p>
+</div>
+<div class="insight">
+  <div class="tag">Finding 4 (诚实)</div>
+  <p><strong>CoT + Self-Consistency 在纯推理上可能更强</strong>。论文没有回避自己的短板 — ReAct 解决的是"需要外部信息"的问题，不是所有问题。</p>
+</div>
+<div class="insight">
+  <div class="tag">Finding 5</div>
+  <p><strong>ReAct + CoT-SC 融合最强</strong>：先用 ReAct，不确定时再用 CoT (SC) 投票，取置信度更高的答案。</p>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: HOW -->
+<!-- ============================================================ -->
+<section id="mechanism">
+<h2><span class="num">&sect;3</span>如何做的 — The Loop</h2>
+
+<h3 id="prompt-structure">Prompt 五层结构</h3>
+
+<div class="diagram-wrap">
+<pre>
+<span style="color:var(--accent)">┌──────────────────────────────────────────────────────┐</span>
+<span style="color:var(--accent)">│</span> <span style="color:var(--warning)">1. INSTRUCTION</span>（系统指令）                              <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>    "Solve a question answering task with              <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>     interleaving Thought, Action, Observation..."     <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>    定义三种 Action: Search / Lookup / Finish           <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">├──────────────────────────────────────────────────────┤</span>
+<span style="color:var(--accent)">│</span> <span style="color:var(--warning)">2. Few-shot 示例</span>（6 道完整示例）                        <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>    每道包含完整 Thought→Action→Observation 循环         <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">├──────────────────────────────────────────────────────┤</span>
+<span style="color:var(--accent)">│</span> <span style="color:var(--warning)">3. 当前题目</span>                                            <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>    "Question: Were Scott Derrickson and Ed Wood..."    <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">├──────────────────────────────────────────────────────┤</span>
+<span style="color:var(--accent)">│</span> <span style="color:var(--warning)">4. 已有的推理历史</span>（逐轮累加）                            <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>    Thought 1→Action 1→Observation 1→Thought 2→...     <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">├──────────────────────────────────────────────────────┤</span>
+<span style="color:var(--accent)">│</span> <span style="color:var(--warning)">5. 当前轮提示前缀</span>                                      <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>    "Thought {i}:" ← 模型从此续写                       <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">│</span>    stop_sequences = ["\nObservation {i}:"]              <span style="color:var(--accent)">│</span>
+<span style="color:var(--accent)">└──────────────────────────────────────────────────────┘</span>
+</pre>
+</div>
+
+<h3 id="the-loop">循环机制 — 可视化</h3>
+
+<p>点击每一步查看详情：</p>
+
+<div class="loop-viz" id="loopViz">
+  <div class="loop-step active" data-step="1" onclick="activateStep(1)">
+    <div class="step-icon">&#x1F4AD;</div>
+    <div class="step-label">Step 1</div>
+    <div class="step-title">Thought</div>
+    <div class="step-desc">模型推理当前情况，规划下一步行动</div>
+  </div>
+  <div class="loop-arrow">&rarr;</div>
+  <div class="loop-step" data-step="2" onclick="activateStep(2)">
+    <div class="step-icon">&#x26A1;</div>
+    <div class="step-label">Step 2</div>
+    <div class="step-title">Action</div>
+    <div class="step-desc">模型决定调用哪个工具<br>Search / Lookup / Finish</div>
+  </div>
+  <div class="loop-arrow">&rarr;</div>
+  <div class="loop-step" data-step="3" onclick="activateStep(3)">
+    <div class="step-icon">&#x1F50D;</div>
+    <div class="step-label">Step 3</div>
+    <div class="step-title">Observation</div>
+    <div class="step-desc">程序执行 Action，返回真实结果（非模型编造）</div>
+  </div>
+  <div class="loop-arrow">&rarr;</div>
+  <div class="loop-step" data-step="4" onclick="activateStep(4)">
+    <div class="step-icon">&#x1F501;</div>
+    <div class="step-label">Step 4</div>
+    <div class="step-title">Append &amp; Loop</div>
+    <div class="step-desc">本轮结果追加到 prompt，进入下一轮循环</div>
+  </div>
+</div>
+<div class="loop-return">
+  &#x21A9; 循环继续，直到模型输出 <span>Finish[answer]</span> 或达到 max_steps (默认 8 轮)
+</div>
+
+<!-- Step detail panel -->
+<div id="stepDetail" class="anno-block" style="margin-top:16px;">
+  <div id="stepDetailContent">
+    <div class="en" style="font-family:inherit;">
+      <strong>Thought（推理）</strong>— 模型用自然语言写出当前的思考。
+    </div>
+    <div class="zh">
+      对应代码：<code>llm(prompt + f"Thought {i}:", stop=[f"\\nObservation {i}:"])</code><br>
+      模型看到完整的 prompt（指令 + few-shot + 历史），从 "Thought {i}:" 开始续写。<code>stop_sequences</code> 在模型输出到 Observation 之前截断 — 不让它编造搜索结果。
+    </div>
+  </div>
+</div>
+
+<h3>stop_sequences：控制权的分界线</h3>
+
+<div class="diagram-wrap">
+<pre>
+  <span style="color:var(--success)">run_react.py (你的电脑)</span>                <span style="color:var(--accent)">LLM API (远程服务器)</span>
+  ═══════════════════════                ══════════════════════
+
+  拼接 prompt + "Thought 1:"
+              ── HTTP 请求 ──►
+              stop = ["\nObservation 1:"]
+                                         模型逐 token 生成...
+                                         "...Action 1: Search[X]"
+                                         "\nObservation 1:" ← <span style="color:var(--danger)">命中 stop!</span>
+                                         <span style="color:var(--danger)">⛔ 强制停止</span>
+              ◄── HTTP 响应 ──
+              返回 Thought + Action
+
+  解析 Action
+  → 调 Wikipedia → 拿到<span style="color:var(--success)">真实结果</span>
+  → 作为 Observation 拼回 prompt
+  → "Thought 2:" 再发给模型
+              ── HTTP 请求 ──►
+              ...循环继续...
+</pre>
+</div>
+
+<div class="insight">
+  <div class="tag">Key Insight</div>
+  <p>
+    模型看过 few-shot 里完整的 Thought → Action → Observation 循环，所以它<strong>有能力自己编造 Observation</strong>。
+    <code>stop_sequences</code> 就是"拦截点" — 用 few-shot 教模型格式，用 stop_sequences <strong>夺回内容的控制权</strong>。
+    这个思想在今天演化成了 <strong>tool_use API</strong>（Anthropic / OpenAI 的结构化工具调用接口）。
+  </p>
+</div>
+
+<h3 id="example">完整示例：HotpotQA idx=0</h3>
+
+<p><em>"Were Scott Derrickson and Ed Wood of the same nationality?"</em></p>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab(event, 'round1')">Round 1</button>
+  <button class="tab-btn" onclick="switchTab(event, 'round2')">Round 2</button>
+  <button class="tab-btn" onclick="switchTab(event, 'round3')">Round 3</button>
+</div>
+
+<div id="round1" class="tab-content active">
+  <p><strong>Thought 1:</strong> I need to search Scott Derrickson and Ed Wood, find their nationalities, then determine if they are the same.</p>
+  <p><strong>Action 1:</strong> <code>Search[Scott Derrickson]</code></p>
+  <p style="color:var(--success)"><strong>Observation 1:</strong> Scott Derrickson (born July 16, 1966) is an <strong>American</strong> filmmaker. He is known for his work in the horror genre...</p>
+  <p style="color:var(--text-muted); font-size:0.85rem">&#x2192; 模型规划了完整策略（搜两个人→比较国籍），先搜第一个人。</p>
+</div>
+
+<div id="round2" class="tab-content">
+  <p><strong>Thought 2:</strong> Scott Derrickson is an American filmmaker. I need to search Ed Wood next and find his nationality.</p>
+  <p><strong>Action 2:</strong> <code>Search[Ed Wood]</code></p>
+  <p style="color:var(--success)"><strong>Observation 2:</strong> Edward Davis Wood Jr. (October 10, 1924 &ndash; December 10, 1978) was an <strong>American</strong> filmmaker, actor and novelist...</p>
+  <p style="color:var(--text-muted); font-size:0.85rem">&#x2192; 基于 Round 1 的结果，模型知道还需要搜第二个人。</p>
+</div>
+
+<div id="round3" class="tab-content">
+  <p><strong>Thought 3:</strong> Ed Wood is also an American filmmaker. So Scott Derrickson and Ed Wood are of the same nationality.</p>
+  <p><strong>Action 3:</strong> <code>Finish[yes]</code></p>
+  <p style="color:var(--success)"><strong>Result:</strong> EM = 1 &#x2714; &nbsp; F1 = 1.00 &#x2714; &nbsp; 3 轮完成，0 次 parse 失败</p>
+  <p style="color:var(--text-muted); font-size:0.85rem">&#x2192; 两个 Observation 提供了真实国籍信息，模型做出正确判断。</p>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: RESULTS -->
+<!-- ============================================================ -->
+<section id="results">
+<h2><span class="num">&sect;4</span>实验结果概览</h2>
+
+<table class="cmp-table">
+  <tr>
+    <th>任务</th><th>指标</th><th>CoT</th><th>Act-only</th><th>ReAct</th><th>ReAct + CoT-SC</th>
+  </tr>
+  <tr>
+    <td><strong>HotpotQA</strong></td><td>EM</td>
+    <td>29.4</td><td>25.7</td><td>27.4</td><td style="color:var(--success)"><strong>35.1</strong></td>
+  </tr>
+  <tr>
+    <td><strong>FEVER</strong></td><td>Accuracy</td>
+    <td>56.3</td><td>58.9</td><td>60.9</td><td style="color:var(--success)"><strong>64.6</strong></td>
+  </tr>
+  <tr>
+    <td><strong>ALFWorld</strong></td><td>Success</td>
+    <td>—</td><td>45%</td><td style="color:var(--success)"><strong>71%</strong></td><td>—</td>
+  </tr>
+  <tr>
+    <td><strong>WebShop</strong></td><td>Success</td>
+    <td>—</td><td>30.1</td><td style="color:var(--success)"><strong>40.0</strong></td><td>—</td>
+  </tr>
+</table>
+
+<p style="color:var(--text-dim); font-size:0.88rem;">
+  数据来自论文 Table 1-4（PaLM-540B 结果）。注意 HotpotQA 上 ReAct 单独并不比 CoT 高很多，但 ReAct + CoT-SC 融合后大幅领先。这体现了两种能力的互补性。
+</p>
+
+<div class="insight">
+  <div class="tag">现代模型的提升</div>
+  <p>
+    论文用的 PaLM-540B 和 text-davinci-002 已是旧一代模型。
+    用 Claude Haiku 4.5 跑本项目的复现代码（<code>run_react.py --n 50</code>），HotpotQA EM 通常能到 40%+，远超论文数字。
+    模型变强了，但 ReAct 的循环架构没有过时。
+  </p>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- VOCAB TRACKER -->
+<!-- ============================================================ -->
+<section id="vocab">
+<h2><span class="num">&sect;V</span>词汇追踪</h2>
+
+<p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:20px;">
+  阅读论文过程中积累的学术英语表达。持续更新。
+</p>
+
+<table class="vocab-table">
+  <thead>
+    <tr><th>English</th><th>中文</th><th>论文中的语境</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="en-term">synergizing</td>
+      <td class="zh-term">协同 / 使产生协同效应</td>
+      <td class="ctx">标题 "Synergizing Reasoning and Acting" — 让推理和行动产生 1+1&gt;2 的效果</td>
+    </tr>
+    <tr>
+      <td class="en-term">reasoning traces</td>
+      <td class="zh-term">推理轨迹</td>
+      <td class="ctx">模型用自然语言写出的思考过程，即 Thought 部分</td>
+    </tr>
+    <tr>
+      <td class="en-term">interleaved manner</td>
+      <td class="zh-term">交替方式</td>
+      <td class="ctx">"generate both reasoning traces and actions in an interleaved manner"</td>
+    </tr>
+    <tr>
+      <td class="en-term">greater synergy</td>
+      <td class="zh-term">更大的协同效应</td>
+      <td class="ctx">"allowing for greater synergy between the two"</td>
+    </tr>
+    <tr>
+      <td class="en-term">impressive capabilities</td>
+      <td class="zh-term">令人印象深刻的能力</td>
+      <td class="ctx">"LLMs have demonstrated impressive capabilities"</td>
+    </tr>
+    <tr>
+      <td class="en-term">have primarily been studied as separate topics</td>
+      <td class="zh-term">主要被作为独立课题研究</td>
+      <td class="ctx">论文开篇定义的"割裂"问题</td>
+    </tr>
+    <tr>
+      <td class="en-term">induce, track, and update</td>
+      <td class="zh-term">归纳、追踪、更新</td>
+      <td class="ctx">"reasoning traces help the model induce, track, and update action plans"</td>
+    </tr>
+    <tr>
+      <td class="en-term">handle exceptions</td>
+      <td class="zh-term">处理异常</td>
+      <td class="ctx">"as well as handle exceptions" — 推理让模型能应对意外情况</td>
+    </tr>
+    <tr>
+      <td class="en-term">interface with external sources</td>
+      <td class="zh-term">与外部信息源交互</td>
+      <td class="ctx">"actions allow it to interface with external sources such as knowledge bases"</td>
+    </tr>
+    <tr>
+      <td class="en-term">diverse set of</td>
+      <td class="zh-term">多样的…集合</td>
+      <td class="ctx">"a diverse set of language and decision making tasks"</td>
+    </tr>
+    <tr>
+      <td class="en-term">state-of-the-art baselines</td>
+      <td class="zh-term">当前最优基线</td>
+      <td class="ctx">"demonstrate its effectiveness over state-of-the-art baselines"</td>
+    </tr>
+    <tr>
+      <td class="en-term">interpretability / interpretable</td>
+      <td class="zh-term">可解释性 / 可解释的</td>
+      <td class="ctx">"improved human interpretability and trustworthiness"</td>
+    </tr>
+    <tr>
+      <td class="en-term">trustworthiness</td>
+      <td class="zh-term">可信度</td>
+      <td class="ctx">人能看懂模型推理过程，因此更信任其结果</td>
+    </tr>
+    <tr>
+      <td class="en-term">hallucination</td>
+      <td class="zh-term">幻觉（编造事实）</td>
+      <td class="ctx">"overcomes issues of hallucination and error propagation"</td>
+    </tr>
+    <tr>
+      <td class="en-term">error propagation</td>
+      <td class="zh-term">错误传播</td>
+      <td class="ctx">前面的错误推理导致后续步骤全部出错</td>
+    </tr>
+    <tr>
+      <td class="en-term">outperforms</td>
+      <td class="zh-term">超越 / 优于</td>
+      <td class="ctx">"ReAct outperforms imitation and reinforcement learning methods"</td>
+    </tr>
+    <tr>
+      <td class="en-term">imitation (learning)</td>
+      <td class="zh-term">模仿学习</td>
+      <td class="ctx">从人类示范中学习策略的方法，需要大量标注数据</td>
+    </tr>
+    <tr>
+      <td class="en-term">reinforcement (learning)</td>
+      <td class="zh-term">强化学习</td>
+      <td class="ctx">通过试错和奖励信号学习策略的方法</td>
+    </tr>
+    <tr>
+      <td class="en-term">in-context examples</td>
+      <td class="zh-term">上下文示例（few-shot）</td>
+      <td class="ctx">"prompted with only one or two in-context examples"</td>
+    </tr>
+    <tr>
+      <td class="en-term">we apply our approach</td>
+      <td class="zh-term">我们将此方法应用于</td>
+      <td class="ctx">学术论文中描述方法应用的标准表达</td>
+    </tr>
+    <tr>
+      <td class="en-term">demonstrate its effectiveness</td>
+      <td class="zh-term">证明其有效性</td>
+      <td class="ctx">学术论文中描述实验验证的标准表达</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ============================================================ -->
+<!-- TAKEAWAYS -->
+<!-- ============================================================ -->
+<section id="takeaways">
+<h2><span class="num">&sect;T</span>初学者要点</h2>
+
+<h3>论文层面：记住三件事</h3>
+
+<div class="insight">
+  <div class="tag">1 / 交织是核心词</div>
+  <p>
+    不是"先想完再做"，而是<strong>每一步都交替</strong>。
+    每一轮 Thought 基于上一轮 Observation 推理，每一轮 Action 基于当前 Thought 决策。
+    这种交织让模型能<strong>根据新信息修正策略</strong>。
+  </p>
+</div>
+
+<div class="insight">
+  <div class="tag">2 / stop_sequences 是控制权分界线</div>
+  <p>
+    不是靠 prompt 求模型"不要编造"，而是用 API 参数 <code>stop_sequences</code> <strong>硬性截断</strong>。
+    程序决定什么时候该模型输出，什么时候该程序执行。
+    今天的 <code>tool_use</code> API 是同一思想的结构化演进。
+  </p>
+</div>
+
+<div class="insight">
+  <div class="tag">3 / 没有银弹</div>
+  <p>
+    论文诚实报告了 CoT (SC) 在纯推理上更强的场景。
+    ReAct 解决的是<strong>"需要外部信息 + 多步决策"</strong>的问题。
+    甚至提出了 ReAct + CoT-SC 融合策略 — 好论文不回避自己的边界。
+  </p>
+</div>
+
+<h3>代码层面：做三个实验</h3>
+
+<div class="anno-block">
+  <div class="en" style="font-family:inherit;">
+    <strong>Experiment 1 — 跑单题观察</strong>
+  </div>
+  <div class="zh">
+    <code>cd code/react-hands-on && python run_react.py --idx 0</code><br>
+    观察完整的 Thought → Action → Observation 交替输出。重点看模型在 Thought 里规划了什么。
+  </div>
+</div>
+<div class="anno-block">
+  <div class="en" style="font-family:inherit;">
+    <strong>Experiment 2 — Ablation：去掉 Thought</strong>
+  </div>
+  <div class="zh">
+    修改 INSTRUCTION，切换到 Act-only prompt，跑 50 题对比。复现论文 Figure 2 的核心实验。
+  </div>
+</div>
+<div class="anno-block">
+  <div class="en" style="font-family:inherit;">
+    <strong>Experiment 3 — 改工具粒度</strong>
+  </div>
+  <div class="zh">
+    把 Search 和 Lookup 合并成一个工具，观察 loop 长度和分数的变化。理解工具粒度对 agent 行为的影响。
+  </div>
+</div>
+
+<h3>心智模型</h3>
+
+<div class="diagram-wrap">
+<pre>
+<span style="color:var(--accent);font-weight:700">心智模型 1 — Agent = Loop + Tools + LLM</span>
+
+  ReAct 论文         run_react.py              今天的 Claude Code
+  ──────────        ──────────────            ──────────────────
+  Loop              for i in range(1,9)       while True: ...
+  Tools             Wikipedia Search/Lookup   Read/Write/Bash/Grep
+  LLM               text-davinci-002          Claude Opus 4.6
+
+  <span style="color:var(--text-dim)">骨架没变。变的是规模。</span>
+
+<span style="color:var(--accent-2);font-weight:700">心智模型 2 — Prompt 是程序，stop_sequences 是中断</span>
+
+  INSTRUCTION        = 函数签名（定义 I/O 格式）
+  Few-shot 示例      = 单元测试（示范期望行为）
+  当前题目 + 历史    = 运行时状态
+  stop_sequences     = 中断（在特定位置夺回控制权）
+</pre>
+</div>
+
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <p>
+    <a href="https://arxiv.org/abs/2210.03629">ReAct Paper</a> &middot;
+    <a href="https://react-lm.github.io/">Project Page</a> &middot;
+    <a href="https://github.com/ysymyth/ReAct">Original Code</a>
+  </p>
+  <p style="margin-top:8px;">
+    Part of <a href="/">Learn AI Engineering</a> &middot; Annotated by a learner, for learners.
+  </p>
+</footer>
+
+</main>
+</div>
+
+<!-- ============ SCRIPTS ============ -->
+<script>
+// Tab switching
+function switchTab(e, id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+// Loop step detail
+const stepDetails = {
+  1: {
+    en: '<strong>Thought（推理）</strong>— 模型用自然语言写出当前的思考。',
+    zh: '对应代码：<code>llm(prompt + f"Thought {i}:", stop=[f"\\nObservation {i}:"])</code><br>' +
+        '模型看到完整 prompt（指令 + few-shot + 历史），从 "Thought {i}:" 开始续写。' +
+        '<code>stop_sequences</code> 在模型输出到 Observation 之前截断。'
+  },
+  2: {
+    en: '<strong>Action（行动）</strong>— 模型选择调用哪个工具。',
+    zh: '模型在同一次生成中输出 Thought 和 Action（被 stop_sequences 一起截断）。' +
+        '三种可选：<code>Search[entity]</code>（搜索 Wikipedia）、<code>Lookup[keyword]</code>（在当前页面查找）、<code>Finish[answer]</code>（提交答案）。'
+  },
+  3: {
+    en: '<strong>Observation（观察）</strong>— 程序执行 Action 并返回真实结果。',
+    zh: '对应代码：<code>obs, r, done, info = env.step(action)</code><br>' +
+        '这一步完全由程序控制，不经过 LLM。Wikipedia 的真实搜索结果作为 Observation 拼回 prompt。' +
+        '<strong>这就是 stop_sequences 的意义 — 不让模型编造这部分内容。</strong>'
+  },
+  4: {
+    en: '<strong>Append & Loop（追加并循环）</strong>— 本轮结果追加到 prompt，进入下一轮。',
+    zh: '对应代码：<code>prompt += step_str</code><br>' +
+        'Prompt 每轮增长约 500-700 字符（Thought + Action + Observation）。' +
+        '退出条件：<code>Finish[answer]</code> 或达到 max_steps。'
+  }
+};
+
+function activateStep(n) {
+  document.querySelectorAll('.loop-step').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.loop-step[data-step="${n}"]`).classList.add('active');
+  const d = stepDetails[n];
+  document.getElementById('stepDetailContent').innerHTML =
+    `<div class="en" style="font-family:inherit;">${d.en}</div><div class="zh">${d.zh}</div>`;
+}
+
+// Scroll-spy for TOC and nav
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      // sidebar
+      document.querySelectorAll('.toc a').forEach(a => a.classList.remove('active'));
+      const tocLink = document.querySelector(`.toc a[href="#${id}"]`);
+      if (tocLink) tocLink.classList.add('active');
+      // top nav
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+      const navLink = document.querySelector(`.nav-links a[href="#${id}"]`);
+      if (navLink) navLink.classList.add('active');
+    }
+  });
+}, { rootMargin: '-80px 0px -60% 0px' });
+
+document.querySelectorAll('section[id], header[id]').forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
