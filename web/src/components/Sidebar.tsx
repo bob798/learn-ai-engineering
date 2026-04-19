@@ -9,6 +9,7 @@ import {
   subfolderLabel,
   type TreeNode,
 } from "@/lib/docs";
+import { SearchTrigger } from "@/components/SearchDialog";
 
 /* ── Icons ── */
 const SECTION_ICONS: Record<string, string> = {
@@ -179,11 +180,16 @@ export function Sidebar({ activeSection }: { activeSection?: string }) {
   return (
     <aside className="w-64 shrink-0 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto sticky top-0 h-screen">
       {/* Brand */}
-      <div className="px-5 pt-6 pb-4">
+      <div className="px-5 pt-6 pb-3">
         <Link href="/" className="block font-bold text-lg hover:text-orange-600 transition">
           AI Handbook
         </Link>
         <p className="text-[11px] text-zinc-400 mt-1">Learn AI Engineering</p>
+      </div>
+
+      {/* Search */}
+      <div className="px-4 pb-4">
+        <SearchTrigger />
       </div>
 
       {/* Nav sections */}
