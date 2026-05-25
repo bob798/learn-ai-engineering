@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <style>
+      .bg { fill: #FAFAF7; }
+      .label { font: 600 18px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #C0392B; letter-spacing: 4px; }
+      .title { font: 700 88px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #1A1A1A; }
+      .subtitle { font: 500 36px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #6B6B6B; }
+      .desc { font: 400 22px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #6B6B6B; letter-spacing: 2px; }
+      .corner { font: 500 14px ui-monospace, "SF Mono", Menlo, monospace; fill: #9A9A9A; letter-spacing: 1px; }
+      .dot { fill: #D9D9D6; }
+      .dot-end { fill: #C0392B; }
+      .arrow { stroke: #6B6B6B; stroke-width: 2; fill: none; }
+      .accent-line { stroke: #C0392B; stroke-width: 3; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="630"/>
+
+  <!-- Top label -->
+  <text class="label" x="100" y="120">AI ENGINEERING ARCHITECTURE · 03</text>
+  <line class="accent-line" x1="100" y1="138" x2="160" y2="138"/>
+
+  <!-- Title -->
+  <text class="title" x="100" y="260">AI 不是不懂，</text>
+  <text class="title" x="100" y="360">是会<tspan fill="#C0392B">"忘"</tspan>。</text>
+
+  <!-- Subtitle -->
+  <text class="subtitle" x="100" y="430">一次 4 轮迭代的真实复盘</text>
+
+  <!-- Visual: 4 dots → 1 highlighted -->
+  <g transform="translate(100, 500)">
+    <circle class="dot" cx="0" cy="0" r="10" opacity="0.3"/>
+    <circle class="dot" cx="40" cy="0" r="10" opacity="0.5"/>
+    <circle class="dot" cx="80" cy="0" r="10" opacity="0.7"/>
+    <circle class="dot" cx="120" cy="0" r="10" opacity="0.9"/>
+    <path class="arrow" d="M 145 0 L 200 0 M 190 -7 L 200 0 L 190 7"/>
+    <circle class="dot-end" cx="225" cy="0" r="14"/>
+  </g>
+  <text class="desc" x="100" y="555">4 轮指令 → 1 个对的版本</text>
+
+  <!-- Corner mark -->
+  <text class="corner" x="100" y="595">learn-ai-engineering</text>
+  <text class="corner" x="1080" y="595">#03</text>
+</svg>

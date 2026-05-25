@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <defs>
+    <style>
+      .bg { fill: #FAFAF7; }
+      .h { font: 600 22px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #1A1A1A; }
+      .num { font: 700 48px ui-monospace, "SF Mono", Menlo, monospace; fill: #C0392B; opacity: 0.85; }
+      .name { font: 600 22px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #1A1A1A; }
+      .tag { font: 600 13px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #C0392B; }
+      .tpl { font: 400 15px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #1A1A1A; }
+      .tpl-code { font: 400 14px ui-monospace, "SF Mono", Menlo, monospace; fill: #1A1A1A; }
+      .muted { font: 400 13px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #6B6B6B; }
+      .card { fill: #FFFFFF; stroke: #D9D9D6; stroke-width: 1; }
+      .codebox { fill: #F5F5F2; }
+      .tagbox { fill: #FBE4DC; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="600"/>
+
+  <text class="h" x="60" y="50">三个可复制的协作公式</text>
+
+  <!-- Formula 1 -->
+  <g transform="translate(60, 90)">
+    <rect class="card" width="1080" height="140" rx="10"/>
+    <text class="num" x="40" y="80">01</text>
+    <text class="name" x="120" y="55">开场 3 件事</text>
+    <rect class="tagbox" x="120" y="65" width="100" height="24" rx="4"/>
+    <text class="tag" x="135" y="82">治根本</text>
+
+    <text class="muted" x="280" y="55">任何复杂任务前，一次性说清楚：</text>
+    <rect class="codebox" x="280" y="70" width="770" height="55" rx="4"/>
+    <text class="tpl-code" x="295" y="92">受众与用途 · 风格样例 · 领域维度</text>
+    <text class="muted" x="295" y="113">「这份 X 给 Y 看，要 Z」+ 贴一段样式 +「要区分 A 和 B」</text>
+  </g>
+
+  <!-- Formula 2 -->
+  <g transform="translate(60, 250)">
+    <rect class="card" width="1080" height="140" rx="10"/>
+    <text class="num" x="40" y="80">02</text>
+    <text class="name" x="120" y="55">持久规则标记</text>
+    <rect class="tagbox" x="120" y="65" width="120" height="24" rx="4"/>
+    <text class="tag" x="135" y="82">治规则衰减</text>
+
+    <text class="muted" x="280" y="55">想让约束整篇生效，用持久化语言：</text>
+    <rect class="codebox" x="280" y="70" width="770" height="55" rx="4"/>
+    <text class="tpl-code" x="295" y="92">「始终 X」「整篇 X」「之后所有修改都遵守 X」</text>
+    <text class="muted" x="295" y="113">AI 看到这类词会把它当 session 级约束，而不是单次指令</text>
+  </g>
+
+  <!-- Formula 3 -->
+  <g transform="translate(60, 410)">
+    <rect class="card" width="1080" height="140" rx="10"/>
+    <text class="num" x="40" y="80">03</text>
+    <text class="name" x="120" y="55">冲突反问模板</text>
+    <rect class="tagbox" x="120" y="65" width="120" height="24" rx="4"/>
+    <text class="tag" x="135" y="82">治指令冲突</text>
+
+    <text class="muted" x="280" y="55">主动给 AI 一个反问的钩子：</text>
+    <rect class="codebox" x="280" y="70" width="770" height="55" rx="4"/>
+    <text class="tpl-code" x="295" y="92">「如果和之前说的有冲突，先告诉我，不要自己决定」</text>
+    <text class="muted" x="295" y="113">一句反问省一整轮迭代</text>
+  </g>
+</svg>

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" width="1200" height="480">
+  <defs>
+    <style>
+      .bg { fill: #FAFAF7; }
+      .h { font: 600 22px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #1A1A1A; }
+      .round { font: 700 36px ui-monospace, "SF Mono", Menlo, monospace; fill: #1A1A1A; }
+      .round-hot { font: 700 36px ui-monospace, "SF Mono", Menlo, monospace; fill: #C0392B; }
+      .label { font: 600 16px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #6B6B6B; letter-spacing: 2px; }
+      .body { font: 400 15px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #1A1A1A; }
+      .body-hot { font: 600 15px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #C0392B; }
+      .muted { font: 400 13px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #6B6B6B; }
+      .card { fill: #FFFFFF; stroke: #D9D9D6; stroke-width: 1; }
+      .card-hot { fill: #FBE4DC; stroke: #C0392B; stroke-width: 2; }
+      .arrow { stroke: #9A9A9A; stroke-width: 1.5; fill: none; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="480"/>
+
+  <!-- Title -->
+  <text class="h" x="60" y="50">4 轮迭代：偏差发生在哪一刻</text>
+
+  <!-- Card 1 -->
+  <g transform="translate(60, 100)">
+    <rect class="card" width="240" height="320" rx="8"/>
+    <text class="round" x="20" y="50">①</text>
+    <text class="label" x="20" y="80">指令</text>
+    <text class="body" x="20" y="105">修表 + 填前置</text>
+    <text class="muted" x="20" y="125">（23 个字）</text>
+    <line x1="20" y1="155" x2="220" y2="155" stroke="#D9D9D6"/>
+    <text class="label" x="20" y="185">偏差</text>
+    <text class="body" x="20" y="210">把"状态描述"</text>
+    <text class="body" x="20" y="232">当"操作步骤"</text>
+    <text class="muted" x="20" y="280">⚠️ 受众错位</text>
+  </g>
+
+  <!-- Arrow 1→2 -->
+  <path class="arrow" d="M 310 260 L 340 260 M 332 254 L 340 260 L 332 266"/>
+
+  <!-- Card 2 -->
+  <g transform="translate(345, 100)">
+    <rect class="card" width="240" height="320" rx="8"/>
+    <text class="round" x="20" y="50">③</text>
+    <text class="label" x="20" y="80">指令</text>
+    <text class="body" x="20" y="105">立 5 条规则</text>
+    <text class="muted" x="20" y="125">（不说已配置等）</text>
+    <line x1="20" y1="155" x2="220" y2="155" stroke="#D9D9D6"/>
+    <text class="label" x="20" y="185">偏差</text>
+    <text class="body" x="20" y="210">都做了，但</text>
+    <text class="body" x="20" y="232">简化过头</text>
+    <text class="muted" x="20" y="280">⚠️ 矫枉过正</text>
+  </g>
+
+  <!-- Arrow 2→3 -->
+  <path class="arrow" d="M 595 260 L 625 260 M 617 254 L 625 260 L 617 266"/>
+
+  <!-- Card 3 (HOT) -->
+  <g transform="translate(630, 90)">
+    <rect class="card-hot" width="240" height="340" rx="8"/>
+    <text class="round-hot" x="20" y="55">④</text>
+    <text class="label" x="20" y="85" fill="#C0392B">指令</text>
+    <text class="body-hot" x="20" y="110">「用例 1 用上一版」</text>
+    <line x1="20" y1="140" x2="220" y2="140" stroke="#C0392B" stroke-opacity="0.3"/>
+    <text class="label" x="20" y="170" fill="#C0392B">偏差</text>
+    <text class="body" x="20" y="195">机械复制，</text>
+    <text class="body" x="20" y="217">把禁掉的内容</text>
+    <text class="body-hot" x="20" y="239">塞了回去</text>
+    <text class="body-hot" x="20" y="290">🔴 违反③轮规则</text>
+    <text class="muted" x="20" y="315">规则衰减 ⭐</text>
+  </g>
+
+  <!-- Arrow 3→final -->
+  <path class="arrow" d="M 880 260 L 910 260 M 902 254 L 910 260 L 902 266"/>
+
+  <!-- Final card -->
+  <g transform="translate(915, 100)">
+    <rect class="card" width="225" height="320" rx="8"/>
+    <text class="round" x="20" y="50">手</text>
+    <text class="label" x="20" y="80">用户改</text>
+    <text class="body" x="20" y="105">动作化语言</text>
+    <text class="muted" x="20" y="125">"打开 → 点击 → 填入"</text>
+    <line x1="20" y1="155" x2="205" y2="155" stroke="#D9D9D6"/>
+    <text class="label" x="20" y="185">AI 缺失</text>
+    <text class="body" x="20" y="210">用户被扫/主扫</text>
+    <text class="body" x="20" y="232">截图失效警示</text>
+    <text class="body" x="20" y="254">转码工具链接</text>
+    <text class="muted" x="20" y="290">🟡 领域 default</text>
+  </g>
+</svg>
