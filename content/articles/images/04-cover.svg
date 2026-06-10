@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <style>
+      .bg { fill: #FAFAF7; }
+      .label { font: 600 18px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #C0392B; letter-spacing: 4px; }
+      .title { font: 700 84px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #1A1A1A; }
+      .subtitle { font: 500 34px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #6B6B6B; }
+      .desc { font: 400 22px "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; fill: #6B6B6B; letter-spacing: 2px; }
+      .corner { font: 500 14px ui-monospace, "SF Mono", Menlo, monospace; fill: #9A9A9A; letter-spacing: 1px; }
+      .chip { font: 600 20px "PingFang SC", system-ui, sans-serif; fill: #1A1A1A; }
+      .chip-sub { font: 400 15px ui-monospace, Menlo, monospace; fill: #9A9A9A; }
+      .accent-line { stroke: #C0392B; stroke-width: 3; }
+      .flow { stroke: #6B6B6B; stroke-width: 2; fill: none; }
+      .box-short { fill: #FBEDEA; stroke: #C0392B; stroke-width: 2; }
+      .box-long { fill: #ECECEA; stroke: #6B6B6B; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="630"/>
+
+  <!-- Top label -->
+  <text class="label" x="100" y="120">AI ENGINEERING ARCHITECTURE · 04</text>
+  <line class="accent-line" x1="100" y1="138" x2="160" y2="138"/>
+
+  <!-- Title -->
+  <text class="title" x="100" y="255">记忆不是</text>
+  <text class="title" x="100" y="350">塞进<tspan fill="#C0392B">上下文</tspan>。</text>
+
+  <!-- Subtitle -->
+  <text class="subtitle" x="100" y="415">短期 + 长期，手搓一个记忆层</text>
+
+  <!-- Visual: short-term box → long-term box (write-through) -->
+  <g transform="translate(100, 470)">
+    <rect class="box-short" x="0" y="0" width="200" height="70" rx="10"/>
+    <text class="chip" x="28" y="34">短期记忆</text>
+    <text class="chip-sub" x="28" y="56">context window</text>
+
+    <path class="flow" d="M 215 35 L 290 35 M 280 28 L 290 35 L 280 42"/>
+    <text class="chip-sub" x="222" y="26">write-through</text>
+
+    <rect class="box-long" x="305" y="0" width="200" height="70" rx="10"/>
+    <text class="chip" x="333" y="34">长期记忆</text>
+    <text class="chip-sub" x="333" y="56">vector store</text>
+  </g>
+
+  <!-- Corner mark -->
+  <text class="corner" x="100" y="600">learn-ai-engineering</text>
+  <text class="corner" x="1080" y="600">#04</text>
+</svg>

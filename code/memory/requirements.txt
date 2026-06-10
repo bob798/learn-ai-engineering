@@ -1,0 +1,13 @@
+# Memory Demo 依赖
+# 安装：pip install -r requirements.txt
+
+openai>=1.0.0          # OpenAI 兼容协议（siliconflow / qwen / openai 都走它）
+numpy>=1.24.0          # 向量运算 + 余弦相似度
+python-dotenv>=1.0.0   # 读取 .env 配置
+httpx>=0.24.0          # 自定义 http_client（跳过系统代理）
+
+# 可选：使用智谱 AI 时需要
+# zhipuai>=2.0.0
+
+# 可选：04_用mem0库.py 需要（A 路线：直接用 mem0 开源库）
+# mem0ai>=0.1.0
