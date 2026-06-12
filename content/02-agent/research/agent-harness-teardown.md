@@ -367,6 +367,8 @@ Anthropic 的终端编程 agent（2025-02 发布）及其抽出的通用 harness
 
 ## 九、从 0 到 1 的建造路线图
 
+> 里程碑 1/2 已有本仓库可运行实现：[code/agent/](../../../code/agent/)（V1 对标 mini-swe-agent，V2 对标 Aider，含设计决策↔报告章节的索引表）。
+
 ```
 里程碑 1（~3 天）· mini 骨架
   while-loop + bash 工具 + 步数上限 + Docker 跑
