@@ -221,7 +221,7 @@ client.beta.memory_stores.memories.create(store.id, path="/x.md", content="...")
 
 ### 专题 A：Claude Code Auto Memory 的写入逻辑
 
-**核心定性：实时记笔记，不是 dreaming 式离线合成。**【官方】文档原文 "Claude reads and writes memory files **during your session**"。
+**核心定性：两套机制并存——`extractMemories`(会话内实时记笔记) + `autoDream`(跨会话后台离线巩固)。**【官方】文档原文 "Claude reads and writes memory files **during your session**"(指前者)；后者是服务端灰度、官方文档未提及、扒二进制才可见的离线合成机制（详见专题 B 修正）。
 
 | 问题 | 实现 | 来源 |
 |---|---|---|
@@ -240,7 +240,9 @@ client.beta.memory_stores.memories.create(store.id, path="/x.md", content="...")
 
 ### 专题 B：各家 Dreaming / 离线合成对比（实时 vs 离线提炼）
 
-> "Dreaming" = 后台离线读历史、重新合成记忆。**只有 OpenAI 和 Anthropic Managed Agents 真正有；Claude Code / claude.ai / Claude memory tool 都是实时，无离线合成。**
+> "Dreaming" = 后台离线读历史、重新合成记忆。**OpenAI(Dreaming)、Anthropic Managed Agents(Dreams)、以及 Claude Code(autoDream) 都有；claude.ai / Claude API memory tool 是实时无离线合成。**
+>
+> ⚠️ **2026-06 重大更正**：本节初版曾断言"Claude Code 无离线合成、auto dream 是第三方命名"——**错误，已更正**。经扒官方二进制(v2.1.177)证实 Claude Code 内置官方 `autoDream` 后台巩固机制(见下"Claude Code autoDream"小节)。误判原因：该开关服务端灰度、官方文档零提及，纯文档调研看不到。
 
 **OpenAI ChatGPT「Dreaming」**【官方公告 2026-06-04 "Dreaming V3"，但一手页 403，引文经多家媒体转引】
 - **定义**：*"automatically curate memories in the background by referencing chat history"* —— 异步后台进程，跨多年对话合成用户画像。
@@ -257,16 +259,22 @@ client.beta.memory_stores.memories.create(store.id, path="/x.md", content="...")
 - **状态**：研究预览，需申请；支持 opus-4-8/4-7、sonnet-4-6；按 token 计费。
 - ⚠️ beta header 调研给出 `managed-agents-2026-04-21`，与 memory stores 的 `managed-agents-2026-04-01` 不同，**需核实**（Dreams 未出现在本仓库已加载的 claude-api skill 文档中，属较新功能）。
 
-**实时（无离线合成）的三者**：
-- **Claude Code Auto Memory**：实时记笔记。网上 "Claude Code auto dream" 文章是**第三方/社区命名**，非官方机制（官方文档零提及）。⚠️
-- **claude.ai Projects / Auto Memory**：项目指令 + 知识库向量检索 + 会话内记忆，**无 dreaming 式后台画像合成**。
+**Claude Code「autoDream」**（官方内置，**服务端灰度 + 官方文档未记载**）【一手证据：扒 v2.1.177 Mach-O 二进制字面字符串，已独立 grep 验证】
+- 与 turn 级实时的 `extractMemories` **并存**：autoDream 是**跨会话后台离线巩固**。
+- **触发**：`minHours:24, minSessions:5`(距上次 ≥24h 且自上次触达 ≥5 个会话) + 10 分钟扫描节流；`.consolidate-lock` 防并发。
+- **调度**：*"Nightly reflection and consolidation. Runs overnight (1–5am local)"*，由 `claude daemon` 后台进程驱动。
+- **执行**：fork 一次独立 LLM 调用(`querySource:"auto_dream"`, `task_dream`)，工具受限为只读 shell + 仅可删 memory 目录内 `.md`；prompt 标题 `# Dream: Memory Consolidation`(四阶段 Orient/Gather/Consolidate/Prune)。
+- **开关**：`autoDreamEnabled`——"When set, overrides the **server-side default**"；遥测 `tengu_auto_dream_fired/skipped/completed/failed`。
+
+**仍是实时（无离线合成）的两者**：
+- **claude.ai Projects / Auto Memory**：项目指令 + 知识库向量检索 + 会话内记忆，无 dreaming 式后台画像合成。
 - **Claude API memory tool**：纯客户端实时文件读写，无后台合成。
 
 | | 后台离线合成 | 触发 | 产物 |
 |---|---|---|---|
 | OpenAI ChatGPT | ✅ Dreaming(自动) | 自动(周期未公开) | 可编辑画像摘要 |
 | Anthropic Managed Agents | ✅ Dreams(手动) | `POST /v1/dreams` | **新 store**(原 store 不动) |
-| Claude Code Auto Memory | ❌ 实时 | 会话内 | 更新 MEMORY.md |
+| **Claude Code autoDream** | ✅ **后台离线** | **≥24h + ≥5 会话，夜间 1–5am** | 巩固/精简 `~/.claude/projects/<cwd>/memory/` |
 | claude.ai / Claude memory tool | ❌ 实时 | — | — |
 
 ### 专题 C：记忆记录的 Schema 设计

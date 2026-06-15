@@ -255,7 +255,7 @@ CREATE TABLE memory_record (
 
 ## 离线合成 / 记忆巩固对比（实时 vs 后台提炼）
 
-> 对照 survey 里"各家 Dreaming"：商用侧 OpenAI(Dreaming)、Anthropic Managed Agents(Dreams) 有后台离线合成；OSS 这边——
+> 对照 survey 里"各家 Dreaming"：商用侧 OpenAI(Dreaming)、Anthropic Managed Agents(Dreams)、**Claude Code(autoDream，扒二进制 v2.1.177 证实：≥24h+≥5 会话、夜间 1–5am 后台巩固 memory，服务端灰度+官方未文档化)** 都有后台离线合成；OSS 这边——
 
 | 项目 | 写入时机 | 离线/批量巩固 |
 |---|---|---|
