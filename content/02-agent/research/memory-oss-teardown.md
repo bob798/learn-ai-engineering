@@ -191,6 +191,104 @@ def add_note(content):
 | 生产可用 | ✅ 成熟 | ✅ 成熟(争议) | ✅ 较成熟 | ✅ 较成熟 | ✅ 中上 | ❌ 研究原型 |
 | 综合 | ~4.6 | ~3.9 | ~4.5 | ~4.1 | ~4.4 | ~3.25 |
 
+## 检索实现对比（各家 search 到底怎么做）
+
+> 共性：除 Graphiti(hybrid)外，多数核心检索仍是"向量相似 + 过滤"，图/link 是增强。
+
+| 项目 | 检索机制 | 过滤维度 | rerank/融合 | 返回 |
+|---|---|---|---|---|
+| **Letta** | archival 向量(embedding 相似)；recall 走 `conversation_search` | tags、page | — | passage 进 FIFO queue(page-in)，LLM 再决定固化 |
+| **mem0** | query 向量化 → ANN(Qdrant) | user/agent/run_id + metadata + `threshold` | v3 hybrid(向量+BM25+实体)；base 无 | `memory` + `score` |
+| **Graphiti** | **hybrid**：向量 + BM25 + 图遍历 | group_id + SearchFilters | **RRF 融合** + 可选 mmr/cross_encoder/**node_distance**/episode_mentions | EntityEdge 列表(检索期**零 LLM**) |
+| **Cognee** | `SearchType` 切换 | dataset/node_set | 依类型 | GRAPH_COMPLETION(图+LLM 生成)/RAG(向量)/CHUNKS/INSIGHTS(三元组)/CYPHER/NATURAL_LANGUAGE |
+| **Memobase** | profile=**纯 SQL 拼接**(免 embedding,<100ms)；event=pgvector 向量 | only_topics/prefer_topics | profile 可选 LLM 语义重排 | `profile()` 结构化 JSON / `context()` 可直接拼 prompt 的串 |
+| **A-MEM** | `search()` 纯 embedding(ChromaDB)；`search_agentic()`=embedding + 命中 note 的 links 邻居 | — | ⚠ 实现用 L2 当 cosine(bug #24) | note + metadata |
+
+**mem0 `search()` 详细流程**（最常被问）：
+```text
+search(query, user_id=, limit=, threshold=, filters=)
+ 1. query → embedding(默认 text-embedding-3-small)
+ 2. 向量库 ANN 相似检索取候选
+ 3. 按 user_id/agent_id/run_id + metadata 过滤(多租户隔离)
+ 4. threshold(相似度下限) + limit 截断；隐式排序 user→session→raw
+ 5. 返回 [{id, memory(事实文本), score, metadata, created_at, updated_at}]
+```
+mem0 检索的是 **add() 阶段已抽取/去重/去冲突后的"事实"**，不是原始对话——所以只需召回少量高质量事实即可，这是它省 token 的根因。开启 mem0^g(Neo4j) 后额外用实体-关系图遍历增强时序/跨事实推理。
+
+---
+
+## 记忆记录 schema 对照 + 推荐自建 schema
+
+**6 家记忆单元字段对照**
+
+| 项目 | 记忆单元 | 关键字段 | 去重/版本 | 是否带向量 |
+|---|---|---|---|---|
+| Letta | memory block / archival passage | `label/value/limit/description/read_only` | — | archival 带 |
+| mem0 | 事实记录 | `id/memory/hash(MD5)/metadata/categories/user_id,agent_id,run_id/created_at/updated_at/score` | MD5 去重 | 是 |
+| Graphiti | EntityEdge(边=事实) | `fact/fact_embedding/episodes/valid_at/invalid_at/expired_at/created_at/group_id` | 时态版本 | 是 |
+| Cognee | DataPoint | `id/created_at/updated_at/version/source_content_hash/metadata{index_fields}/ontology_valid` | content_hash + version | index_fields 决定 |
+| Memobase | profile 槽 + event | profile:`content TEXT`+`attributes JSONB`(topic/sub_topic)；event:`event_data JSONB`+`Vector` | UPDATE 覆盖 | 仅 event 带 |
+| A-MEM | MemoryNote | `content/keywords/tags/context/links/timestamp/last_accessed/retrieval_count/evolution_history` | 进化覆盖 | ChromaDB |
+
+**推荐自建 schema（融合 6 家优点，可直接建表）**
+```sql
+CREATE TABLE memory_record (
+  id            UUID PRIMARY KEY,
+  content       TEXT NOT NULL,          -- 抽取后的事实(mem0/Memobase 思路,非原文堆叠)
+  content_hash  CHAR(64),              -- 去重(mem0=MD5)
+  embedding     VECTOR(1536),          -- 放向量库
+  user_id TEXT, agent_id TEXT, run_id TEXT,  -- 四级作用域(mem0)
+  memory_type   TEXT,                  -- episodic|semantic|procedural(A-MEM/Letta 分层思想)
+  topic TEXT, sub_topic TEXT,          -- 结构化画像槽(Memobase)
+  categories    TEXT[], keywords TEXT[], links UUID[],  -- 标签+自链接(A-MEM)
+  source        TEXT, confidence REAL, -- 溯源(Graphiti episodes)+置信度
+  valid_at TIMESTAMPTZ, invalid_at TIMESTAMPTZ,  -- 双时态软遗忘(Graphiti)⭐
+  created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ, last_accessed_at TIMESTAMPTZ,
+  ttl INTERVAL, is_deleted BOOLEAN DEFAULT FALSE,
+  metadata JSONB
+);
+-- 配套:历史审计表(mem0 history:old/new/event) + 可选图层(实体-关系)
+```
+> 完整 schema 设计推导见 [[ai-memory-implementation-survey]] 专题 C。
+
+---
+
+## 离线合成 / 记忆巩固对比（实时 vs 后台提炼）
+
+> 对照 survey 里"各家 Dreaming"：商用侧 OpenAI(Dreaming)、Anthropic Managed Agents(Dreams) 有后台离线合成；OSS 这边——
+
+| 项目 | 写入时机 | 离线/批量巩固 |
+|---|---|---|
+| **Letta** | 实时(LLM 工具) | ✅ **Sleep-time agents**：idle 时后台重组/精炼 block(consolidation) |
+| **A-MEM** | 实时(每条触发邻居进化) | ✅ `consolidate_memories()` 每 `evo_threshold`(默认100) 次重建 collection |
+| **Memobase** | insert 进 buffer | ✅ 半离线：异步 flush 批量抽取 + re-summarize/reorganize 巩固 |
+| **Cognee** | `add→cognify` | ◐ cognify 可 `run_in_background`；`memify()` 后处理 enrichment |
+| **mem0** | add 同步 AUDN | ◐ v3 平台改异步队列；无专门"巩固"阶段 |
+| **Graphiti** | 实时增量(每边 LLM 失效判断) | ❌ 无离线巩固——失效是**实时**判定的(写入即处理) |
+
+要点：**Letta sleep-time / A-MEM evolution 是 OSS 里最接近"dreaming 式离线提炼"的**；Graphiti 走相反路线（实时失效，无需离线整理）。
+
+---
+
+## Benchmark landscape（评测体系 + 可复现争议）
+
+| Benchmark | 测什么 | 现状 |
+|---|---|---|
+| **DMR**(MemGPT/MSC) | 跨会话事实回忆 | 已饱和(90%+,MemGPT 93.4%/Zep 94.8%)，区分度低 |
+| **LoCoMo** | 长对话 QA,5 类(single/multi-hop/temporal/open-domain/adversarial)，~16–26k token | 主流但**被批太弱**(现代上下文可直接塞下)+ adversarial 类缺 ground truth |
+| **LongMemEval** | 更难、更贴企业长程 | 新主力,区分度更好 |
+| **BEAM(1M)** | 超长上下文记忆 | 较新 |
+
+**⚠ 可复现争议（选型必读）**：
+- mem0 自报 LoCoMo "+26%/-91%/91.6"，但 **Zep 公开反驳**(指其集成 Zep 有误、full-context baseline ~73% 反而高于 mem0 ~68%)。
+- **mem0 官方 issue #3944** 复现仅 ~0.20(时间戳 bug)。
+- Zep 自己 84% 也被第三方修正到 58.44%。
+- 多份第三方论文显示 **mem0 在多数 LoCoMo 类别反超 A-MEM**。
+
+**结论：所有厂商自报记忆 benchmark 都应标注"自评 + 有复现争议"，认真选型须自己用固定模型版本跑 ≥5 次取均值。**
+
+---
+
 ## 能直接借鉴到自己记忆层的点
 
 - **遗忘**：抄 Graphiti 的 **双时态**（`valid_at/invalid_at` 区分"世界变了"，`expired_at` 区分"认知改了"）——比硬删除强得多。
