@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="650" viewBox="0 0 1120 650" font-family="'PingFang SC','Microsoft YaHei','Hiragino Sans GB',sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#54d98c"/>
+    </marker>
+  </defs>
+  <rect width="1120" height="650" fill="#0f1420"/>
+
+  <!-- Title -->
+  <text x="560" y="40" fill="#f2f5fa" font-size="25" font-weight="700" text-anchor="middle">RollingSummarizer · 窗口在两个时间尺度上的不同行为</text>
+  <text x="560" y="67" fill="#8a93a6" font-size="14.5" text-anchor="middle">纵轴=喂给 LLM 的窗口字符数　横轴=时间(请求 turn → 每个请求内的 ReAct 轮)</text>
+
+  <!-- request bands -->
+  <rect x="80"  y="100" width="250" height="345" fill="#141b28"/>
+  <rect x="330" y="100" width="460" height="345" fill="#1e1620"/>
+  <rect x="790" y="100" width="270" height="345" fill="#141b28"/>
+  <!-- band top labels -->
+  <text x="205" y="120" fill="#9aa3b5" font-size="13.5" text-anchor="middle" font-weight="600">请求 1(短)</text>
+  <text x="560" y="120" fill="#ff9aa6" font-size="13.5" text-anchor="middle" font-weight="700">请求 2(长任务 · 同一请求内多轮)</text>
+  <text x="925" y="120" fill="#9aa3b5" font-size="13.5" text-anchor="middle" font-weight="600">请求 3</text>
+
+  <!-- boundaries -->
+  <line x1="330" y1="128" x2="330" y2="445" stroke="#3a455f" stroke-width="1.2" stroke-dasharray="4 4"/>
+  <line x1="790" y1="128" x2="790" y2="445" stroke="#3a455f" stroke-width="1.2" stroke-dasharray="4 4"/>
+  <text x="333" y="438" fill="#6b768c" font-size="10.5">Req1 未触发摘要→不回落</text>
+
+  <!-- threshold -->
+  <line x1="80" y1="277" x2="1060" y2="277" stroke="#e0556b" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="1056" y="271" fill="#e0556b" font-size="12" text-anchor="end">压缩触发阈值 12000 字符</text>
+
+  <!-- axes -->
+  <line x1="80" y1="445" x2="1060" y2="445" stroke="#3a455f" stroke-width="1.3"/>
+  <line x1="80" y1="128" x2="80" y2="445" stroke="#3a455f" stroke-width="1.3"/>
+  <text x="60" y="290" fill="#6b768c" font-size="11" transform="rotate(-90 60 290)" text-anchor="middle">窗口字符数</text>
+
+  <!-- window trajectory: Req1 + Req2 (continuous, monotonic up) -->
+  <polyline fill="none" stroke="#4cc2ff" stroke-width="2.8"
+    points="110,417 190,375 280,333 375,312 455,291 540,266 620,245 700,224 770,207"/>
+
+  <!-- cross-request drop arrow (Req2 -> Req3) -->
+  <path d="M 770,207 C 800,250 815,330 838,368" fill="none" stroke="#54d98c" stroke-width="2.6" stroke-dasharray="2 5" marker-end="url(#arrow)"/>
+  <!-- Req3 trajectory -->
+  <polyline fill="none" stroke="#4cc2ff" stroke-width="2.8" points="840,375 925,347 1010,319"/>
+
+  <!-- round dots Req1 -->
+  <g fill="#4cc2ff"><circle cx="110" cy="417" r="4"/><circle cx="190" cy="375" r="4"/><circle cx="280" cy="333" r="4"/></g>
+  <!-- Req2: first crossing green, rest red -->
+  <g fill="#4cc2ff"><circle cx="375" cy="312" r="4"/><circle cx="455" cy="291" r="4"/></g>
+  <circle cx="540" cy="266" r="7" fill="#54d98c" stroke="#0f1420" stroke-width="2"/>
+  <text x="540" y="252" fill="#54d98c" font-size="12.5" text-anchor="middle" font-weight="700">摘要✓</text>
+  <circle cx="620" cy="245" r="6.5" fill="#ff5d73" stroke="#0f1420" stroke-width="2"/>
+  <circle cx="700" cy="224" r="6.5" fill="#ff5d73" stroke="#0f1420" stroke-width="2"/>
+  <circle cx="770" cy="207" r="6.5" fill="#ff5d73" stroke="#0f1420" stroke-width="2"/>
+  <!-- Req3 dots -->
+  <g fill="#4cc2ff"><circle cx="840" cy="375" r="4"/><circle cx="925" cy="347" r="4"/><circle cx="1010" cy="319" r="4"/></g>
+
+  <!-- annotation: within-request bug -->
+  <rect x="600" y="150" width="185" height="46" rx="6" fill="#2a1620" stroke="#5a2330"/>
+  <text x="612" y="169" fill="#ff7a8a" font-size="12" font-weight="700">同一请求内(跨轮)</text>
+  <text x="612" y="187" fill="#ffb3bd" font-size="11">只增不减 → 越线后✗每轮重摘</text>
+
+  <!-- annotation: cross-request drop -->
+  <rect x="812" y="232" width="240" height="46" rx="6" fill="#15211c" stroke="#234a36"/>
+  <text x="824" y="251" fill="#7fe0a6" font-size="12" font-weight="700">跨请求(下一次 turn)✅</text>
+  <text x="824" y="269" fill="#bfe9cf" font-size="10.5">findHistory 取"最新 summary+其后"→回落</text>
+
+  <!-- x baseline caption -->
+  <text x="80" y="463" fill="#6b768c" font-size="11">时间 →(每个请求内 ●=一次 ReAct 轮的窗口)</text>
+
+  <!-- footer: root cause -->
+  <rect x="80" y="486" width="600" height="150" rx="9" fill="#161d2c" stroke="#26304a"/>
+  <text x="100" y="512" fill="#f2f5fa" font-size="14" font-weight="700">为什么"同一请求内"只增不减?</text>
+  <text x="100" y="538" fill="#cfd5e1" font-size="12.5">① 摘要 emit 进 collector(给持久化 + 下次重建用),</text>
+  <text x="116" y="557" fill="#cfd5e1" font-size="12.5">但 ReActEngine.java:163 每轮 current = new Prompt(全量工具历史),</text>
+  <text x="116" y="576" fill="#cfd5e1" font-size="12.5">摘要<tspan fill="#ff9aa6" font-weight="700">不回灌 current</tspan> → 当前请求窗口不缩。</text>
+  <text x="100" y="600" fill="#cfd5e1" font-size="12.5">② compressWindow <tspan fill="#ff9aa6" font-weight="700">无"本批已压过"幂等守卫</tspan> → 窗口恒在线上,</text>
+  <text x="116" y="619" fill="#cfd5e1" font-size="12.5">每轮都判定"需压缩",于是重复触发(红点)。</text>
+
+  <!-- footer: cost + not-broken -->
+  <rect x="700" y="486" width="360" height="150" rx="9" fill="#161d2c" stroke="#26304a"/>
+  <text x="720" y="512" fill="#ff9aa6" font-size="13.5" font-weight="700">每个红点的代价</text>
+  <text x="720" y="535" fill="#cfd5e1" font-size="12">· 多余摘要 LLM 调用(≤30s + token)</text>
+  <text x="720" y="554" fill="#cfd5e1" font-size="12">· 冗余 Summary 行(下次只取最新,余者白做)</text>
+  <text x="720" y="585" fill="#7fe0a6" font-size="13.5" font-weight="700">不会坏的</text>
+  <text x="720" y="608" fill="#cfd5e1" font-size="12">结构/正确性 OK(Summary 落干净轮边界,</text>
+  <text x="720" y="626" fill="#cfd5e1" font-size="12">重建只取最新)—— 是浪费,不是错</text>
+</svg>

@@ -8,6 +8,7 @@
 2. [如何和 AI 协作完成架构设计](./02-collaborating-with-ai-for-architecture-design.md)
 3. [AI 不是不懂，是会"忘"——一次 4 轮迭代的真实复盘](./03-ai-collaboration-rule-decay.md)
 4. [记忆不是塞进上下文——短期+长期记忆的实战复盘](./04-short-term-vs-long-term-memory-in-practice.md)
+5. [上下文窗口管理——从一个"每轮重复摘要"的 bug 说起](./05-context-window-management.md)
 
 ## 系列定位
 

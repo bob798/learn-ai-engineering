@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1280" viewBox="0 0 960 1280" font-family="'PingFang SC','Microsoft YaHei','Hiragino Sans GB',sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#54d98c"/>
+    </marker>
+  </defs>
+  <rect width="960" height="1280" fill="#0f1420"/>
+
+  <!-- Title -->
+  <text x="480" y="46" fill="#f2f5fa" font-size="30" font-weight="700" text-anchor="middle">滚动摘要:为什么"每轮重复摘要"</text>
+  <text x="480" y="78" fill="#8a93a6" font-size="16" text-anchor="middle">纵轴=窗口字符数　横轴=时间(请求 → 请求内的 ReAct 轮)</text>
+
+  <!-- ===================== PANEL A : 期望 ===================== -->
+  <rect x="30" y="100" width="900" height="372" rx="12" fill="#161d2c" stroke="#234a36"/>
+  <text x="52" y="134" fill="#7fe0a6" font-size="19" font-weight="700">❌ 直觉以为的</text>
+  <text x="52" y="160" fill="#9aa3b5" font-size="14.5">摘要后窗口回落 → 偶尔才触发(锯齿)</text>
+
+  <!-- plot A: x 80..900, y 185..445 ; y=445-(v/18)*260 -->
+  <line x1="80" y1="261" x2="905" y2="261" stroke="#e0556b" stroke-width="1.8" stroke-dasharray="7 5"/>
+  <text x="900" y="254" fill="#e0556b" font-size="13" text-anchor="end">阈值 12000</text>
+  <line x1="80" y1="445" x2="905" y2="445" stroke="#3a455f" stroke-width="1.4"/>
+  <line x1="80" y1="185" x2="80" y2="445" stroke="#3a455f" stroke-width="1.4"/>
+  <text x="62" y="320" fill="#6b768c" font-size="12" transform="rotate(-90 62 320)" text-anchor="middle">窗口字符数</text>
+  <!-- sawtooth v: 2,6,10,13(fire,drop),5,9,13(fire,drop),5,8 ; y=445-(v/18)*260 -->
+  <polyline fill="none" stroke="#54d98c" stroke-width="3"
+    points="80,416 183,358 286,300 389,257 492,373 595,315 698,257 801,373 904,329"/>
+  <circle cx="389" cy="257" r="8" fill="#54d98c" stroke="#0f1420" stroke-width="2"/>
+  <circle cx="698" cy="257" r="8" fill="#54d98c" stroke="#0f1420" stroke-width="2"/>
+  <text x="389" y="240" fill="#54d98c" font-size="14" text-anchor="middle" font-weight="700">摘要✓</text>
+  <text x="92" y="463" fill="#6b768c" font-size="12">同一请求内的轮 →</text>
+
+  <!-- ===================== PANEL B : 实际 ===================== -->
+  <rect x="30" y="492" width="900" height="436" rx="12" fill="#161d2c" stroke="#5a2330"/>
+  <text x="52" y="526" fill="#ff7a8a" font-size="19" font-weight="700">⚠️ 实际</text>
+  <text x="52" y="552" fill="#9aa3b5" font-size="14.5">同一请求内只增不减 → 越线每轮重摘;仅跨请求才回落</text>
+
+  <!-- request bands: Req1 80..330, Req2 330..735, Req3 760..905 (plot y 575..895) -->
+  <rect x="80"  y="575" width="250" height="320" fill="#141b28"/>
+  <rect x="330" y="575" width="405" height="320" fill="#221620"/>
+  <rect x="760" y="575" width="145" height="320" fill="#141b28"/>
+  <text x="205" y="595" fill="#9aa3b5" font-size="13" text-anchor="middle" font-weight="600">请求1(短)</text>
+  <text x="532" y="595" fill="#ff9aa6" font-size="13" text-anchor="middle" font-weight="700">请求2(长·同请求多轮)</text>
+  <text x="832" y="595" fill="#9aa3b5" font-size="13" text-anchor="middle" font-weight="600">请求3</text>
+
+  <line x1="330" y1="600" x2="330" y2="895" stroke="#3a455f" stroke-width="1.1" stroke-dasharray="4 4"/>
+  <line x1="747" y1="600" x2="747" y2="895" stroke="#3a455f" stroke-width="1.1" stroke-dasharray="4 4"/>
+
+  <!-- threshold: plot y 575..895 (H=320), v0..19 ; y=895-(v/19)*320 ; v12 -> 895-202=693 -->
+  <line x1="80" y1="693" x2="905" y2="693" stroke="#e0556b" stroke-width="1.8" stroke-dasharray="7 5"/>
+  <text x="900" y="686" fill="#e0556b" font-size="13" text-anchor="end">阈值 12000</text>
+  <line x1="80" y1="895" x2="905" y2="895" stroke="#3a455f" stroke-width="1.4"/>
+  <line x1="80" y1="575" x2="80" y2="895" stroke="#3a455f" stroke-width="1.4"/>
+
+  <!-- monotonic Req1+Req2 ; y=895-(v/19)*320 -->
+  <!-- v: 2,4.5,7, 9,11,12.8(fire),14.3,15.8,17 -->
+  <polyline fill="none" stroke="#4cc2ff" stroke-width="3"
+    points="120,861 215,819 305,777 375,743 455,710 535,679 615,654 685,629 720,609"/>
+  <!-- cross-request drop -->
+  <path d="M 720,609 C 745,660 760,780 788,825" fill="none" stroke="#54d98c" stroke-width="3" stroke-dasharray="2 6" marker-end="url(#arr)"/>
+  <!-- Req3 -->
+  <polyline fill="none" stroke="#4cc2ff" stroke-width="3" points="790,828 850,795 905,761"/>
+
+  <!-- dots -->
+  <g fill="#4cc2ff"><circle cx="120" cy="861" r="4.5"/><circle cx="215" cy="819" r="4.5"/><circle cx="305" cy="777" r="4.5"/><circle cx="375" cy="743" r="4.5"/><circle cx="455" cy="710" r="4.5"/></g>
+  <circle cx="535" cy="679" r="8" fill="#54d98c" stroke="#0f1420" stroke-width="2"/>
+  <text x="535" y="664" fill="#54d98c" font-size="13.5" text-anchor="middle" font-weight="700">摘要✓</text>
+  <circle cx="615" cy="654" r="7.5" fill="#ff5d73" stroke="#0f1420" stroke-width="2"/>
+  <circle cx="685" cy="629" r="7.5" fill="#ff5d73" stroke="#0f1420" stroke-width="2"/>
+  <circle cx="720" cy="609" r="7.5" fill="#ff5d73" stroke="#0f1420" stroke-width="2"/>
+  <text x="650" y="600" fill="#ff5d73" font-size="14" font-weight="700" text-anchor="middle">✗每轮重摘</text>
+  <g fill="#4cc2ff"><circle cx="790" cy="828" r="4.5"/><circle cx="850" cy="795" r="4.5"/><circle cx="905" cy="761" r="4.5"/></g>
+
+  <!-- drop label -->
+  <text x="812" y="690" fill="#7fe0a6" font-size="12.5" text-anchor="middle" font-weight="700">跨请求✅</text>
+  <text x="812" y="709" fill="#bfe9cf" font-size="11" text-anchor="middle">重建→回落</text>
+
+  <!-- ===================== FOOTER ===================== -->
+  <rect x="30" y="948" width="900" height="148" rx="12" fill="#161d2c" stroke="#26304a"/>
+  <text x="52" y="982" fill="#f2f5fa" font-size="18" font-weight="700">为什么"同一请求内"只增不减?</text>
+  <text x="52" y="1016" fill="#cfd5e1" font-size="15">① 摘要 emit 给持久化,但<tspan fill="#ff9aa6" font-weight="700">不回灌当前窗口</tspan> → 当前请求不缩;</text>
+  <text x="52" y="1048" fill="#cfd5e1" font-size="15">② <tspan fill="#ff9aa6" font-weight="700">无"本批已压过"幂等守卫</tspan> → 越线后窗口恒在线上,</text>
+  <text x="68" y="1076" fill="#cfd5e1" font-size="15">每轮都判"需压缩" → 重复触发(红点)。</text>
+
+  <rect x="30" y="1108" width="900" height="140" rx="12" fill="#161d2c" stroke="#26304a"/>
+  <text x="52" y="1142" fill="#ff9aa6" font-size="17" font-weight="700">每个红点的代价</text>
+  <text x="52" y="1172" fill="#cfd5e1" font-size="14.5">多余摘要 LLM 调用(延迟+token)+ 冗余 Summary 行(下次只取最新)</text>
+  <text x="52" y="1206" fill="#7fe0a6" font-size="17" font-weight="700">但不会坏</text>
+  <text x="52" y="1236" fill="#cfd5e1" font-size="14.5">摘要落干净轮边界,结构/正确性 OK —— 是浪费,不是错</text>
+</svg>
