@@ -236,7 +236,25 @@ client.beta.memory_stores.memories.create(store.id, path="/x.md", content="...")
 | 条目格式 | **官方无示例**；推测纯 markdown(标题/摘要 + 指向主题文件链接)，建议 `/memory` 打开实测 | ⚠️ 无示例 |
 | 与 CLAUDE.md 分工 | CLAUDE.md=**你写**的指令规则；Auto Memory=**Claude 写**的学习与模式(构建命令/调试洞察/风格偏好)。`#` 默认进 Auto Memory | 官方 |
 
-> 要点：Auto Memory 的"写什么值得记"是**模型自主、算法不公开**；它**没有**OpenAI dreaming 那种"会话后离线再合成画像"的阶段。
+> 要点：Auto Memory 的"写什么值得记"是**模型自主、算法不公开**。注意这只是 `extractMemories`(实时)这一段；Claude Code 另有 `autoDream`(离线巩固)——二者对比见下。
+
+**`extractMemories` vs `autoDream`（一手证据：v2.1.177 二进制字面字符串）**
+
+| 维度 | `extractMemories`(实时) | `autoDream`(离线) |
+|---|---|---|
+| 本质 | 每轮对话后**增量记笔记** | 跨会话**后台巩固/整理** |
+| 触发 | 会话内有新消息(`starting — N new messages`) | ≥24h **且** ≥5 会话(`minHours:24,minSessions:5`)+ 10min 节流 |
+| 调度 | 随回合,前台 | `claude daemon`,**夜间 1–5am** |
+| 范围 | 只看本会话自上次以来的新消息(增量) | 批量回看多个会话(`sessions to review`) |
+| 跳过 | 无新用户话 / 本轮已直接写过 memory | 时间门未到 / 会话不足 / 锁占 / 节流内 |
+| 执行 | 当前会话上下文内抽取 | **fork 独立 LLM 调用**(`querySource:"auto_dream"`,`skipTranscript`) |
+| 工具权限 | 正常(写 memory) | 受限:只读 shell + 仅删 memory 内 `.md` |
+| 处理 | 抽新事实→写文件 | **四阶段** Orient→Gather→Consolidate→Prune |
+| 并发/容错 | `drainPendingExtraction` 合并待处理 | `.consolidate-lock` 锁 + **回滚**(`rollback failed`/abort) |
+| 开关 | `autoMemoryEnabled` | `autoDreamEnabled`(**服务端灰度默认**) |
+| 遥测 | `tengu_extract_memories_*` | `tengu_auto_dream_*` |
+
+> **协作关系**：二者是"写入-整理"两段，类比人脑——`extractMemories` = 白天工作记忆即时落盘(只增、会膨胀/重复)；`autoDream` = 睡眠期记忆固化(夜里回看一批会话，合并去重+精简)。Claude Code 是**实时堆积 + 离线整理**的完整闭环，只是离线那段服务端灰度、官方不写文档。
 
 ### 专题 B：各家 Dreaming / 离线合成对比（实时 vs 离线提炼）
 
