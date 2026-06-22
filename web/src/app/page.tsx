@@ -45,6 +45,16 @@ const SECTION_META: Record<
     gradient: "from-amber-500/10 to-yellow-500/5",
     color: "text-amber-600 dark:text-amber-400",
   },
+  "llm-foundations": {
+    icon: Boxes,
+    gradient: "from-indigo-500/10 to-blue-500/5",
+    color: "text-indigo-600 dark:text-indigo-400",
+  },
+  "spring-ai": {
+    icon: Code2,
+    gradient: "from-green-500/10 to-emerald-500/5",
+    color: "text-green-600 dark:text-green-400",
+  },
 };
 
 /* ── Learning path (condensed) ── */

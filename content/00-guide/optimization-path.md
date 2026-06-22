@@ -71,7 +71,7 @@ graph LR
 | 顺序 | 动作 | 分数 | 验收 |
 |---|---|---|---|
 | 1 | **V1 最小 Agent 循环**（代码+讲解） | 27 | `python` 跑通；证明整条线成立 |
-| 2 | V2-V3 ReAct + 多工具路由 | 27 | 串入 `research/react-paper.md` |
+| 2 | V2-V3 ReAct + 多工具路由 | 27 | 串入 `papers/react-paper.md` |
 | 3 | V4-V5 记忆（复用 `code/memory`） | 18 | 把已有 memory 代码"串进 agent 循环" |
 | 4 | V6-V7 规划 + 反思 | 15 | — |
 | 5 | **V8 评估框架**（填最大空白） | 18 | 轨迹评估能跑出成功率/成本 |
@@ -93,7 +93,7 @@ graph LR
 
 | 动作 | 说明 |
 |---|---|
-| 养 `_framework/` 与 `articles/` | 方法论母体(5D/ATDF)是护城河；articles 是获客引擎，固定节奏更新 |
+| 养 `_framework/` 与架构系列(`04-ai-programming/architecture-series/`) | 方法论母体(5D/ATDF)是护城河；架构系列是获客引擎，固定节奏更新 |
 | web 站点加成熟度徽章 + 文末 CTA | 🌱/🌳 强化"保留过程"人设；CTA 指向独立站课程 |
 | 漏斗闭环 | 免费内容 → 社群/邮件 → 独立站付费课程 |
 

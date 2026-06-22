@@ -4,7 +4,7 @@
 
 > 我一直把「AI 记忆」理解成「把更多东西塞进上下文窗口」。直到读完 mem0 的这篇 [Short-Term vs Long-Term AI Memory](https://mem0.ai/blog/short-term-vs-long-term-memory-in-ai)，又照着它手搓了一遍，才意识到：记忆是一个**架构问题**，不是一个 Prompt 问题。
 >
-> 这篇是我把译文（见 [`content/03-rag/ai-memory-short-term-vs-long-term.md`](../03-rag/ai-memory-short-term-vs-long-term.md)）落成可运行代码（见 [`code/memory/`](../../code/memory/)）之后的复盘。
+> 这篇是我把译文（见 [`content/03-rag/ai-memory-short-term-vs-long-term.md`](../../03-rag/ai-memory-short-term-vs-long-term.md)）落成可运行代码（见 [`code/memory/`](../../../code/memory/)）之后的复盘。
 
 ## 1. 我原来的误区
 
@@ -108,6 +108,6 @@ Ingest → 短期写入 → Check(检索长期记忆注入) → Generate → Con
 
 **配套资料**
 
-- 理论译文：[`content/03-rag/ai-memory-short-term-vs-long-term.md`](../03-rag/ai-memory-short-term-vs-long-term.md)
-- 可运行代码：[`code/memory/`](../../code/memory/)（`01` 离线可跑，`02`/`03` 需配 `.env`）
+- 理论译文：[`content/03-rag/ai-memory-short-term-vs-long-term.md`](../../03-rag/ai-memory-short-term-vs-long-term.md)
+- 可运行代码：[`code/memory/`](../../../code/memory/)（`01` 离线可跑，`02`/`03` 需配 `.env`）
 - 原文出处：[mem0.ai · Short-Term vs Long-Term AI Memory](https://mem0.ai/blog/short-term-vs-long-term-memory-in-ai)

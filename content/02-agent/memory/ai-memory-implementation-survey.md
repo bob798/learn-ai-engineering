@@ -7,8 +7,8 @@ topic: research
 
 # AI 记忆模块调研报告：OpenAI vs Claude Code vs Claude
 
-> 方法论见 [[memory-module-research-framework]]。本报告分三部分：**① 结论与横向对比 → ② 每个维度的具体实现方式（深挖）→ ③ 分析过程与分级引用**。
-> 关联：[[rag-to-memory]]、[[mem0-short-term-vs-long-term]]、记忆动手 Demo（`code/memory/`）。
+> 方法论见 [记忆模块调研方法论](memory-module-research-framework.md)。本报告分三部分：**① 结论与横向对比 → ② 每个维度的具体实现方式（深挖）→ ③ 分析过程与分级引用**。
+> 关联：[从 RAG 到 Agent Memory](rag-to-memory.md)、[mem0：记忆是什么·为什么·怎么做](mem0-memory-in-agents.md)、记忆动手 Demo（`code/memory/`）。
 > 时间基准：2026 年 6 月。**引用按【官方】/【第三方逆向】/【媒体/利益相关方】分级，写公开内容前请按文末清单核对。**
 
 ---
@@ -219,9 +219,45 @@ client.beta.memory_stores.memories.create(store.id, path="/x.md", content="...")
 
 ## 二·补：三个专题深挖
 
-### 专题 A：Claude Code Auto Memory 的写入逻辑
+### 专题 A：Claude Code 记忆系统全景——实时抽取 + 离线巩固双闭环（一手证据，扒 v2.1.178 二进制复核）
+
+> 视角说明：本专题不再只看"写入逻辑"。Claude Code 的记忆不是单点写文件，而是一套**双闭环**：白天 `extractMemories` 逐回合增量落盘（只增、会膨胀），夜里 `autoDream` 跨会话回看整理（合并/去重/精简）。再加上一层**磁盘布局**（索引 + 主题文件 + 活动日志 + 团队共享目录）和一套**记忆条目规范**（类型化 + wiki 链接）。把这四面拼起来，才是它和 mem0 / OpenAI bio 真正可比的对象。下文所有定性均以 **v2.1.178 Mach-O 二进制字面字符串**为准（在初版 v2.1.177 基础上重新 grep 复核，标注 ✅一手 / ⚠️推断 / 官方文档）。
 
 **核心定性：两套机制并存——`extractMemories`(会话内实时记笔记) + `autoDream`(跨会话后台离线巩固)。**【官方】文档原文 "Claude reads and writes memory files **during your session**"(指前者)；后者是服务端灰度、官方文档未提及、扒二进制才可见的离线合成机制（详见专题 B 修正）。
+
+#### A.0 磁盘布局（v2.1.178 一手，**初版未覆盖**）
+
+记忆根目录 `~/.claude/projects/<sanitized-cwd>/memory/`，dream prompt 里明确点名的结构：
+
+```
+memory/
+├── MEMORY.md                         # 索引：每会话载入前 N 行 / ~25KB；每条一行 `- [Title](file.md) — 一句话钩子`，≤150 字符
+├── <topic>.md                        # 主题文件（按需读取），dream 合并去重的主战场
+├── logs/YYYY/MM/DD/<id>-<title>.md   # ✅一手新发现：append-only 活动流，一会话一文件
+│                                     #   行前缀编码：`>` 用户 / `<` 助手 / `.` 工具调用；文件名标题即该会话主题
+├── sessions/                         # 若存在，dream 也会回看其中近期条目
+└── team/                             # ✅一手新发现：跨协作者共享记忆（isTeamMemoryEnabled 时启用）
+```
+
+> 两个**初版没挖到**的关键事实：
+> 1. **活动日志 `logs/`** 是 dream 的首要信号源——它不是去读庞大的 JSONL transcript，而是读这个**前缀编码的精简活动流**（`> < .`），transcript 只在"需要查昨天那条报错原文"时窄词 grep。这解释了 autoDream 为什么能 `skipTranscript` 还能工作。
+> 2. **团队记忆 `team/`**：同 repo 多人协作时共享；dream prompt 对它有**单独的保守剪枝纪律**——"可以删被代码明确推翻/被更新条目标记为废弃的；**不要**只因为你不认识它就删（队友可能依赖）；拿不准就留着"。个人记忆晋升到 `team/` 只能由用户经 `/remember` 显式决定，dream **不得**擅自晋升。
+
+#### A.1 记忆条目规范（v2.1.178 一手，**初版仅标"无示例/推测"**）
+
+初版把"条目格式"标为 ⚠️无示例。实际 system prompt 里写得很死（dream 的 Phase 3 直接引用它作为 source of truth）：
+
+| 字段 | 取值/约定 | 说明 |
+|---|---|---|
+| `type` | `user` \| `feedback` \| `project` \| `reference` | 四类，见下 |
+| 正文 | 事实陈述 | `feedback`/`project` 类**必须**跟 `**Why:**` 和 `**How to apply:**` 两行 |
+| 交叉引用 | `[[their-name]]` | wiki 风格链接到相关记忆文件 |
+| 日期 | 相对→绝对 | "昨天/上周"必须改写成绝对日期，过期后仍可解释 |
+
+- `user` = 用户是谁（角色/专长/偏好）；`feedback` = 用户对"你该怎么干活"的指导（纠正 + 确认，**含 why**）；`project` = 代码/git 推不出来的在研工作、目标、约束；`reference` = 外部资源指针（URL/看板/工单）。
+- ✅一手细节（很能说明设计取向）：prompt 里有一句反例自警——*"A `feedback` memory's 'Why: the user corrected me' framing is not evidence it's newer than CLAUDE.md — CLAUDE.md may have been updated since."* 即**显式告诫模型不要把"用户纠正过我"当成该记忆比 CLAUDE.md 新的证据**。这是冲突解决的人工护栏（对照 mem0 的 LLM ADD/UPDATE 决策、专题 C）。
+
+#### A.2 何时写 / 写什么（保留初版，结论不变）
 
 | 问题 | 实现 | 来源 |
 |---|---|---|
@@ -232,8 +268,8 @@ client.beta.memory_stores.memories.create(store.id, path="/x.md", content="...")
 | 用什么工具写 | **标准 Read/Write/Edit**，非专用 memory 命令 | 官方 |
 | 文件结构 | `MEMORY.md`(索引，每会话载前 200 行/25KB) + 主题文件(`debugging.md` 等，按需读取)；超限自动分流到主题文件 | 官方 |
 | 多 worktree | 同 repo 共享一个 `~/.claude/projects/<repo>/memory/` | 官方 |
-| 自维护/去重 | 是否主动清理过时条目、去重、覆盖 vs 追加、冲突检测 —— **均未公开** | ⚠️ 未公开 |
-| 条目格式 | **官方无示例**；推测纯 markdown(标题/摘要 + 指向主题文件链接)，建议 `/memory` 打开实测 | ⚠️ 无示例 |
+| 自维护/去重 | 实时侧只增（skip-on-direct-write/coalesce，见 A.6）；**清理/去重/覆盖/冲突解决全部下放给离线 `autoDream`**——初版标"未公开"已由 A.5 的 dream Phase 3/4 一手证据回答 | ✅一手(改) |
+| 条目格式 | 初版标"无示例"已更正：实为**类型化 markdown**（`type: user\|feedback\|project\|reference` + `**Why:**/**How to apply:**` + `[[wikilink]]`），详见 A.1 | ✅一手(改) |
 | 与 CLAUDE.md 分工 | CLAUDE.md=**你写**的指令规则；Auto Memory=**Claude 写**的学习与模式(构建命令/调试洞察/风格偏好)。`#` 默认进 Auto Memory | 官方 |
 
 > 要点：Auto Memory 的"写什么值得记"是**模型自主、算法不公开**。注意这只是 `extractMemories`(实时)这一段；Claude Code 另有 `autoDream`(离线巩固)——二者对比见下。
@@ -255,6 +291,70 @@ client.beta.memory_stores.memories.create(store.id, path="/x.md", content="...")
 | 遥测 | `tengu_extract_memories_*` | `tengu_auto_dream_*` |
 
 > **协作关系**：二者是"写入-整理"两段，类比人脑——`extractMemories` = 白天工作记忆即时落盘(只增、会膨胀/重复)；`autoDream` = 睡眠期记忆固化(夜里回看一批会话，合并去重+精简)。Claude Code 是**实时堆积 + 离线整理**的完整闭环，只是离线那段服务端灰度、官方不写文档。
+
+#### A.3 `autoDream` 触发门的解析顺序（v2.1.178 一手，**初版只说"服务端灰度默认"**）
+
+初版只写了 `autoDreamEnabled`(服务端灰度)。复核反汇编出**完整的三级解析优先级**（伪代码，函数 `vp8/d_/yrq/uO8`）：
+
+```js
+function autoDreamGate() {
+  if (!vp8()) return false;                  // ① 总开关/前置条件不满足 → 直接关
+  let H = settings.autoDreamEnabled;
+  if (H !== undefined) return H;             // ② 用户显式设过 → 用户说了算（覆盖一切）
+  if (gate()?.enabled === true) return true; // ③ 否则看 onyx_plover 灰度配置
+  return serverSideDefault();                // ④ 都没有 → 服务端默认
+}
+```
+
+- 配置项官方 schema 自述：`autoDreamEnabled` = *"Enable background memory consolidation (auto-dream). When set, overrides the server-side default."* —— 即**用户显式开关永远压过服务端灰度**。
+- **阈值不是写死的**：`minHours:24 / minSessions:5` 来自远端配置键 **`tengu_onyx_plover`**（✅一手，初版未发现此键名），代码做了 `Number.isFinite && >0` 校验后回落到默认 `24/5`。也就是说 Anthropic 可以**远程下调/上调触发频率**而不发版。
+- 首次开启会打点 `tengu_auto_dream_toggled {enabled, is_first_enable}`；扫描节流仍是 10min(`pIL`)，并发用 `.consolidate-lock`，跳过原因打点 `tengu_auto_dream_skipped {reason: sessions|lock}`。
+
+#### A.4 `dream` 是一个"具名计划任务"，不是随手 fork（v2.1.178 一手，**修正初版表述**）
+
+初版表述为"由 `claude daemon` 后台进程驱动"。更精确的一手定性：dream 是一份**具名的 scheduled-task 定义**（frontmatter 形式）：
+
+```yaml
+---
+name: dream
+description: Nightly reflection and consolidation. Runs overnight (1–5am local) via the scheduled task scaffold.
+context: fork
+---
+This is a housekeeping job — you should not need to message the user unless you find something noteworthy.
+```
+
+- ✅ "**Runs overnight (1–5am local)**" 与 "**via the scheduled task scaffold**" 在 v2.1.178 仍在（初版结论成立）；调度由 `daemon scheduled` 任务体系驱动（`daemon.scheduled.status.json`、`daemon_scheduled_add/remove` 打点）。
+- `context: fork` = 在**独立分叉的子代理上下文**里跑（`querySource:"auto_dream"`, `task_dream`），不污染你的当前会话；定位是 housekeeping，除非发现值得说的事，否则**不打扰用户**。
+
+#### A.5 Dream prompt 四阶段全文拆解（v2.1.178 一手，**初版仅列四个词**）
+
+初版只写了 `Orient→Gather→Consolidate→Prune` 四个词。实际 prompt 每阶段都有明确动作（精简引述）：
+
+| 阶段 | prompt 实际指令（一手） |
+|---|---|
+| **Phase 1 — Orient** | `ls` 记忆目录看现有结构；读 `MEMORY.md` 理解当前索引；skim 现有主题文件**以改进而非造重复**；`ls -R logs/` 看近期活动日志（有 `sessions/` 也一并看） |
+| **Phase 2 — Gather recent signal** | 按优先级找新信号：① 读最近 1–3 天的 `logs/.../<id>-<title>.md`（前缀 `> < .`）② 找**已漂移的旧记忆**（与当前代码矛盾的事实）③ 仅在需要特定上下文时，用**窄词 grep** transcript（`grep -rn "<narrow term>" … --include="*.jsonl" \| tail -50`）。明确要求**不要穷尽读 transcript** |
+| **Phase 3 — Consolidate** | 对每条值得记的：在顶层写/更新记忆文件，**复用 system prompt 的 auto-memory 规范**（A.1）；优先**并入现有主题文件而非造近重复**；相对日期改绝对；**删掉被推翻的事实**（今天的调查证伪了旧记忆就在源头改） |
+| **Phase 4 — Prune and index** | 维护 `MEMORY.md` 保持 < N 行且 < ~25KB——它是**索引不是 dump**，每条 ≤150 字符 `- [Title](file.md) — hook`；删除过时/错误/被取代的指针；**降级**超过 ~200 字符的索引行（说明它把正文塞进了索引，应缩短并把细节移回主题文件）；解决矛盾（两文件冲突就改错的那个） |
+
+> dream 收尾要求返回"**合并/更新/精简了什么**"的简短摘要；若无变化（记忆已经很紧）就明说。整套 prompt 的设计意图很清楚：**把一个会越长越乱的 append-only 文件堆，周期性地收敛回"索引 + 去重主题文件"的可检索结构**——这正是 mem0 用 LLM 在写入时做 ADD/UPDATE/DELETE 决策的"离线版"（专题 C 对照）。
+
+#### A.6 `extractMemories` 实时侧的并发与去抖细节（v2.1.178 一手，补充初版表）
+
+初版表里"并发/容错"只写了 `drainPendingExtraction`。复核出更完整的实时侧状态机：
+
+- **skip-on-direct-write**：若本轮对话已经直接写过记忆文件，则跳过抽取，打点 `tengu_extract_memories_skipped_direct_write`——避免重复记。
+- **trailing run / coalescing**：抽取进行中又来新内容时，把上下文 stash 起来跑一次 trailing extraction（`running trailing extraction for stashed context`），并打点 `tengu_extract_memories_coalesced`——多次触发合并成一次，省 LLM 调用。
+- **缓存可观测**：完成时日志带 `cache_read / cache_creation / input_tokens` 和命中率，并区分写入的普通记忆 vs `team/` 记忆数（`teamCount`）。
+- 抽取本身也是独立 LLM 调用（`querySource:"extract_…"`），与 dream 的 fork 调用是两套来源。
+
+#### A.7 工程启示（从这套设计能抄什么）
+
+1. **写入与整理必须分两段**：实时抽取只管"别漏"，允许冗余；整理交给离线 job 收敛。强行在写入时就去重，会拖慢回合且决策上下文不足。
+2. **离线 job 的信号源要分层**：精简活动流(`logs/` 前缀编码) 当首选，原始 transcript 只做窄词回查——这是 autoDream 能 `skipTranscript` 仍有效的关键，可直接借鉴到自建记忆系统（别让 dream-agent 去 sniff 全量原始日志）。
+3. **索引/正文分离 + 硬性体积上限**：`MEMORY.md` ≤25KB/≤N 行、每条 ≤150 字符，正文进主题文件——天然的"摘要层 vs 明细层"分层检索。
+4. **冲突解决要有人工护栏**：不要假设"用户最近纠正过"就等于"最新事实"（CLAUDE.md 可能更新过）——时间新≠正确。
+5. **共享记忆要保守剪枝**：多租户/团队场景下，删自己看不懂的条目是高风险操作；"拿不准就留"比"激进清理"安全。
 
 ### 专题 B：各家 Dreaming / 离线合成对比（实时 vs 离线提炼）
 
@@ -341,7 +441,7 @@ CREATE TABLE memory_record (
 
 ## 三、分析过程（方法可复现）
 
-1. **沉淀方法论**：先把"调研记忆模块该看哪些维度"固化为 8 维度 + 打分表（`content/02-agent/methodology/memory-module-research-framework.md`）。
+1. **沉淀方法论**：先把"调研记忆模块该看哪些维度"固化为 8 维度 + 打分表（`content/02-agent/memory/memory-module-research-framework.md`）。
 2. **第一轮概览调研**：并行派出 3 个调研 agent（OpenAI 用 web-search-agent；Claude Code / Claude 用 claude-code-guide，可联网核对官方文档），各自按 8 维度结构化输出 + 来源 + 不确定标注。
 3. **第二轮实现深挖**：针对"每个维度的具体实现方式"再并行派出 3 个 agent，要求带**数据格式 / API 签名 / 注入机制 / beta header / 代码片段**，并强制标注来源是【官方】还是【逆向】。
 4. **交叉校验**：Claude API 的 type 字符串与 beta header（`memory_20250818`、`clear_tool_uses_20250919`、`clear_thinking_20251015`、`compact_20260112`、`managed-agents-2026-04-01`）与本仓库已加载的 `claude-api` skill 文档一致，标为【已验证】；ChatGPT 内部 section 名 / bio 格式 / 会话轮数全部来自逆向，标为⚠️。

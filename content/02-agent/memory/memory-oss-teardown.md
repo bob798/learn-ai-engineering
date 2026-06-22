@@ -7,7 +7,7 @@ topic: research
 
 # 开源 AI 记忆项目深度拆解
 
-> 方法论见 [[memory-module-research-framework]]；三大商用方案对比见 [[ai-memory-implementation-survey]]。候选清单见同目录 OSS candidates。
+> 方法论见 [记忆模块调研方法论](memory-module-research-framework.md)；三大商用方案对比见 [AI 记忆模块调研报告](ai-memory-implementation-survey.md)。候选清单见同目录 OSS candidates。
 > 本篇用 8 维度逐项拆解 6 个**代表不同范式**的开源项目。时间基准 2026-06。评分 1-5；⚠ 表示不确定/需核实。所有字段名尽量取自源码。
 
 | 项目 | 范式 | 一句话 | 综合 |
@@ -19,7 +19,7 @@ topic: research
 | **Memobase** | 结构化用户画像 | profile 槽位(topic/sub_topic/content) + event 时间线 | ~4.4 |
 | **A-MEM** | 自组织(Zettelkasten) | atomic note + LLM 记忆进化/自链接 | ~3.25(学术满分/工程偏弱) |
 
-> Letta、mem0 另有独立专文：[[memgpt-letta-guide]]、mem0 译文 [[mem0-short-term-vs-long-term]] / [[rag-to-memory]]；此处按统一 8 维度补入以便横向对比。
+> Letta、mem0 另有独立专文：[MemGPT/Letta 入门指南](../deep-dives/memgpt-letta/memgpt-letta-guide.md)、mem0 译文 [记忆是什么·为什么·怎么做](mem0-memory-in-agents.md) / [从 RAG 到 Agent Memory](rag-to-memory.md)；此处按统一 8 维度补入以便横向对比。
 
 ---
 
@@ -249,7 +249,7 @@ CREATE TABLE memory_record (
 );
 -- 配套:历史审计表(mem0 history:old/new/event) + 可选图层(实体-关系)
 ```
-> 完整 schema 设计推导见 [[ai-memory-implementation-survey]] 专题 C。
+> 完整 schema 设计推导见 [AI 记忆模块调研报告](ai-memory-implementation-survey.md) 专题 C。
 
 ---
 

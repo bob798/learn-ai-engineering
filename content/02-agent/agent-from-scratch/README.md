@@ -73,9 +73,9 @@ graph LR
 | `01_概念_agent是什么.md` | 概念直觉：循环、状态、工具、记忆的关系 | 跑 V1 前读 |
 | `02_代码讲解_V1V2.md` | 数据流：最小循环 → ReAct 怎么工作 | V1-V2 |
 | `03_工程方法论_评估与失败模式.md` | 项目落地：怎么评估、怎么防死循环和注入 | V8-V10 |
-| `agent-knowledge-map.md` | 系统全貌：模块关系（呼应 `concepts/rag-to-memory.md`） | 全部 |
+| `agent-knowledge-map.md` | 系统全貌：模块关系（呼应 `memory/rag-to-memory.md`） | 全部 |
 
-> 复用已有资产：`harness/agent-loop.md`(并入 V1 讲解)、`research/react-paper.md`(并入 V2)、`code/memory/*`(并入 V4-V5)、`code/react-hands-on/*`(V2 的进阶参考)。不重写，只串线。
+> 复用已有资产：`harness/agent-loop.md`(并入 V1 讲解)、`papers/react-paper.md`(并入 V2)、`code/memory/*`(并入 V4-V5)、`code/react-hands-on/*`(V2 的进阶参考)。不重写，只串线。
 
 ---
 
@@ -85,9 +85,9 @@ graph LR
 |---|---|---|
 | `methodology/ATDF.md` | 拆解方法论 | 用来 Scan 档快过外部框架，不进主线 |
 | `deep-dives/omc·gstack` | 拆别人的框架 | 横向深，**本主线是纵向深**，互补 |
-| `research/react-paper.md` | 论文理论 | 并入 V2 作为理论根基 |
+| `papers/react-paper.md` | 论文理论 | 并入 V2 作为理论根基 |
 | `harness/agent-loop.md` | 循环原理 | 并入 V1 作为概念前置 |
-| `concepts/rag-to-memory.md` | 演化叙事 | 并入 V5 解释"RAG→记忆原语" |
+| `memory/rag-to-memory.md` | 演化叙事 | 并入 V5 解释"RAG→记忆原语" |
 
 ---
 

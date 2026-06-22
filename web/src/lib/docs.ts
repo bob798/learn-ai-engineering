@@ -69,7 +69,9 @@ const SUBFOLDER_LABELS: Record<string, string> = {
   // agent
   "agent/concepts": "Concepts · 核心概念",
   "agent/deep-dives": "Deep Dives · 项目深拆",
+  "agent/memory": "Memory · 记忆专题",
   "agent/methodology": "Methodology · 方法论",
+  "agent/papers": "Papers · 论文解读",
   "agent/planning-reasoning": "Planning & Reasoning",
   "agent/research": "Research · 行业研究",
   "agent/templates": "Templates · 可复用模板",
@@ -78,6 +80,7 @@ const SUBFOLDER_LABELS: Record<string, string> = {
   "rag/research": "Research · 论文参考",
   // ai-programming
   "ai-programming/cases": "Cases · 实战案例",
+  "ai-programming/architecture-series": "Architecture Series · 架构系列",
 };
 
 export function subfolderLabel(section: string, sub: string): string {

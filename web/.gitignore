@@ -20,6 +20,7 @@
 # generated at build time by scripts/extract-content.ts
 /src/data/docs.json
 /public/viz
+/public/content-assets
 
 # production
 /build

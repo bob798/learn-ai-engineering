@@ -10,7 +10,7 @@ topic: methodology
 > 调研一个 Agent / 开源项目的记忆模块，本质是回答三个问题：**它管什么记忆（架构）→ 工程上怎么用（成本/可观测）→ 到底比"全塞进上下文"强多少（评估）**。
 > 下面 8 个维度按「先架构、后工程、再评估」排列，每个维度给出"看什么 / 怎么量"。文末是可直接套用的打分表。
 
-相关：[[rag-to-memory]]、[[mem0-short-term-vs-long-term]]、记忆动手 Demo（`code/memory/`）。
+相关：[从 RAG 到 Agent Memory](rag-to-memory.md)、[mem0：记忆是什么·为什么·怎么做](mem0-memory-in-agents.md)、记忆动手 Demo（`code/memory/`）。
 
 ---
 

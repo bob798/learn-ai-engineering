@@ -30,6 +30,8 @@ const SECTIONS: Section[] = [
   { slug: "agent",          dir: "02-agent",          title: "Agent",          description: "智能体架构 · 方法论 · 生态拆解" },
   { slug: "rag",            dir: "03-rag",            title: "RAG",            description: "检索增强生成 · 从 V1 到企业级" },
   { slug: "ai-programming", dir: "04-ai-programming", title: "AI Programming", description: "AI 编程实战与工具链" },
+  { slug: "llm-foundations", dir: "05-llm-foundations", title: "LLM Foundations", description: "模型内部机制 · 术语精度 · 选型判据" },
+  { slug: "spring-ai",      dir: "06-spring-ai",      title: "Spring AI",      description: "Java 工程师视角的 AI 应用工程" },
 ];
 
 interface Heading { depth: number; text: string; id: string }
@@ -111,9 +113,22 @@ function walkTree(node: any, fn: (el: any) => void) {
  * 3. Absolute internal paths (/agent/...) → prepend basePath
  * 4. Links outside content/ → GitHub blob URL
  */
+const IMAGE_EXTS = [".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif"];
+
 function rehypeRewriteLinks(filePath: string) {
   return () => (tree: any) => {
     walkTree(tree, (el: any) => {
+      // <img> with relative src → copy of content asset under /content-assets/
+      if (el.tagName === "img") {
+        const src = (el.properties as any)?.src;
+        if (!src || typeof src !== "string") return;
+        if (src.startsWith("http") || src.startsWith("data:") || src.startsWith("/")) return;
+        const resolved = path.resolve(path.dirname(filePath), src.split("#")[0]);
+        const rel = path.relative(CONTENT_DIR, resolved).replace(/\\/g, "/");
+        if (rel.startsWith("..")) return; // outside content/
+        (el.properties as any).src = `${BASE_PATH}/content-assets/${rel}`;
+        return;
+      }
       if (el.tagName !== "a") return;
       const href = (el.properties as any)?.href;
       if (!href || typeof href !== "string") return;
@@ -297,6 +312,22 @@ async function main() {
   fs.cpSync(INTERACTIVE_DIR, PUBLIC_VIZ, { recursive: true });
   const htmlCount = walk(PUBLIC_VIZ, ".html").length;
   console.log(`✓ Copied interactive/ → public/viz/ (${htmlCount} HTML files)`);
+
+  // Copy content images → public/content-assets/ (mirrors content/ tree)
+  // so relative <img src="./images/x.svg"> rewritten to /content-assets/... resolves.
+  const PUBLIC_ASSETS = path.join(WEB_DIR, "public", "content-assets");
+  fs.rmSync(PUBLIC_ASSETS, { recursive: true, force: true });
+  let imgCount = 0;
+  for (const ext of IMAGE_EXTS) {
+    for (const file of walk(CONTENT_DIR, ext)) {
+      const rel = path.relative(CONTENT_DIR, file);
+      const dest = path.join(PUBLIC_ASSETS, rel);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(file, dest);
+      imgCount++;
+    }
+  }
+  console.log(`✓ Copied content images → public/content-assets/ (${imgCount} files)`);
 }
 
 main().catch((e) => {

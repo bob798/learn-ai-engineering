@@ -322,7 +322,7 @@ export function SearchDialog() {
             </div>
             {[
               { label: "学习路线图", slug: "guide/learning-path" },
-              { label: "ReAct 论文解读", slug: "agent/research/react-paper" },
+              { label: "ReAct 论文解读", slug: "agent/papers/react-paper" },
               { label: "Agent Loop 深度理解", slug: "agent/harness/agent-loop" },
               { label: "MCP 基础", slug: "mcp/01-foundations" },
               { label: "理解 RAG", slug: "rag/01-理解RAG" },

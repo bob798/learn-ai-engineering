@@ -25,7 +25,7 @@
 | 你会看到 | 举例 |
 |---------|------|
 | **踩坑记录** | [学 MCP 时我理解错的 10 件事](/mcp/05-interview/common-misconceptions) |
-| **亲手复现** | [ReAct 论文解读 + 可运行代码](/agent/research/react-paper) |
+| **亲手复现** | [ReAct 论文解读 + 可运行代码](/agent/papers/react-paper) |
 | **认知框架** | [Agent Loop 的 60 年血脉](/agent/harness/agent-loop)、[5D 学习方法论](/agent/methodology/5d-framework) |
 | **中文注解** | [论文逐句翻译 + 词汇追踪](viz/agent/react-paper-annotated.html) |
 | **模拟面试** | [RAG 面试题库](/rag/mock-interview/01_基础概念题) |

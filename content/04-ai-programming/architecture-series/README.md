@@ -1,4 +1,10 @@
-# AI Engineering Architecture Series
+---
+title: "AI Engineering Architecture Series · 架构系列"
+description: 把 AI 能力工程化为可调用、可治理、可观测、可评估的平台能力——Skill 抽象、AI 协作架构、协作反模式复盘
+order: 1
+---
+
+# AI Engineering Architecture Series · 架构系列
 
 这个目录用于沉淀 AI 系统架构系列内容，重点关注如何把 AI 能力工程化为可调用、可治理、可观测、可评估的平台能力。
 
@@ -7,8 +13,10 @@
 1. [Skill 模块架构设计方法论](./01-skill-architecture-methodology.md)
 2. [如何和 AI 协作完成架构设计](./02-collaborating-with-ai-for-architecture-design.md)
 3. [AI 不是不懂，是会"忘"——一次 4 轮迭代的真实复盘](./03-ai-collaboration-rule-decay.md)
-4. [记忆不是塞进上下文——短期+长期记忆的实战复盘](./04-short-term-vs-long-term-memory-in-practice.md)
-5. [上下文窗口管理——从一个"每轮重复摘要"的 bug 说起](./05-context-window-management.md)
+
+> 本系列原有的两篇「记忆 / 上下文」文章已归入 [Agent · 记忆专题](../../02-agent/memory/README.md)，与其它记忆内容放在一起：
+> - [记忆不是塞进上下文——短期+长期记忆的实战复盘](../../02-agent/memory/short-term-vs-long-term-memory-in-practice.md)
+> - [上下文窗口管理——从一个"每轮重复摘要"的 bug 说起](../../02-agent/memory/context-window-management.md)
 
 ## 系列定位
 
