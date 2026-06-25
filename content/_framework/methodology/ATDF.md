@@ -47,12 +47,12 @@ ATDF 强制你回答 8 个维度的具体问题，30 分钟到 3 小时内产出
 
 | 主题 | 深度 | 链接 |
 |---|---|---|
-| oh-my-claudecode (OMC) | Deep | [omc-atdf.md](../deep-dives/omc/omc-atdf.md) |
-| gstack (Garry Tan) | Deep | [gstack-atdf.md](../deep-dives/gstack/gstack-atdf.md) |
-| MemGPT / Letta | 入门指南 | [memgpt-letta-guide.html](../deep-dives/memgpt-letta/memgpt-letta-guide.html) |
+| oh-my-claudecode (OMC) | Deep | [omc-atdf.md](../../02-agent/deep-dives/omc/omc-atdf.md) |
+| gstack (Garry Tan) | Deep | [gstack-atdf.md](../../02-agent/deep-dives/gstack/gstack-atdf.md) |
+| MemGPT / Letta | 入门指南 | [memgpt-letta-guide.md](../../02-agent/deep-dives/memgpt-letta/memgpt-letta-guide.md) |
 
 ## 如何贡献
 
 1. 复制 [ATDF 模板](../templates/ATDF-template.md)
 2. 按 8 个维度填写你感兴趣的 AI 主题
-3. 提 PR 到 `deep-dives/<主题名>/` 目录
+3. 提 PR 到 `02-agent/deep-dives/<主题名>/` 目录

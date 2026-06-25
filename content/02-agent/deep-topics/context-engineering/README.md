@@ -26,7 +26,7 @@ order: 2
 ## 相关内容(强关联)
 
 - [Agent · 记忆专题](../memory/README.md) — 上下文是工作记忆(L1),记忆专题覆盖短期(L2)/长期(L3)与跨会话召回
-- [MemGPT / Letta 入门指南](../deep-dives/memgpt-letta/memgpt-letta-guide.md) — 「LLM 即操作系统」:context=RAM,外存=disk,记忆=换页管理器
+- [MemGPT / Letta 入门指南](../../deep-dives/memgpt-letta/memgpt-letta-guide.md) — 「LLM 即操作系统」:context=RAM,外存=disk,记忆=换页管理器
 
 ---
 

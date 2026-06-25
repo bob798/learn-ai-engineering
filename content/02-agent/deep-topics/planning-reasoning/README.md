@@ -116,9 +116,9 @@ function detectLoop(actionHistory, windowSize = 3) {
 
 | 目录 | 关系 |
 |------|------|
-| [`../rag/`](../rag/) | 同系列 · 同框架 · 另一个核心知识领域 |
-| [`../mcp/`](../mcp/) | Agent 工具调用层：如何定义和接入工具 |
-| [`../methodology/`](../methodology/) | 这整套笔记使用的 5D 学习方法论 |
+| [`../../03-rag/`](../../../03-rag/) | 同系列 · 同框架 · 另一个核心知识领域 |
+| [`../../01-mcp/`](../../../01-mcp/) | Agent 工具调用层：如何定义和接入工具 |
+| [`_framework/methodology/`](../../../_framework/methodology/) | 这整套笔记使用的 5D 学习方法论 |
 
 ---
 

@@ -22,7 +22,7 @@ order: 1
 ## 延伸
 
 - [ReAct 模式反思](../planning-reasoning/react-paper-reflection.md) — 放在 Planning & Reasoning 专题里，从「三种推理模式」的角度再看 ReAct
-- [Agent Loop 的 60 年血脉](../harness/agent-loop.md) — ReAct 循环的工程实现与历史脉络
+- [Agent Loop 的 60 年血脉](../../concepts/agent-loop.md) — ReAct 循环的工程实现与历史脉络
 
 ---
 
