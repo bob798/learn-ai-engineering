@@ -107,10 +107,12 @@ function TreeItems({
   nodes,
   activeSlug,
   sectionSlug,
+  pathPrefix = "",
 }: {
   nodes: TreeNode[];
   activeSlug: string;
   sectionSlug: string;
+  pathPrefix?: string;
 }) {
   return (
     <>
@@ -129,7 +131,8 @@ function TreeItems({
 
         // Branch: folder with children
         const hasActiveChild = hasDescendant(node, activeSlug);
-        const folderLabel = subfolderLabel(sectionSlug, node.label);
+        const subPath = pathPrefix ? `${pathPrefix}/${node.label}` : node.label;
+        const folderLabel = subfolderLabel(sectionSlug, subPath);
         const leafCount = countLeaves(node);
 
         return (
@@ -151,6 +154,7 @@ function TreeItems({
                 nodes={node.children}
                 activeSlug={activeSlug}
                 sectionSlug={sectionSlug}
+                pathPrefix={subPath}
               />
             </FolderGroup>
           </li>
