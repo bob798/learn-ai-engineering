@@ -32,6 +32,7 @@ const SECTIONS: Section[] = [
   { slug: "ai-programming", dir: "04-ai-programming", title: "AI Programming", description: "AI 编程实战与工具链" },
   { slug: "llm-foundations", dir: "05-llm-foundations", title: "LLM Foundations", description: "模型内部机制 · 术语精度 · 选型判据" },
   { slug: "spring-ai",      dir: "06-spring-ai",      title: "Spring AI",      description: "Java 工程师视角的 AI 应用工程" },
+  { slug: "faq",            dir: "07-faq",            title: "FAQ",            description: "AI 协作常见问答 · 为什么会这样 · 怎么办" },
 ];
 
 interface Heading { depth: number; text: string; id: string }
