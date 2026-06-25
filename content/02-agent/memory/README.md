@@ -21,8 +21,9 @@ order: 1
 | **② 业界怎么做（开源）** | [开源 AI 记忆项目深度拆解](memory-oss-teardown.md) | Letta / mem0 / Graphiti / Cognee / Memobase / A-MEM 六项目逐维拆解 |
 | **③ 怎么调研判断** | [记忆模块调研方法论](memory-module-research-framework.md) | 调研任意记忆模块该看的 8 维度 + 可复用打分表 |
 | **④ 实战复盘** | [短期+长期记忆实战](short-term-vs-long-term-memory-in-practice.md) | 读完 mem0 后手搓一个短期+长期记忆层的复盘（pin 系统提示 / 行级隔离 / 写穿透） |
-| **④ 实战复盘** | [上下文窗口管理](context-window-management.md) | 从一个「每轮重复摘要」的 bug 说起 · 滚动摘要 / context rot / 取舍 |
 | **⑤ 怎么动手** | `code/memory/`（仓库内代码） | 把记忆代码「串进 agent 循环」的 Demo |
+
+> **上下文窗口怎么管**（滚动摘要 / context rot / prefix caching / 三难权衡与六大解法）已拆到姊妹专题 [Context Engineering · 上下文工程](../context-engineering/README.md)——上下文是工作记忆（L1），本专题聚焦短期（L2）/ 长期（L3）记忆与跨会话召回。
 
 ---
 
