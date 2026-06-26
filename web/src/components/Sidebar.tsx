@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -175,14 +175,45 @@ function countLeaves(node: TreeNode): number {
   return node.children.reduce((n, c) => n + countLeaves(c), node.slug ? 1 : 0);
 }
 
+/* ── Hamburger icon ── */
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      {open ? (
+        <>
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </>
+      ) : (
+        <>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 /* ── Main Sidebar ── */
 export function Sidebar({ activeSection }: { activeSection?: string }) {
   const pathname = usePathname();
-  // Derive activeSlug from pathname: "/agent/research/react-paper" -> "agent/research/react-paper"
   const activeSlug = pathname.replace(/^\//, "");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  return (
-    <aside className="w-64 shrink-0 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto sticky top-0 h-screen">
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
+  const sidebarContent = (
+    <>
       {/* Brand */}
       <div className="px-5 pt-6 pb-3">
         <Link href="/" className="block font-bold text-lg hover:text-orange-600 transition">
@@ -218,7 +249,42 @@ export function Sidebar({ activeSection }: { activeSection?: string }) {
           );
         })}
       </nav>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile: hamburger button */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="fixed top-3 left-3 z-50 p-2 rounded-lg bg-white/80 dark:bg-zinc-900/80 backdrop-blur border border-zinc-200 dark:border-zinc-700 shadow-sm lg:hidden"
+        aria-label="Toggle menu"
+      >
+        <MenuIcon open={mobileOpen} />
+      </button>
+
+      {/* Mobile: overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile: slide-in sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto transition-transform duration-200 lg:hidden ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="pt-14">{sidebarContent}</div>
+      </aside>
+
+      {/* Desktop: static sidebar */}
+      <aside className="hidden lg:block w-64 shrink-0 border-r border-zinc-200 dark:border-zinc-800 overflow-y-auto sticky top-0 h-screen">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
 

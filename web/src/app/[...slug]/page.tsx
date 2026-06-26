@@ -39,7 +39,7 @@ export default async function DocPage({ params }: PageProps) {
     return (
       <div className="flex">
         <Sidebar activeSection={section.slug} />
-        <main className="flex-1 min-w-0 max-w-5xl px-8 lg:px-12 py-12">
+        <main className="flex-1 min-w-0 max-w-5xl px-4 sm:px-8 lg:px-12 py-8 sm:py-12 pt-14 lg:pt-12">
           <SectionHero
             section={section.slug}
             title={section.title}
@@ -107,7 +107,7 @@ export default async function DocPage({ params }: PageProps) {
   return (
     <div className="flex">
       <Sidebar activeSection={doc.section} />
-      <main className="flex-1 min-w-0 max-w-4xl px-10 py-12">
+      <main className="flex-1 min-w-0 max-w-4xl px-4 sm:px-10 py-8 sm:py-12 pt-14 lg:pt-12">
         <div className="mb-6 text-xs text-zinc-500 font-mono">{doc.path}</div>
         <DocBody html={doc.contentHtml} />
         <Comments />
