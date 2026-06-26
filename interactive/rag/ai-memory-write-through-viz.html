@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>写穿透记忆架构 · 动态演示 — 短期 vs 长期记忆</title>
+<style>
+/* ============ 复用 viz-framework 设计语言 ============ */
+:root {
+  --viz-bg:      #0f1117;
+  --viz-card:    #1a1d28;
+  --viz-border:  #2a2d3a;
+  --viz-accent:  #6c63ff;
+  --viz-green:   #00d2a0;
+  --viz-orange:  #ff9f43;
+  --viz-red:     #ff6b6b;
+  --viz-blue:    #4ecdc4;
+  --viz-text:    #e4e6eb;
+  --viz-dim:     #8b8fa3;
+  --viz-radius:  16px;
+  --viz-radius-sm: 8px;
+  --viz-font: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: var(--viz-font);
+  background: radial-gradient(1200px 600px at 50% -10%, #161a26 0%, var(--viz-bg) 60%);
+  color: var(--viz-text);
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding: 56px 24px 80px; }
+h1 { font-size: 34px; margin-bottom: 10px; letter-spacing: .5px; }
+h1 em { color: var(--viz-accent); font-style: normal; }
+.subtitle { color: var(--viz-dim); font-size: 16px; margin-bottom: 32px; }
+
+/* ====== 舞台 ====== */
+.stage {
+  position: relative;
+  background: var(--viz-card);
+  border: 1px solid var(--viz-border);
+  border-radius: var(--viz-radius);
+  padding: 36px 28px 28px;
+  margin-bottom: 24px;
+}
+.lane { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; align-items: stretch; }
+
+.node {
+  position: relative;
+  background: #14161f;
+  border: 1.5px solid var(--viz-border);
+  border-radius: var(--viz-radius-sm);
+  padding: 16px 14px;
+  min-height: 132px;
+  transition: border-color .35s, box-shadow .35s, transform .35s;
+}
+.node.active {
+  border-color: var(--viz-accent);
+  box-shadow: 0 0 0 1px var(--viz-accent), 0 8px 30px rgba(108,99,255,.25);
+  transform: translateY(-3px);
+}
+.node .tag {
+  display:inline-block; font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  color: var(--viz-dim); margin-bottom: 8px;
+}
+.node h3 { font-size: 16px; margin-bottom: 6px; }
+.node p  { font-size: 12.5px; color: var(--viz-dim); }
+.node.short h3 { color: var(--viz-orange); }
+.node.llm   h3 { color: var(--viz-blue); }
+.node.long  h3 { color: var(--viz-green); }
+
+/* 短期缓冲：滑动窗口槽位 */
+.buffer { display:flex; gap:6px; margin-top:10px; }
+.slot {
+  flex:1; height: 26px; border-radius:4px;
+  background: #0e1018; border:1px dashed var(--viz-border);
+  display:flex; align-items:center; justify-content:center;
+  font-size: 11px; color: var(--viz-dim);
+  transition: all .3s;
+}
+.slot.filled { background: rgba(255,159,67,.16); border:1px solid var(--viz-orange); color: var(--viz-orange); }
+
+/* 长期存储：向量条目 */
+.vecs { margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.vec {
+  font-size: 11px; padding:4px 8px; border-radius:4px;
+  background: rgba(0,210,160,.10); border:1px solid rgba(0,210,160,.35);
+  color: var(--viz-green); opacity:.55; transform: translateX(-6px);
+  transition: all .45s;
+}
+.vec.live { opacity:1; transform:none; }
+.vec.fresh { background: rgba(0,210,160,.25); box-shadow: 0 0 12px rgba(0,210,160,.4); }
+
+/* 飞行的数据包 */
+.packet {
+  position:absolute; top:0; left:0;
+  padding:5px 11px; border-radius: 20px; font-size:12px; font-weight:600;
+  background: var(--viz-accent); color:#fff; white-space:nowrap;
+  box-shadow: 0 6px 20px rgba(108,99,255,.5);
+  opacity:0; pointer-events:none;
+  transition: transform 1s cubic-bezier(.65,.05,.36,1), opacity .35s ease, background .3s;
+  z-index: 30;
+  outline: 2px solid var(--viz-bg);
+}
+.packet.consol { background: var(--viz-green); box-shadow: 0 6px 20px rgba(0,210,160,.5); }
+
+/* ====== 旁白 ====== */
+.caption {
+  background: linear-gradient(180deg, #161925, #12141d);
+  border:1px solid var(--viz-border); border-left: 3px solid var(--viz-accent);
+  border-radius: var(--viz-radius-sm);
+  padding: 16px 18px; margin-bottom: 22px; min-height: 76px;
+}
+.caption .step-no { font-size:12px; color: var(--viz-accent); letter-spacing:1px; }
+.caption .step-txt { font-size: 15px; margin-top:4px; }
+.caption .step-txt b { color: var(--viz-text); }
+.caption.async { border-left-color: var(--viz-green); }
+.caption.async .step-no { color: var(--viz-green); }
+
+/* ====== 控制条 ====== */
+.controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.btn {
+  background: var(--viz-accent); color:#fff; border:none;
+  padding: 10px 20px; border-radius: var(--viz-radius-sm);
+  font-size: 14px; font-weight:600; cursor:pointer;
+  transition: filter .2s, opacity .2s; font-family: inherit;
+}
+.btn:hover { filter: brightness(1.12); }
+.btn.ghost { background: transparent; border:1px solid var(--viz-border); color: var(--viz-dim); }
+.btn:disabled { opacity:.4; cursor:not-allowed; }
+.progress { flex:1; height:4px; background: var(--viz-border); border-radius:4px; min-width:120px; overflow:hidden; }
+.progress i { display:block; height:100%; width:0; background: var(--viz-accent); transition: width .4s; }
+
+.legend { margin-top: 28px; font-size: 13px; color: var(--viz-dim); }
+.legend code { color: var(--viz-orange); background:#0e1018; padding:1px 6px; border-radius:4px; }
+.foot { margin-top: 36px; font-size: 13px; color: var(--viz-dim); }
+.foot a { color: var(--viz-blue); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>写穿透记忆架构 · <em>动态演示</em></h1>
+  <p class="subtitle">把《短期记忆 vs 长期记忆》一文的 5 步流程，从文字变成会动的数据流。点「播放」看一条消息如何穿过系统。</p>
+
+  <!-- 旁白 -->
+  <div class="caption" id="caption">
+    <div class="step-no" id="capNo">就绪</div>
+    <div class="step-txt" id="capTxt">点击 <b>播放</b>，跟随一条用户消息「我叫 Sarah，喜欢用 Python」走完全程。</div>
+  </div>
+
+  <!-- 舞台 -->
+  <div class="stage">
+    <div class="lane">
+      <!-- 短期 -->
+      <div class="node short" id="nShort">
+        <span class="tag">同步 · 易失 · 热路径</span>
+        <h3>短期记忆</h3>
+        <p>会话缓冲（滑动窗口）</p>
+        <div class="buffer" id="buffer">
+          <div class="slot">·</div><div class="slot">·</div>
+          <div class="slot">·</div><div class="slot">·</div>
+        </div>
+      </div>
+      <!-- LLM -->
+      <div class="node llm" id="nLLM">
+        <span class="tag">无状态 · 推理</span>
+        <h3>LLM</h3>
+        <p>读取上下文 → 生成回应</p>
+        <div style="margin-top:14px;font-size:13px;color:var(--viz-dim)" id="llmOut">等待输入…</div>
+      </div>
+      <!-- 长期 -->
+      <div class="node long" id="nLong">
+        <span class="tag">异步 · 持久 · 可索引</span>
+        <h3>长期记忆</h3>
+        <p>向量库 / 知识图谱</p>
+        <div class="vecs" id="vecs">
+          <div class="vec live">user → 偏好 → 简洁回答</div>
+          <div class="vec live">user → 时区 → UTC+8</div>
+        </div>
+      </div>
+    </div>
+    <div class="packet" id="packet">📩 "我叫 Sarah…"</div>
+  </div>
+
+  <!-- 控制 -->
+  <div class="controls">
+    <button class="btn" id="play">▶ 播放</button>
+    <button class="btn ghost" id="step">单步 →</button>
+    <button class="btn ghost" id="reset">↺ 重置</button>
+    <div class="progress"><i id="bar"></i></div>
+  </div>
+
+  <div class="legend">
+    图例：<code>橙</code> 短期（每字节都在每次推理中花钱，对话结束即消失）·
+    <code style="color:var(--viz-blue)">蓝</code> 无状态推理 ·
+    <code style="color:var(--viz-green)">绿</code> 长期（异步整合，跨会话持久）。
+    第 5 步「整合」发生在<strong>响应之后的后台</strong>——这是写穿透的关键。
+  </div>
+
+  <div class="foot">
+    源文档：<a href="../../content/03-rag/ai-memory-short-term-vs-long-term.md">ai-memory-short-term-vs-long-term.md</a>
+    · 这是「静态文档 → 动态可视化」的最小验证：零依赖、单文件、双击即看、可进 git。
+  </div>
+</div>
+
+<script>
+// ============ 5 步状态机 ============
+const STEPS = [
+  {
+    no: "STEP 1 / 5 · 接收 Ingest",
+    txt: "用户发来 <b>「我叫 Sarah，喜欢用 Python」</b>。消息进入系统热路径。",
+    async: false,
+    run(s){ s.flyPacket("nShort", '📩 "我叫 Sarah…"'); s.activate("nShort"); }
+  },
+  {
+    no: "STEP 2 / 5 · 短期写入 Short-term write",
+    txt: "消息<b>追加进会话缓冲</b>。滑动窗口已满，最旧的一条被挤出去（FIFO）——短期记忆是有限资源。",
+    async: false,
+    run(s){ s.activate("nShort"); s.fillBuffer('"我叫 Sarah…"'); }
+  },
+  {
+    no: "STEP 3 / 5 · 检查 Check",
+    txt: "系统<b>查询长期索引</b>，把相关事实拉进上下文：检索到「偏好简洁回答」「UTC+8」并注入。",
+    async: false,
+    run(s){ s.activate("nLong"); s.activate("nLLM", true); s.highlightVecs(); s.llm("已注入 2 条长期记忆…"); }
+  },
+  {
+    no: "STEP 4 / 5 · 生成 Generate",
+    txt: "LLM 基于<b>短期上下文 + 注入的长期记忆</b>生成回应：「你好 Sarah，我会用 Python 简洁作答。」此刻用户已拿到结果。",
+    async: false,
+    run(s){ s.activate("nLLM"); s.llm("✓ 你好 Sarah，用 Python 简洁作答"); }
+  },
+  {
+    no: "STEP 5 / 5 · 整合 Consolidate（异步）",
+    txt: "<b>后台工作进程</b>分析对话，提取出有价值的事实「user → 名字 → Sarah」「user → 语言 → Python」，写入长期索引。不阻塞响应——这就是<b>写穿透</b>。",
+    async: true,
+    run(s){
+      s.activate("nLong");
+      s.flyPacket("nLong", "🧠 提取事实", true);
+      s.addVec("user → 名字 → Sarah");
+      s.addVec("user → 语言 → Python");
+    }
+  }
+];
+
+const $ = id => document.getElementById(id);
+let idx = -1, playing = false, timer = null;
+
+const ctrl = {
+  clearActive(){ ["nShort","nLLM","nLong"].forEach(i=>$(i).classList.remove("active")); },
+  activate(id, soft){ if(!soft) {} $(id).classList.add("active"); },
+  fillBuffer(label){
+    const slots = $("buffer").children;
+    // 模拟 FIFO：左移，新条目进最右
+    for(let i=0;i<slots.length-1;i++){
+      slots[i].className = slots[i+1].className;
+      slots[i].textContent = slots[i+1].textContent;
+    }
+    const last = slots[slots.length-1];
+    last.className = "slot filled"; last.textContent = label;
+    // 首槽若被挤空则显示淡出
+    if(!slots[0].classList.contains("filled")){ slots[0].textContent="·"; }
+  },
+  highlightVecs(){ [...$("vecs").children].forEach(v=>v.classList.add("fresh"));
+    setTimeout(()=>[...$("vecs").children].forEach(v=>v.classList.remove("fresh")),900); },
+  addVec(text){
+    const v = document.createElement("div");
+    v.className = "vec"; v.textContent = text;
+    $("vecs").appendChild(v);
+    requestAnimationFrame(()=>{ v.classList.add("live","fresh"); });
+    setTimeout(()=>v.classList.remove("fresh"), 1200);
+  },
+  llm(text){ $("llmOut").textContent = text; },
+  flyPacket(targetId, label, consol){
+    const p = $("packet"), stage = p.parentElement.getBoundingClientRect();
+    const tgt = $(targetId).getBoundingClientRect();
+    p.textContent = label;
+    p.classList.toggle("consol", !!consol);
+    // 1) 设起点 + 关过渡
+    p.style.transition = "none";
+    p.style.opacity = "0";
+    p.style.transform = `translate(${stage.width/2 - 60}px, -8px)`;
+    // 2) 强制重排：把起点状态「提交」到屏幕，过渡才有起点可依
+    void p.offsetWidth;
+    // 3) 开过渡 + 设终点（此时已是另一次样式计算，过渡必然触发）
+    p.style.transition = "";
+    p.style.opacity = "1";
+    const x = tgt.left - stage.left + tgt.width / 2 - 60;
+    const y = tgt.top - stage.top + 16;
+    p.style.transform = `translate(${x}px, ${y}px)`;
+    // 4) 落点后淡出，避免滞留重叠
+    clearTimeout(this._pkt);
+    this._pkt = setTimeout(() => { p.style.opacity = "0"; }, 1150);
+  },
+  clearPacket(){ clearTimeout(this._pkt); $("packet").style.opacity = "0"; }
+};
+
+function render(i){
+  ctrl.clearActive();
+  ctrl.clearPacket();
+  const s = STEPS[i];
+  $("capNo").textContent = s.no;
+  $("capTxt").innerHTML = s.txt;
+  $("caption").classList.toggle("async", s.async);
+  s.run(ctrl);
+  $("bar").style.width = ((i+1)/STEPS.length*100) + "%";
+}
+
+function next(){
+  if(idx >= STEPS.length-1){ stop(); return false; }
+  idx++; render(idx); return true;
+}
+
+function reset(){
+  stop(); idx = -1;
+  $("capNo").textContent="就绪";
+  $("capTxt").innerHTML='点击 <b>播放</b>，跟随一条用户消息「我叫 Sarah，喜欢用 Python」走完全程。';
+  $("caption").classList.remove("async");
+  ctrl.clearActive(); $("bar").style.width="0";
+  $("llmOut").textContent="等待输入…";
+  // 重建缓冲与向量
+  $("buffer").innerHTML='<div class="slot">·</div><div class="slot">·</div><div class="slot">·</div><div class="slot">·</div>';
+  $("vecs").innerHTML='<div class="vec live">user → 偏好 → 简洁回答</div><div class="vec live">user → 时区 → UTC+8</div>';
+}
+
+function play(){
+  if(playing) return;
+  if(idx >= STEPS.length-1) reset();
+  playing = true; $("play").textContent="⏸ 暂停";
+  const tick = () => {
+    if(!next()){ stop(); return; }
+    timer = setTimeout(tick, 2200);
+  };
+  tick();
+}
+function stop(){ playing=false; clearTimeout(timer); $("play").textContent= idx>=STEPS.length-1 ? "↺ 重播" : "▶ 播放"; }
+
+$("play").onclick = ()=> playing ? stop() : play();
+$("step").onclick = ()=>{ stop(); if(idx>=STEPS.length-1) reset(); next(); };
+$("reset").onclick = reset;
+reset();
+</script>
+</body>
+</html>
