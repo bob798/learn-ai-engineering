@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -47,17 +47,24 @@ function Chevron({ open }: { open: boolean }) {
 function FolderGroup({
   label,
   children,
+  defaultOpen,
   count,
 }: {
   label: string;
   children: React.ReactNode;
+  defaultOpen: boolean;
   count: number;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
+  const userToggled = useRef(false);
+  // Auto-expand when active child appears, but never auto-collapse once user has interacted
+  useEffect(() => {
+    if (defaultOpen && !userToggled.current) setOpen(true);
+  }, [defaultOpen]);
   return (
     <div>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => { userToggled.current = true; setOpen(!open); }}
         className="flex items-center gap-1.5 w-full py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition"
       >
         <Chevron open={open} />
@@ -127,6 +134,7 @@ function TreeItems({
         }
 
         // Branch: folder with children
+        const hasActiveChild = hasDescendant(node, activeSlug);
         const subPath = pathPrefix ? `${pathPrefix}/${node.label}` : node.label;
         const folderLabel = subfolderLabel(sectionSlug, subPath);
         const leafCount = countLeaves(node);
@@ -135,6 +143,7 @@ function TreeItems({
           <li key={node.label}>
             <FolderGroup
               label={folderLabel}
+              defaultOpen={hasActiveChild}
               count={leafCount}
             >
               {/* If the folder itself is also a doc (e.g. a README) */}
@@ -301,7 +310,12 @@ function SectionAccordion({
   isActive: boolean;
   activeSlug: string;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(isActive);
+  const userToggled = useRef(false);
+  // Auto-expand when section becomes active, but never auto-collapse once user has interacted
+  useEffect(() => {
+    if (isActive && !userToggled.current) setOpen(true);
+  }, [isActive]);
 
   return (
     <div className="mb-1">
@@ -323,7 +337,7 @@ function SectionAccordion({
           <span className="truncate">{title}</span>
         </Link>
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => { userToggled.current = true; setOpen(!open); }}
           className="p-1 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
           aria-label={open ? "Collapse" : "Expand"}
         >
