@@ -47,19 +47,13 @@ function Chevron({ open }: { open: boolean }) {
 function FolderGroup({
   label,
   children,
-  defaultOpen,
   count,
 }: {
   label: string;
   children: React.ReactNode;
-  defaultOpen: boolean;
   count: number;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
-  // Auto-expand when an active child appears (but never auto-collapse)
-  useEffect(() => {
-    if (defaultOpen) setOpen(true);
-  }, [defaultOpen]);
+  const [open, setOpen] = useState(true);
   return (
     <div>
       <button
@@ -133,7 +127,6 @@ function TreeItems({
         }
 
         // Branch: folder with children
-        const hasActiveChild = hasDescendant(node, activeSlug);
         const subPath = pathPrefix ? `${pathPrefix}/${node.label}` : node.label;
         const folderLabel = subfolderLabel(sectionSlug, subPath);
         const leafCount = countLeaves(node);
@@ -142,7 +135,6 @@ function TreeItems({
           <li key={node.label}>
             <FolderGroup
               label={folderLabel}
-              defaultOpen={hasActiveChild}
               count={leafCount}
             >
               {/* If the folder itself is also a doc (e.g. a README) */}
@@ -309,11 +301,7 @@ function SectionAccordion({
   isActive: boolean;
   activeSlug: string;
 }) {
-  const [open, setOpen] = useState(isActive);
-  // Auto-expand when section becomes active (but never auto-collapse)
-  useEffect(() => {
-    if (isActive) setOpen(true);
-  }, [isActive]);
+  const [open, setOpen] = useState(true);
 
   return (
     <div className="mb-1">
