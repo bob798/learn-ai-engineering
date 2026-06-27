@@ -6,7 +6,6 @@ date: 2026-06-27
 depth: Medium
 tags: [agent, agent-loop, ReAct, first-principles, control-theory]
 prev: 01-why-agent-is-inevitable
-next: 03-karpathy-route
 ---
 
 # 为什么 Agent 必须是循环
@@ -160,6 +159,6 @@ while not done:
 ### 延伸阅读
 
 - [上一篇：为什么 AI 必然走向 Agent](01-why-agent-is-inevitable.md)
-- [下一篇：Karpathy 路线](03-karpathy-route.md)
+- [Karpathy 的 Memory 思想脉络](../deep-topics/memory/karpathy-memory-route.md)
 - [Agent 退化循环（doom loop）](../harness/agent-doom-loop.md)
 - [沙箱生命周期可靠性](../harness/agent-sandbox-lifecycle-reliability.md)

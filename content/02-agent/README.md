@@ -27,8 +27,7 @@
 | 主题 | 一句话 | 链接 |
 |---|---|---|
 | **为什么 AI 必然走向 Agent** | 从第一性原理倒推：LLM 只覆盖知识+推理，剩下四种能力补上去就是 Agent | [01-why-agent-is-inevitable.md](concepts/01-why-agent-is-inevitable.md) |
-| **Agent Loop 深度理解** | 为什么必须是循环（5 个底层原因）+ 60 年血脉 + messages 数组机制 | [02-agent-loop.md](concepts/02-agent-loop.md) |
-| **Karpathy 路线** | LLM OS → RAG is a hack → LLM Wiki → Software 3.0 → Agent Memory | [03-karpathy-route.md](concepts/03-karpathy-route.md) |
+| **为什么 Agent 必须是循环** | 5 个底层原因 + 60 年血脉 + messages 数组机制 | [02-agent-loop.md](concepts/02-agent-loop.md) |
 
 ---
 
@@ -51,6 +50,7 @@
 
 | 主题 | 一句话 | 链接 |
 |---|---|---|
+| **Karpathy 的 Memory 思想脉络** | LLM OS → RAG is a hack → LLM Wiki → Context Engineering → Agent Memory | [karpathy-memory-route.md](deep-topics/memory/karpathy-memory-route.md) |
 | **从 RAG 到 Memory** | 传统 RAG 被降级为原语，Memory / Context Engineering 是新战场 | [rag-to-memory.md](deep-topics/memory/rag-to-memory.md) |
 | **mem0 入门译文** | 记忆是什么 · 为什么 · 怎么做（记忆 vs 上下文窗口 vs RAG） | [mem0-memory-in-agents.md](deep-topics/memory/mem0-memory-in-agents.md) |
 | **商用方案对比** | OpenAI / Claude Code / Claude 三家 8 维度 + 实现细节 | [survey](deep-topics/memory/ai-memory-implementation-survey.md) |
@@ -118,10 +118,9 @@
 02-agent/
 ├── README.md                    ← 本文件（总索引 + 阅读路径）
 │
-├── concepts/                    ← ① 核心概念（入口）
+├── concepts/                    ← ① 核心概念（入口，不过期的认知基石）
 │   ├── 01-why-agent-is-inevitable.md
-│   ├── 02-agent-loop.md
-│   └── 03-karpathy-route.md
+│   └── 02-agent-loop.md
 │
 ├── agent-from-scratch/          ← ② 从零手写 V1→V10
 │   ├── README.md

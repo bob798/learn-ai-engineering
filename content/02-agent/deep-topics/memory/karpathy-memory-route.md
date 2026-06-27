@@ -1,16 +1,15 @@
 ---
-title: Karpathy 路线：从 RAG 到 Agent Memory
+title: Karpathy 的 Memory 思想脉络：从 RAG 到 Agent Memory
 description: 整理 Andrej Karpathy 在 2023-2025 年关于 Agent Memory / Knowledge 的五个核心主张，以及各家的落地进展
 status: draft
 date: 2026-06-27
 depth: Medium
 tags: [karpathy, RAG, memory, LLM-wiki, context-engineering, agent-memory]
-prev: 02-agent-loop
 ---
 
-# Karpathy 路线：从 RAG 到 Agent Memory
+# Karpathy 的 Memory 思想脉络：从 RAG 到 Agent Memory
 
-> [上一篇](02-agent-loop.md) 讲了 Agent 为什么必须是循环。这篇看一个更长期的问题：Agent 的知识和记忆该怎么组织？Karpathy 从 2023 年起的一系列公开发言，给出了一条清晰的演进路线。
+> Karpathy 从 2023 年起关于 Agent 知识管理的一系列公开发言，形成了一条从 RAG 到 Agent Memory 的演进路线。这篇梳理他的五个核心主张和各家的落地进展。
 
 **观点标识说明**：📚 事实；🔍 分析；💡 作者观点。
 
@@ -111,6 +110,6 @@ graph LR
 
 ### 延伸阅读
 
-- [上一篇：为什么 Agent 必须是循环](02-agent-loop.md)
-- [从 RAG 到 Memory 演化](../deep-topics/memory/rag-to-memory.md) — 商业价值分层 + 各方向判断
-- [MemGPT/Letta 入门指南](../deep-dives/memgpt-letta/memgpt-letta-guide.md) — 用秘书比喻理解三级记忆
+- [从 RAG 到 Memory 演化](rag-to-memory.md) — 商业价值分层 + 各方向判断
+- [MemGPT/Letta 入门指南](../../deep-dives/memgpt-letta/memgpt-letta-guide.md) — 用秘书比喻理解三级记忆
+- [为什么 AI 必然走向 Agent](../../concepts/01-why-agent-is-inevitable.md) — Agent 的第一性原理推导
