@@ -1,7 +1,7 @@
 ---
 title: Writing Guide · 文章编写规范
 description: 这个仓库写文章的硬要求——怎么开头、怎么搭结构、怎么写得像人话、怎么压篇幅。从一次真实迭代里攒出来的
-status: v2 · 增加引用与观点标识规范（实例：content/02-agent/concepts/why-agent-is-inevitable.md）
+status: v2 · 增加引用与观点标识规范（实例：content/02-agent/concepts/01-why-agent-is-inevitable.md）
 ---
 
 # Writing Guide · 文章编写规范
@@ -72,7 +72,7 @@ status: v2 · 增加引用与观点标识规范（实例：content/02-agent/conc
 
 ### 实例
 
-见 `content/02-agent/concepts/why-agent-is-inevitable.md`——全文用三类标识 + 行内引用 + 文末参考资料的完整示范。
+见 `content/02-agent/concepts/01-why-agent-is-inevitable.md`——全文用三类标识 + 行内引用 + 文末参考资料的完整示范。
 
 ## 7. 取材自真实项目：脱敏
 

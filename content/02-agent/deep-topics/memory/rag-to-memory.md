@@ -72,5 +72,5 @@ Memory / Context 本身就是一等公民
 
 ## 延伸阅读
 
-- [Karpathy 路线](../concepts/karpathy-route.md) — LLM OS / LLM Wiki / Software 3.0
+- [Karpathy 路线](../concepts/03-karpathy-route.md) — LLM OS / LLM Wiki / Software 3.0
 - [MemGPT/Letta 入门指南](../deep-dives/memgpt-letta/memgpt-letta-guide.html) — 用秘书比喻理解 Agent Memory

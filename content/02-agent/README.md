@@ -26,9 +26,9 @@
 
 | 主题 | 一句话 | 链接 |
 |---|---|---|
-| **为什么 AI 必然走向 Agent** | 从第一性原理倒推：LLM 只覆盖知识+推理，剩下四种能力补上去就是 Agent | [why-agent-is-inevitable.md](concepts/why-agent-is-inevitable.md) |
-| **Agent Loop 深度理解** | 为什么必须是循环（5 个底层原因）+ 60 年血脉 + messages 数组机制 | [agent-loop.md](concepts/agent-loop.md) |
-| **Karpathy 路线** | LLM OS → RAG is a hack → LLM Wiki → Software 3.0 → Agent Memory | [karpathy-route.md](concepts/karpathy-route.md) |
+| **为什么 AI 必然走向 Agent** | 从第一性原理倒推：LLM 只覆盖知识+推理，剩下四种能力补上去就是 Agent | [01-why-agent-is-inevitable.md](concepts/01-why-agent-is-inevitable.md) |
+| **Agent Loop 深度理解** | 为什么必须是循环（5 个底层原因）+ 60 年血脉 + messages 数组机制 | [02-agent-loop.md](concepts/02-agent-loop.md) |
+| **Karpathy 路线** | LLM OS → RAG is a hack → LLM Wiki → Software 3.0 → Agent Memory | [03-karpathy-route.md](concepts/03-karpathy-route.md) |
 
 ---
 
@@ -119,9 +119,9 @@
 ├── README.md                    ← 本文件（总索引 + 阅读路径）
 │
 ├── concepts/                    ← ① 核心概念（入口）
-│   ├── why-agent-is-inevitable.md
-│   ├── agent-loop.md
-│   └── karpathy-route.md
+│   ├── 01-why-agent-is-inevitable.md
+│   ├── 02-agent-loop.md
+│   └── 03-karpathy-route.md
 │
 ├── agent-from-scratch/          ← ② 从零手写 V1→V10
 │   ├── README.md

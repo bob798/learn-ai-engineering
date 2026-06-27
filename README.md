@@ -112,7 +112,7 @@ graph LR
 ### 🧠 方法论 & 思考框架
 - [5D 知识习得方法](./content/02-agent/methodology/5d-framework.md) · 可迁移到任意新领域
 - [从 RAG 到 Memory · 演化路线](./content/02-agent/concepts/rag-to-memory.md)
-- [Karpathy · LLM OS → LLM Wiki → Software 3.0](./content/02-agent/concepts/karpathy-route.md)
+- [Karpathy · LLM OS → LLM Wiki → Software 3.0](./content/02-agent/concepts/03-karpathy-route.md)
 
 ### 🎨 交互式笔记（浏览器打开）
 - [MCP 深度追问系列](./interactive/mcp/) · 11Q + 5Q

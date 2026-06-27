@@ -295,8 +295,8 @@ grep -oE '^  \w+,' web/src/components/DocBody.tsx
 
 ### v1 首发实例（2026-04）
 
-- **页面**：`/agent/concepts/agent-loop`
-- **MD**：`content/02-agent/concepts/agent-loop.md`
+- **页面**：`/agent/concepts/02-agent-loop`
+- **MD**：`content/02-agent/concepts/02-agent-loop.md`
 - **前置源**：[shareAI-lab/learn-claude-code](https://github.com/shareAI-lab/learn-claude-code) 中文版 12 讲
 - **验收核心**：读者能用 4 格（反馈/分支树/状态累积/调度者）把 agent loop 结构移植到 HTTP server / 游戏 AI / 做菜 / Kubernetes 中至少一个
 - **组件清单**（8 个）：

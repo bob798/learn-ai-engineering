@@ -30,7 +30,7 @@ order: 1
 ## 相关内容（不在本目录但强关联）
 
 - [MemGPT / Letta 入门指南](../deep-dives/memgpt-letta/memgpt-letta-guide.md) — 用秘书比喻理解三级记忆（core / recall / archival）
-- [Karpathy 路线](../concepts/karpathy-route.md) — LLM OS → LLM Wiki → Agent Memory 的思想脉络
+- [Karpathy 路线](../concepts/03-karpathy-route.md) — LLM OS → LLM Wiki → Agent Memory 的思想脉络
 - [Agent 生态 2026](../research/agent-ecosystem-2026.md) — 记忆作为「创新空白」的行业背景
 
 ---
