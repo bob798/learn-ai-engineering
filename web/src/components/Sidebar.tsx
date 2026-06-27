@@ -89,12 +89,11 @@ function DocLink({
     <li>
       <Link
         href={`/${slug}`}
-        className={`block py-1 text-sm transition truncate ${
+        className={`block py-1 text-sm transition leading-snug ${
           isActive
             ? "text-orange-600 dark:text-orange-400 font-medium border-l-2 border-orange-500 -ml-[13px] pl-[11px]"
             : "text-zinc-600 hover:text-orange-600 dark:text-zinc-400 dark:hover:text-orange-400"
         }`}
-        title={title}
       >
         {title}
       </Link>
