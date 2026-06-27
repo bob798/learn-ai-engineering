@@ -17,7 +17,7 @@ tags: [agent, first-principles, AI-history, LLM, evolution]
 
 ## 前言：为什么今天所有 AI 公司都在做 Agent
 
-2024 年，Anthropic 发布 Computer Use，让模型直接操作屏幕；同年推出 MCP 协议，统一 Agent 的工具接入标准。OpenAI 发布 Agents SDK，把 Agent 开发从手搓变成框架化。Google 发布 A2A 协议，定义多 Agent 互操作标准。Cognition 的 Devin 成为第一个引起广泛关注的 AI 软件工程 Agent。到 2026 年中，Claude Code、Cursor、Windsurf 已经是工程师的日常工具——Agent 不再是论文里的概念，而是每天在用的生产系统。
+2024-2025 年，Anthropic 推出 Computer Use 和 MCP 协议，OpenAI 发布 Agents SDK，Google 发布 A2A 协议，Devin 成为首个出圈的 AI 软件工程 Agent。到 2026 年中，Claude Code、Cursor 已经是工程师的日常工具。
 
 三大 AI 公司同时押注 Agent，不是巧合。背后有一条从 1956 年就开始的因果链。
 
