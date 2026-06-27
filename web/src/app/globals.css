@@ -287,6 +287,15 @@ html { font-family: var(--font-sans); }
 .prose-doc h3:hover .anchor { opacity: 1; }
 .prose-doc .anchor::before { content: "#"; }
 
+/* Mermaid diagrams */
+.prose-doc .mermaid {
+  margin: 1.5rem 0;
+  text-align: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.prose-doc .mermaid svg { max-width: 100%; height: auto; }
+
 /* ---- Mobile responsive ---- */
 @media (max-width: 640px) {
   .prose-doc { font-size: 14px; }

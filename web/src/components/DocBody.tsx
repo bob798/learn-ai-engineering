@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LoopTokenGrowth } from "./visualizations/LoopTokenGrowth";
 import { ToolGranularityCompare } from "./visualizations/ToolGranularityCompare";
@@ -89,6 +89,39 @@ export function DocBody({ html }: { html: string }) {
       />
     );
   }
+
+  // Render mermaid diagrams after mount
+  useEffect(() => {
+    const codeBlocks = document.querySelectorAll("pre > code.language-mermaid");
+    if (codeBlocks.length === 0) return;
+
+    // Replace code blocks with mermaid containers before loading the library
+    const containers: HTMLElement[] = [];
+    codeBlocks.forEach((block) => {
+      const pre = block.parentElement;
+      if (!pre) return;
+      const div = document.createElement("div");
+      div.className = "mermaid";
+      div.textContent = block.textContent || "";
+      pre.replaceWith(div);
+      containers.push(div);
+    });
+
+    // Load mermaid from CDN
+    if (!(window as any).mermaid) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+      script.onload = () => {
+        const m = (window as any).mermaid;
+        m.initialize({ startOnLoad: false, theme: "base", fontFamily: "inherit" });
+        m.run({ nodes: containers });
+      };
+      document.head.appendChild(script);
+    } else {
+      const m = (window as any).mermaid;
+      m.run({ nodes: containers });
+    }
+  }, [html]);
 
   return <article className="prose-doc" onClick={handleClick}>{parts}</article>;
 }
