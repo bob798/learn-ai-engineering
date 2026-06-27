@@ -56,6 +56,10 @@ function FolderGroup({
   count: number;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  // Auto-expand when an active child appears (but never auto-collapse)
+  useEffect(() => {
+    if (defaultOpen) setOpen(true);
+  }, [defaultOpen]);
   return (
     <div>
       <button
@@ -306,6 +310,10 @@ function SectionAccordion({
   activeSlug: string;
 }) {
   const [open, setOpen] = useState(isActive);
+  // Auto-expand when section becomes active (but never auto-collapse)
+  useEffect(() => {
+    if (isActive) setOpen(true);
+  }, [isActive]);
 
   return (
     <div className="mb-1">
