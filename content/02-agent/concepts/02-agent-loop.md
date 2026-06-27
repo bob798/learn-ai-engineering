@@ -41,7 +41,7 @@ next: 03-karpathy-route
 
 ## 第二章 循环的 60 年血脉
 
-📚 今天的 Agent 循环不是 2022 年凭空发明的。从 1960 年代的机器人到 1990 年代的强化学习，「感知→规划→行动」这个结构被六批不同的人在六个不同领域独立发现。ReAct [1] 只是把它搬到了 LLM 上。
+📚 Agent 循环不是 2022 年凭空发明的。从 1960 年代的机器人到 1990 年代的强化学习，「感知→规划→行动」这个结构被六批不同的人在六个不同领域独立发现。ReAct [1] 只是把它搬到了 LLM 上。
 
 ### 六条源流
 
@@ -55,7 +55,7 @@ next: 03-karpathy-route
 
 **1986 · Subsumption Architecture** [6]
 
-📚 Brooks（iRobot 创始人，MIT）的论文 *Intelligence Without Reason* 抨击 SPA 太慢太脆——机器人还没想完，老鼠已经跑了。他提出反应式分层架构：多个感知-动作循环并行运行，底层反射快、高层规划慢，高层压制低层。这是今天多 Agent、subagent 的架构思想源头。
+📚 Brooks（iRobot 创始人，MIT）的论文 *Intelligence Without Reason* 抨击 SPA 太慢太脆——机器人还没想完，老鼠已经跑了。他提出反应式分层架构：多个感知-动作循环并行运行，底层反射快、高层规划慢，高层压制低层。这是多 Agent、subagent 架构的思想源头。
 
 **1983-至今 · SOAR** [2]
 
@@ -63,11 +63,11 @@ next: 03-karpathy-route
 
 **1993-至今 · ACT-R** [3]
 
-📚 认知心理学建模的标杆（Anderson，CMU）。核心是产生式规则（IF pattern THEN action）不断匹配工作记忆并触发。每一次触发就是一轮循环，结果更新工作记忆，引发下一轮匹配。ACT-R 明确区分程序性记忆（规则）和陈述性记忆（事实），这正是今天 Agent 里「工具」和「上下文」的分离。
+📚 认知心理学建模的标杆（Anderson，CMU）。核心是产生式规则（IF pattern THEN action）不断匹配工作记忆并触发。每一次触发就是一轮循环，结果更新工作记忆，引发下一轮匹配。ACT-R 明确区分程序性记忆（规则）和陈述性记忆（事实），这正是 Agent 架构里「工具」和「上下文」的分离。
 
 **1998 · Agent-Environment Loop** [4]
 
-📚 Sutton 和 Barto 把 Agent 抽象为数学对象：每个 timestep t，Agent 观察状态 sₜ，选择动作 aₜ，环境反馈奖励 rₜ₊₁ 和新状态 sₜ₊₁。目标是最大化累积奖励。这是今天所有 Agent 循环的数学骨架。
+📚 Sutton 和 Barto 把 Agent 抽象为数学对象：每个 timestep t，Agent 观察状态 sₜ，选择动作 aₜ，环境反馈奖励 rₜ₊₁ 和新状态 sₜ₊₁。目标是最大化累积奖励。这是所有 Agent 循环的数学骨架。
 
 ### 汇流
 
