@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 是什么？为什么 AI 必然会走向 Agent</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  /* ========== 工具栏（不会被 WechatSync 提取） ========== */
+  .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .toolbar .left { display: flex; align-items: center; gap: 16px; }
+  .toolbar .status {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+  }
+  .toolbar .status.ready { background: rgba(46,125,50,0.3); color: #81c784; }
+  .toolbar .status.rendering { background: rgba(255,152,0,0.3); color: #ffb74d; }
+  .toolbar button {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .toolbar .btn-sync {
+    background: #4caf50;
+    color: #fff;
+  }
+  .toolbar .btn-sync:hover { background: #388e3c; }
+  .toolbar .btn-sync:disabled { background: #666; cursor: not-allowed; }
+  .toolbar .btn-toggle {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  .toolbar .btn-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* ========== 素材区（封面+图表预览） ========== */
+  .assets-panel {
+    margin-top: 60px;
+    background: #fff;
+    border-bottom: 3px solid #e0e0e0;
+    overflow: hidden;
+    transition: max-height 0.3s;
+  }
+  .assets-panel.collapsed { max-height: 0; }
+  .assets-panel .inner { padding: 30px 20px 40px; }
+  .assets-panel h2 {
+    text-align: center;
+    font-size: 16px;
+    color: #999;
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+
+  /* 封面 */
+  .cover {
+    width: 900px;
+    height: 500px;
+    margin: 0 auto 40px;
+    border-radius: 8px;
+    position: relative;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+  }
+  .cover .tag {
+    display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 20px;
+    padding: 4px 18px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+    color: rgba(255,255,255,0.8);
+  }
+  .cover h1 {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.4;
+    max-width: 720px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .cover h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    color: rgba(255,255,255,0.7);
+    max-width: 600px;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .cover .evolution {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 40px;
+    font-size: 15px;
+  }
+  .cover .evolution .node {
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.6);
+  }
+  .cover .evolution .node.active {
+    background: rgba(0,210,255,0.15);
+    border-color: rgba(0,210,255,0.5);
+    color: #00d2ff;
+    font-weight: 600;
+  }
+  .cover .evolution .arrow { color: rgba(255,255,255,0.3); }
+
+  /* Mermaid 预览卡片 */
+  .diagram-card {
+    max-width: 860px;
+    margin: 0 auto 30px;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .diagram-card .label {
+    background: #f0f0f0;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #666;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .diagram-card .mermaid-wrap {
+    padding: 24px 16px;
+    display: flex;
+    justify-content: center;
+    overflow: auto;
+    background: #fff;
+  }
+
+  /* ========== 正文区（WechatSync 提取目标） ========== */
+  article {
+    max-width: 680px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px 28px 60px;
+  }
+  article img.diagram {
+    display: block;
+    max-width: 100%;
+    margin: 20px auto;
+    border-radius: 4px;
+  }
+
+  /* ========== file:// 提示条 ========== */
+  .file-warning {
+    display: none;
+    margin-top: 60px;
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 8px;
+    padding: 20px 24px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  .file-warning.show { display: block; }
+  .file-warning h3 { color: #e65100; font-size: 16px; margin-bottom: 8px; }
+  .file-warning code {
+    background: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+    user-select: all;
+  }
+  .file-warning .actions { margin-top: 12px; display: flex; gap: 10px; }
+  .file-warning button {
+    border: none; border-radius: 6px; padding: 8px 16px;
+    font-size: 14px; cursor: pointer; font-weight: 600;
+  }
+  .file-warning .btn-copy { background: #1976d2; color: #fff; }
+  .file-warning .btn-copy:hover { background: #1565c0; }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 10px 24px; border-radius: 8px;
+    font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ==================== 顶部工具栏 ==================== -->
+<nav class="toolbar" id="toolbar">
+  <div class="left">
+    <strong>发布工具</strong>
+    <span class="status rendering" id="statusBadge">⏳ Mermaid 渲染中...</span>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
+    <button class="btn-sync" id="btnDownload" disabled onclick="downloadAllPng()" style="background:#1976d2;">⬇️ 下载图表</button>
+    <button class="btn-sync" id="btnCopy" disabled onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
+    <button class="btn-sync" id="btnCopyX" disabled onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
+    <button class="btn-sync" id="btnSyncWx" disabled onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
+    <button class="btn-sync" id="btnSyncOther" disabled onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
+  </div>
+</nav>
+
+<!-- file:// 协议提示 -->
+<div class="file-warning" id="fileWarning">
+  <h3>⚠️ 当前为本地文件模式（file://）</h3>
+  <p>WechatSync 扩展无法在 <code>file://</code> 页面上运行。请用以下任一方式解决：</p>
+  <p><strong>方式 A — 本地 HTTP 服务（推荐，WechatSync 可直接提取）</strong></p>
+  <p>在终端运行：<code id="serverCmd">node scripts/publish-server.mjs content/02-agent/concepts</code></p>
+  <p>然后在 Chrome 打开 <code>http://localhost:8787/01-why-agent-is-inevitable-wechat.html</code></p>
+  <p><strong>方式 B — 复制 + 粘贴</strong></p>
+  <p>点击「📋 复制正文」→ 粘贴到公众号编辑器 → 点击「⬇️ 下载全部图表」→ 在【图 N】标记处插入图片。</p>
+</div>
+
+<!-- toast 通知 -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 素材区（封面 + 图表预览） ==================== -->
+<div class="assets-panel" id="assetsPanel">
+<div class="inner">
+  <h2>封面图（右键 → 另存为图片，或截图）</h2>
+  <div class="cover">
+    <div class="tag">AI 工程学习路线 · 第一篇</div>
+    <h1>为什么 AI 必然走向 <em>Agent</em></h1>
+    <div class="subtitle">从达特茅斯会议到 GPT 再到 Agent<br/>一篇文章看懂 70 年的演进逻辑</div>
+    <div class="evolution">
+      <span class="node">专家系统</span><span class="arrow">→</span>
+      <span class="node">机器学习</span><span class="arrow">→</span>
+      <span class="node">深度学习</span><span class="arrow">→</span>
+      <span class="node">LLM</span><span class="arrow">→</span>
+      <span class="node active">Agent</span>
+    </div>
+  </div>
+
+  <h2>Mermaid 图表预览（渲染完成后自动注入正文）</h2>
+
+  <!-- 隐藏的 Mermaid 源，渲染后转 PNG -->
+  <div class="diagram-card">
+    <div class="label">图 1 — AI 技术演进时间线（第一章）</div>
+    <div class="mermaid-wrap"><pre class="mermaid" id="mermaid-1">
+graph LR
+    A["专家系统<br/>(1970s-80s)<br/>人写规则，机器照做"] --> B["机器学习<br/>(1990s-2000s)<br/>给数据，让机器找规律"]
+    B --> C["深度学习<br/>(2012-)<br/>更大的网络，效果起飞"]
+    C --> D["Transformer<br/>(2017-)<br/>注意力机制，序列建模质变"]
+    D --> E["LLM<br/>(2020-)<br/>能对话、能推理"]
+    E --> F["Agent<br/>(2024-)<br/>能规划、调工具、完成任务"]
+    style F fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    </pre></div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="label">图 2 — Agent 核心循环（第五章）</div>
+    <div class="mermaid-wrap"><pre class="mermaid" id="mermaid-2">
+flowchart TD
+    A["🎯 拿到目标"] --> B["🧠 想<br/>推理 + 规划"]
+    B --> C["🔧 做<br/>调工具"]
+    C --> D["👁️ 看<br/>观察结果"]
+    D --> E{"目标达成了吗？"}
+    E -- "没有" --> B
+    E -- "达成 ✅" --> F["结束"]
+    style A fill:#fff3e0,stroke:#e65100
+    style E fill:#e3f2fd,stroke:#1565c0
+    style F fill:#e8f5e9,stroke:#2e7d32
+    </pre></div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="label">图 3 — 能力依赖链（第七章）</div>
+    <div class="mermaid-wrap"><pre class="mermaid" id="mermaid-3">
+graph LR
+    A["只能生成文本<br/><b>LLM</b>"] --> B["能调工具<br/><b>+ Tool Use</b>"]
+    B --> C["能根据结果调整<br/><b>+ 反馈循环</b>"]
+    C --> D["能记住跨会话经验<br/><b>+ Memory</b>"]
+    D --> E["能自己拆解复杂任务<br/><b>+ Planning</b>"]
+    style A fill:#fce4ec,stroke:#c62828
+    style E fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    </pre></div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="label">图 4 — Agent 之后的演进方向（第八章）</div>
+    <div class="mermaid-wrap"><pre class="mermaid" id="mermaid-4">
+graph LR
+    A["Single Agent<br/>一个人干活"] --> B["Multi-Agent<br/>一群人协作"]
+    B --> C["Self-learning<br/>从错误中自我改进"]
+    C --> D["AGI<br/>通用人工智能"]
+    style D fill:#fff3e0,stroke:#e65100,stroke-width:2px,stroke-dasharray: 5 5
+    </pre></div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 正文（WechatSync 提取区） ==================== -->
+<article id="articleContent">
+
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:8px;line-height:1.5;font-family:-apple-system,'PingFang SC','Hiragino Sans GB',sans-serif;">Agent 是什么？为什么 AI 必然会走向 Agent</h1>
+
+  <p style="text-align:center;color:#999;font-size:14px;margin-bottom:24px;">AI 工程学习路线 · 第一篇</p>
+
+  <p style="font-size:15px;color:#888;text-align:center;margin-bottom:20px;line-height:1.8;">从达特茅斯会议到 GPT，再到 Agent，一篇文章看懂 AI 的演进逻辑。</p>
+
+  <p style="font-size:16px;color:#555;margin-bottom:16px;line-height:2;text-align:justify;">AI 不再只是聊天机器人了——它开始自己动手干活。你让它改代码，它真的打开编辑器、跑测试、提交 PR；你让它做调研，它真的搜资料、读论文、写报告。这不是科幻，是 2026 年正在发生的事。</p>
+
+  <p style="font-size:16px;color:#555;margin-bottom:16px;line-height:2;text-align:justify;">但为什么是现在？为什么所有公司同时转向同一个方向？这背后有一条 70 年的因果链。</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:30px;line-height:1.8;">
+    <strong>观点标识说明</strong>：本文区分三类内容——📚 事实（引用论文、教材、历史资料）；🔍 分析（基于多个来源的归纳）；💡 作者观点（第一性原理思考和判断）。
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">前言：为什么今天所有 AI 公司都在做 Agent</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">2024-2025 年，Anthropic 推出 Computer Use 和 MCP 协议，OpenAI 发布 Agents SDK，Google 发布 A2A 协议，Devin 成为首个出圈的 AI 软件工程 Agent。到 2026 年中，Claude Code、Cursor 已经是工程师的日常工具。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">三大 AI 公司同时押注 Agent，不是巧合。背后有一条从 1956 年就开始的因果链。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">凭什么是 Agent？它只是「LLM + Tools」吗？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">💡 简短的回答：Agent 这个概念在 AI 学科里存在了 30 年，一直没大规模落地，因为缺一个足够强的推理引擎。LLM 补上了这块之后，剩下的能力——感知、行动、记忆、反馈——变成了可以工程化解决的问题。路径一旦清晰，所有人自然同时转向。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">下面从 AI 的初心开始，一层层把这条因果链讲透。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第一章 AI 的初心是什么</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 1955 年，McCarthy、Minsky、Rochester 和 Shannon 提交了达特茅斯会议的申请书。里面有一句话定义了整个学科的目标：</p>
+
+  <blockquote style="border-left:4px solid #00d2ff;padding:12px 16px;margin:16px 0;background:#f9fcff;color:#555;font-size:15px;line-height:1.8;">
+    <p style="margin-bottom:4px;color:#555;">"Every aspect of learning or any other feature of intelligence can in principle be so precisely described that a machine can be made to simulate it."</p>
+    <p style="margin-bottom:0;color:#555;">——McCarthy et al.《A Proposal for the Dartmouth Summer Research Project on Artificial Intelligence》(1955)</p>
+  </blockquote>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">注意这句话的关键词：<strong style="color:#1a1a1a;">simulate intelligence</strong>（模拟智能）。不是 generate text，不是 predict next token，是模拟人的智能。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">🔍 从 1956 年至今，AI 经历了专家系统、机器学习、深度学习、Transformer、LLM 几个阶段。每一代的技术手段不同，但达特茅斯定下的目标没变过。</p>
+
+  <!-- 图1 占位，渲染后自动替换 -->
+  <div id="slot-1" style="text-align:center;margin:20px 0;"><p class="img-mark" style="color:#999;font-size:14px;background:#f5f5f5;padding:12px;border-radius:4px;">【图 1 — AI 技术演进时间线】</p></div>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">那么问题来了：什么叫「智能」？模拟智能到底要模拟什么？</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第二章 什么是智能</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">顺着「智能」这个词往下钻，问五层就见底。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">什么是智能？</strong> 不是知道很多东西，是能用所知道的去达成目标。一个人背了整本百科全书但不会用，没人说他「智能」。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">达成目标需要什么？</strong> 需要推理。环境存在未知，得根据已有信息想出下一步该干嘛。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">光推理够不够？</strong> 不够。知道答案并不能改变世界。想出来还得做出来，目标才能达成。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">做完就行了？</strong> 不行。第一次决策可能错误。做完得知道做得对不对，看到结果，判断离目标近了还是远了，然后调整。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">调整靠什么？</strong> 靠记住之前干过什么、结果怎样。经验能提升未来决策。没有记忆，每次都从零开始，调整无从谈起。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">五层问完，「智能」可以拆成六个具体能力：</p>
+
+  <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
+    <thead><tr><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">能力</th><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">做什么</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>目标</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">知道自己要干嘛</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>感知</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">接收外部信息</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>推理</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">根据信息想出下一步</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>行动</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">把想的变成做的</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>反馈</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">看到结果，判断对不对</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>学习</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">记住经验，下次做得更好</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">🔍 这六条不是某一篇论文的原文，是基于控制论、认知科学和现代 AI 教材的抽象总结。控制论创始人 Wiener 在 1948 年就提出：智能系统的核心是感知-行动-反馈的闭环，不是单向输出。这个洞察直到今天仍然是 Agent 设计的理论根基。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第三章 Agent 并不是今天才出现</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">很多人觉得 Agent 是 2024 年随 GPT 一起火起来的新概念。不是。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 Russell 和 Norvig 在 AI 领域最权威的教科书里，从第一版（1995 年）就把 Agent 作为核心概念：</p>
+
+  <blockquote style="border-left:4px solid #00d2ff;padding:12px 16px;margin:16px 0;background:#f9fcff;color:#555;font-size:15px;line-height:1.8;">
+    <p style="margin-bottom:4px;color:#555;">"An agent is anything that can be viewed as perceiving its environment through sensors and acting upon that environment through actuators."</p>
+    <p style="margin-bottom:0;color:#555;">——Russell &amp; Norvig《Artificial Intelligence: A Modern Approach》</p>
+  </blockquote>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个定义说的是：只要一个系统能感知环境并对环境做出动作，它就是 Agent。跟 LLM 没关系，跟深度学习没关系——这是 AI 学科从 1995 年就确立的基本概念。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">🔍 过去 30 年，Agent 一直活在教科书和学术论文里，没大规模落地。不是概念不对，是缺少足够强的基础模型来支撑「推理」这一环。一个 Agent 要能理解自然语言指令、拆解任务、决定下一步调什么工具——这些能力在 LLM 之前都做不好。<strong style="color:#1a1a1a;">LLM 补上了推理能力，Agent 才从理论变成了工程。</strong></p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第四章 LLM 为什么不够</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 LLM 的技术基础是 Transformer（Vaswani et al., 2017），核心能力由 GPT-3（Brown et al., 2020）展示：给定上下文，预测下一个 token。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个机制带来了两个强能力：知识表达（训练数据里的）和推理（根据上下文推导出下一步）。这两条做得很好，好到让人觉得「AI 已经很强了」。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">🔍 但拿第二章的六条能力去对 LLM，缺口一眼就看出来：</p>
+
+  <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
+    <thead><tr><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">能力</th><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">LLM 的现状</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>感知</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">只能读文本（后来加了多模态，但仍是被动接收）</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>行动</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">只能输出文本，不能操作任何外部系统</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>记忆</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">上下文窗口用完就忘，没有跨会话记忆</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;"><strong>反馈</strong></td><td style="padding:10px 12px;border:1px solid #e8e8e8;">不知道自己的回答是对是错，没有验证环节</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">LLM 本质上是一个「只能回答，不能做事」的系统。你问它「帮我订明天的机票」，它会告诉你怎么订，但它订不了。你问它「这段代码有 bug 吗」，它会分析，但它跑不了、测不了、改不了。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">这不是模型不够大或训练数据不够多能解决的。这是架构层面的缺失</strong>——LLM 的输入是文本，输出也是文本，它跟外部世界之间没有通路。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第五章 Agent 如何补齐这些能力</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">Agent 不是一个全新的东西，它是在 LLM 外面包了一层，把缺的那几条能力补上。这些能力不是凭空造出来的，每一项背后都有对应的研究工作：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 近几年的关键工作：</p>
+
+  <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
+    <thead><tr><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">缺失的能力</th><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">怎么补的</th><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">代表工作</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">行动（Tool Use）</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">让模型调用外部工具</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">Toolformer (2023)、OpenAI Function Calling</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">推理 + 行动闭环</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">交替进行思考和行动</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">ReAct (2023)</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">规划</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">先拆解任务再逐步执行</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">Plan-and-Execute、BabyAGI</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">反思</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">根据失败结果自我修正</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">Reflexion (2023)</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">记忆</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">分层记忆（工作记忆 + 长期存储）</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">MemGPT (2023)、Mem0</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">把这些能力串起来，就是一个循环：</p>
+
+  <!-- 图2 占位 -->
+  <div id="slot-2" style="text-align:center;margin:20px 0;"><p class="img-mark" style="color:#999;font-size:14px;background:#f5f5f5;padding:12px;border-radius:4px;">【图 2 — Agent 核心循环】</p></div>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个循环就是 Agent 的核心。如果你读过 ReAct 论文，会认出这就是 Thought → Action → Observation 循环。不是学术界凭空造了一个模式，而是「要完成任务」这个需求本身就要求这样的结构。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第六章 从论文到生产：2024-2026 的验证</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第五章的引用全部停在 2023 年。接下来两年发生的事情，刚好可以检验前面的推导是不是纸上谈兵。</p>
+
+  <h3 style="font-size:17px;font-weight:700;color:#333;margin:24px 0 12px;">能力逐项兑现</h3>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">🔍 把第五章的论文和 2024-2026 的产品对照着看：</p>
+
+  <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:15px;">
+    <thead><tr><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">能力</th><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">2023 论文</th><th style="background:#f5f5f5;font-weight:600;text-align:left;padding:10px 12px;border:1px solid #e8e8e8;">2024-2026 生产</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">行动</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">Toolformer</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">MCP、Agents SDK</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">推理 + 行动</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">ReAct</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">Claude Code、Cursor</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">感知</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">多模态论文</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">Computer Use</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">规划</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">BabyAGI</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">Devin</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">记忆</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">MemGPT</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">CLAUDE.md + Memory 系统</td></tr>
+      <tr><td style="padding:10px 12px;border:1px solid #e8e8e8;">多 Agent</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">学术框架</td><td style="padding:10px 12px;border:1px solid #e8e8e8;">A2A 协议、CrewAI</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">几个值得展开的：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 <strong style="color:#1a1a1a;">MCP（Model Context Protocol）</strong>：Anthropic 在 2024 年发布的工具接入标准协议。之前每个 Agent 自己对接 API，每换一个工具就重写一次适配层。MCP 把工具描述、调用、返回的格式统一了，Agent 生态的碎片化问题从协议层面解决。OpenAI 随后发布 Agents SDK，走的是同一个方向。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 <strong style="color:#1a1a1a;">Computer Use</strong>：Anthropic 在 2024 年让模型直接操作屏幕和鼠标。Agent 的「行动」能力从调 API 扩展到操作 GUI，感知从「读文本」扩展到「看屏幕」。这一步补的是第二章里「感知」和「行动」两条能力的最后一块拼图。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 <strong style="color:#1a1a1a;">A2A（Agent-to-Agent Protocol）</strong>：Google 在 2025 年发布的多 Agent 互操作标准。当单个 Agent 的能力稳定之后，下一个工程问题自然是多个 Agent 之间怎么协作。这个顺序跟第二章的能力依赖链一致：先把单体能力补齐，再解决协作。</p>
+
+  <h3 style="font-size:17px;font-weight:700;color:#333;margin:24px 0 12px;">工程重心已经转移</h3>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">📚 Karpathy 在 2025 年提出 Context Engineering：Agent 的核心工程问题不再是「怎么调工具」，而是「怎么管上下文」。模型的推理窗口有限，Agent 跑多步之后，历史信息怎么压缩、什么该留什么该丢、怎么避免上下文腐烂，成了比工具调用更难的问题。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">🔍 这个信号说明 Agent 的基本架构（推理 + 工具 + 记忆 + 反馈）已经稳定，不再是研究问题。<strong style="color:#1a1a1a;">工程重心在向更深层的可靠性移动——而这恰恰是一个技术从论文走向生产的标志。</strong></p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第七章 为什么 Agent 是 AI 的必然演进</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">💡 以下是我的分析。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">回到开头的问题：为什么 AI 一定会走向 Agent？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">把前面几章串起来看：</p>
+
+  <ol style="padding-left:24px;margin-bottom:16px;">
+    <li style="font-size:16px;line-height:2;margin-bottom:4px;">AI 的目标从 1956 年起就是模拟完整智能（第一章）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:4px;">完整智能需要六种能力：目标、感知、推理、行动、反馈、学习（第二章）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:4px;">Agent 作为概念在 AI 里存在了 30 年，一直缺推理引擎（第三章）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:4px;">LLM 补上了推理，但只覆盖了六种能力中的两种（第四章）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:4px;">剩下四种能力通过工具调用、反思、记忆等工程手段逐一补齐（第五章）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:4px;">2024-2026 的工程实践验证了这条演进路径（第六章）</li>
+  </ol>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这些能力补齐的顺序也不是随意的——它们之间有依赖关系：</p>
+
+  <!-- 图3 占位 -->
+  <div id="slot-3" style="text-align:center;margin:20px 0;"><p class="img-mark" style="color:#999;font-size:14px;background:#f5f5f5;padding:12px;border-radius:4px;">【图 3 — 能力依赖链】</p></div>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">每加一层，离「完整智能」就近一步。加到最后，就是 Agent。<strong style="color:#1a1a1a;">这条路不存在岔道</strong>——你不可能跳过「行动」直接到「学习」，也不可能不要「反馈」就做好「规划」。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">💡 所以 Agent 不是谁发明了一个概念然后大家跟风。是 AI 的能力积累到 LLM 阶段之后，下一步该补什么，倒推出来就是 Agent 这个形态。<strong style="color:#1a1a1a;">Agent 不是一个独立的新物种，而是 AI 各项能力逐渐补齐后的系统形态。</strong></p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第八章 Agent 之后还会怎么走</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">🔍 Agent 补齐了单个智能体的能力，但离「完整智能」还有距离。从当前研究和工程实践看，下一步大致有两个方向：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">多 Agent 协作</strong>：一个人能做的事有限，一群各有专长的人协作能做更多。现在已经有很多 Multi-Agent 框架在做这件事——让不同 Agent 分工、对话、互相审核。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">自主学习</strong>：目前的 Agent 虽然有记忆，但还不能真正从失败中自我改进。它记住的是「上次用户说了什么」，而不是「上次我哪里做错了、下次该怎么改」。当 Agent 能做到后者，才算真正闭环。</p>
+
+  <!-- 图4 占位 -->
+  <div id="slot-4" style="text-align:center;margin:20px 0;"><p class="img-mark" style="color:#999;font-size:14px;background:#f5f5f5;padding:12px;border-radius:4px;">【图 4 — Agent 之后的演进方向】</p></div>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">Agent 不是终点，是 AI 从「语言模型」变成「智能系统」这条路上，走到现在的位置。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">我的思考</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">💡 回顾全文，有三个判断我认为值得单独拎出来：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">AI 的发展不是从 Chat 走向 Agent，是从「生成答案」重新回到「完成目标」。</strong> 达特茅斯的初心就是模拟智能、完成任务，GPT 时代的对话反而是一个中间状态——模型够强了但还没接上手脚。Agent 不是新方向，是回到正轨。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">LLM 改变了 AI 的能力边界，Agent 改变了 AI 与现实世界的交互方式。</strong> LLM 解决了「能不能想明白」的问题，Agent 解决了「想明白之后能不能做到」的问题。两者是互补的，不是替代的。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">能力之间的依赖关系决定了演进顺序几乎是定死的。</strong> 没有推理就没有规划，没有行动就没有反馈，没有反馈就没有学习。这不是事后总结，而是可以用来预测下一步的框架——当前 Agent 最薄弱的环节是自主学习，那么下一波突破大概率在这里。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- 结尾 -->
+  <section style="background:#f9f9f9;border-radius:8px;padding:24px;margin-top:24px;">
+    <h3 style="font-size:17px;font-weight:700;color:#333;margin:0 0 12px;">写在最后</h3>
+    <p style="font-size:15px;color:#333;line-height:2;margin-bottom:12px;">这是「AI 工程学习路线」系列的第一篇。后续文章会继续沿着这条线深入：</p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:15px;line-height:2;"><strong>下一篇</strong>：ReAct 论文精读——Agent 最核心的思考-行动循环是怎么工作的</li>
+      <li style="font-size:15px;line-height:2;"><strong>再下一篇</strong>：动手实现一个最小 Agent——从零搭建 Tool Use + ReAct 循环</li>
+    </ul>
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;">如果你也在学习或实践 AI Agent，欢迎留言聊聊：你在实际工作中用过哪些 Agent 工具？体验如何？遇到了什么问题？</p>
+  </section>
+
+  <!-- 参考资料 -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:12px 16px;font-size:14px;color:#8d6e00;margin-bottom:20px;line-height:1.8;">
+      公众号内无法插入外链。所有参考论文和链接，请点击文末「阅读原文」查看完整版。
+    </section>
+    <h3 style="font-size:15px;color:#999;margin-bottom:8px;">经典理论</h3>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[1] McCarthy et al. (1955) A Proposal for the Dartmouth Summer Research Project on AI</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[2] Russell &amp; Norvig (2020) Artificial Intelligence: A Modern Approach, 4th ed.</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:12px;">[3] Wiener (1948) Cybernetics: Or Control and Communication in the Animal and the Machine</p>
+    <h3 style="font-size:15px;color:#999;margin-bottom:8px;">LLM 基础</h3>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[4] Vaswani et al. (2017) Attention Is All You Need. NeurIPS 2017</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:12px;">[5] Brown et al. (2020) Language Models are Few-Shot Learners. NeurIPS 2020</p>
+    <h3 style="font-size:15px;color:#999;margin-bottom:8px;">Agent 关键工作（2023）</h3>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[6] Schick et al. (2023) Toolformer. NeurIPS 2023</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[7] Yao et al. (2023) ReAct. ICLR 2023</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[8] Shinn et al. (2023) Reflexion. NeurIPS 2023</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:12px;">[9] Packer et al. (2023) MemGPT. arXiv:2310.08560</p>
+    <h3 style="font-size:15px;color:#999;margin-bottom:8px;">Agent 工程落地（2024-2026）</h3>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[10] Anthropic (2024) Model Context Protocol (MCP)</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[11] OpenAI (2025) Agents SDK</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[12] Anthropic (2024) Computer Use</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:4px;">[13] Google (2025) Agent2Agent Protocol (A2A)</p>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin-bottom:0;">[14] Karpathy (2025) Context Engineering</p>
+  </section>
+
+</article>
+
+<script>
+// ========== 全局状态 ==========
+var SLOTS = ['slot-1', 'slot-2', 'slot-3', 'slot-4'];
+var NAMES = ['01-AI技术演进时间线', '02-Agent核心循环', '03-能力依赖链', '04-Agent之后的演进方向'];
+var pngCache = [];       // 图表 PNG data URL
+var coverPng = null;     // 封面 PNG data URL
+var coverHttpUrl = null; // 封面通过服务器保存后的 HTTP URL
+var diagramHttpUrls = [];// 图表的 HTTP URL
+var TITLE = 'Agent 是什么？为什么 AI 必然会走向 Agent';
+var DESC = 'AI 不再只是聊天机器人——它开始自己规划、调工具、完成任务。三大 AI 公司同时押注 Agent 不是巧合，背后是一条从 1956 年达特茅斯会议就开始的因果链。';
+
+// ========== Mermaid ==========
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  themeVariables: {
+    fontFamily: '-apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif',
+    fontSize: '14px',
+  },
+});
+
+// ========== SVG → PNG ==========
+function svgToPng(svgEl, scale) {
+  scale = scale || 2;
+  var rect = svgEl.getBoundingClientRect();
+  var w = parseFloat(rect.width || svgEl.getAttribute('width') || 800);
+  var h = parseFloat(rect.height || svgEl.getAttribute('height') || 400);
+  var clone = svgEl.cloneNode(true);
+  clone.setAttribute('width', w);
+  clone.setAttribute('height', h);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  var svgData = new XMLSerializer().serializeToString(clone);
+  var dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+  return new Promise(function(resolve, reject) {
+    var img = new Image();
+    img.onload = function() {
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = w * scale; canvas.height = h * scale;
+        var ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+// ========== 注入图片到正文 slot ==========
+function injectImage(slotId, pngDataUrl) {
+  var slot = document.getElementById(slotId);
+  if (!slot) return;
+  // 保留文字标记（公众号模式用），在其后插入图片
+  var existing = slot.querySelector('img.diagram');
+  if (existing) return;
+  var img = document.createElement('img');
+  img.src = pngDataUrl;
+  img.className = 'diagram';
+  img.style.cssText = 'display:block;max-width:100%;margin:12px auto;border-radius:4px;';
+  slot.appendChild(img);
+}
+
+// ========== 启用按钮 ==========
+function enableButtons() {
+  ['btnSyncWx', 'btnSyncOther', 'btnCopy', 'btnCopyX', 'btnDownload'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = false;
+  });
+}
+
+// ========== 上传图片到本地服务器 ==========
+async function saveImageToServer(name, dataUrl) {
+  try {
+    var resp = await fetch('/save-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, data: dataUrl }),
+    });
+    var result = await resp.json();
+    if (result.ok) {
+      console.log('✅ 已保存: ' + result.url);
+      return result.url;
+    }
+  } catch (e) {
+    console.warn('保存到服务器失败（可能未使用 publish-server）:', e.message);
+  }
+  return null;
+}
+
+// ========== 封面 → PNG ==========
+async function renderCover() {
+  var coverEl = document.querySelector('.cover');
+  if (!coverEl || typeof html2canvas !== 'function') return;
+  try {
+    var canvas = await html2canvas(coverEl, { scale: 2, useCORS: true, backgroundColor: null });
+    coverPng = canvas.toDataURL('image/png');
+    // 上传到本地服务器获取 HTTP URL
+    coverHttpUrl = await saveImageToServer('cover.png', coverPng);
+    // 下载按钮
+    var parent = coverEl.parentElement;
+    if (parent && !parent.querySelector('.btn-dl-cover')) {
+      var btn = document.createElement('button');
+      btn.className = 'btn-dl-cover';
+      btn.textContent = '⬇️ 下载封面图' + (coverHttpUrl ? ' ✅' : '');
+      btn.style.cssText = 'display:block;margin:12px auto 0;padding:8px 20px;border:none;border-radius:6px;background:#1976d2;color:#fff;cursor:pointer;font-size:14px;font-weight:600;';
+      btn.onclick = function() {
+        var a = document.createElement('a'); a.href = coverPng; a.download = '封面-Agent是什么.png'; a.click();
+      };
+      parent.insertBefore(btn, coverEl.nextSibling);
+    }
+  } catch (e) {
+    console.warn('封面渲染失败:', e);
+  }
+}
+
+// ========== 主渲染流程 ==========
+async function renderAndInject() {
+  var badge = document.getElementById('statusBadge');
+  badge.textContent = '⏳ 渲染 Mermaid...';
+
+  // 1. Mermaid 渲染
+  try { await mermaid.run(); } catch (e) { console.warn('Mermaid:', e); }
+  await new Promise(function(r) { setTimeout(r, 800); });
+
+  // 2. 收集 SVG
+  var wraps = document.querySelectorAll('.mermaid-wrap');
+  var svgs = [];
+  wraps.forEach(function(w) { var s = w.querySelector('svg'); if (s) svgs.push(s); });
+
+  // 3. 转 PNG + 上传服务器 + 注入正文 + 加下载按钮
+  for (var i = 0; i < Math.min(svgs.length, SLOTS.length); i++) {
+    try {
+      badge.textContent = '🔄 图表 ' + (i + 1) + '/' + svgs.length + '...';
+      pngCache[i] = await svgToPng(svgs[i]);
+      // 上传到本地服务器获取 HTTP URL
+      var httpUrl = await saveImageToServer(NAMES[i] + '.png', pngCache[i]);
+      diagramHttpUrls[i] = httpUrl;
+      // 注入正文（多平台模式用 HTTP URL，降级用 data URL）
+      injectImage(SLOTS[i], httpUrl || pngCache[i]);
+      // 素材区下载按钮
+      var card = svgs[i].closest('.diagram-card');
+      if (card && !card.querySelector('.btn-dl')) {
+        var dlBtn = document.createElement('button');
+        dlBtn.className = 'btn-dl';
+        dlBtn.textContent = '⬇️ 下载此图' + (httpUrl ? ' ✅' : '');
+        dlBtn.style.cssText = 'display:block;margin:8px auto 12px;padding:6px 16px;border:none;border-radius:4px;background:#1976d2;color:#fff;cursor:pointer;font-size:13px;';
+        dlBtn.setAttribute('data-idx', String(i));
+        dlBtn.onclick = function() { downloadOnePng(parseInt(this.getAttribute('data-idx'))); };
+        card.appendChild(dlBtn);
+      }
+    } catch (e) {
+      console.error('图 ' + (i + 1) + ' 失败:', e);
+      pngCache[i] = null;
+    }
+  }
+
+  // 4. 封面渲染 + 上传
+  badge.textContent = '🔄 渲染封面...';
+  await renderCover();
+
+  // 5. 完成
+  var ok = pngCache.filter(Boolean).length;
+  var serverOk = diagramHttpUrls.filter(Boolean).length + (coverHttpUrl ? 1 : 0);
+  var statusMsg = '✅ 就绪 — ' + ok + ' 图表' + (coverPng ? ' + 封面' : '');
+  if (serverOk > 0) statusMsg += '（' + serverOk + ' 张已缓存为本地 HTTP 链接）';
+  badge.textContent = statusMsg;
+  badge.className = 'status ready';
+  enableButtons();
+}
+
+// ========== Toast ==========
+function showToast(msg, ms) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, ms || 3000);
+}
+
+// ========== 下载 ==========
+function downloadOnePng(idx) {
+  if (!pngCache[idx]) { showToast('此图转换失败'); return; }
+  var a = document.createElement('a'); a.href = pngCache[idx]; a.download = NAMES[idx] + '.png'; a.click();
+}
+function downloadAllPng() {
+  var items = [];
+  if (coverPng) items.push({ url: coverPng, name: '00-封面图.png' });
+  pngCache.forEach(function(p, i) { if (p) items.push({ url: p, name: NAMES[i] + '.png' }); });
+  if (!items.length) { showToast('没有可下载的图'); return; }
+  items.forEach(function(item, i) {
+    setTimeout(function() { var a = document.createElement('a'); a.href = item.url; a.download = item.name; a.click(); }, i * 300);
+  });
+  showToast('⬇️ 下载 ' + items.length + ' 张图（含封面）...');
+}
+
+// ========== 复制正文（富文本，含内联图片） ==========
+async function copyArticleHTML() {
+  var article = document.getElementById('articleContent');
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([article.innerHTML], { type: 'text/html' }),
+        'text/plain': new Blob([article.innerText], { type: 'text/plain' }),
+      })
+    ]);
+    showToast('✅ 已复制富文本（含图），可粘贴到支持富文本的编辑器');
+  } catch (e) {
+    try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); }
+    catch (e2) { showToast('❌ 复制失败'); }
+  }
+}
+
+// ========== 构建正文 HTML ==========
+// 含图版：直接取 article innerHTML（图已嵌入）
+function getFullHTML() {
+  return document.getElementById('articleContent').innerHTML;
+}
+// 无图版：去掉 data URL 的 img，保留文字标记
+function getTextOnlyHTML() {
+  var clone = document.getElementById('articleContent').cloneNode(true);
+  clone.querySelectorAll('img.diagram').forEach(function(img) { img.remove(); });
+  return clone.innerHTML;
+}
+
+// ========== 复制 X/Twitter 推文 ==========
+async function copyForX() {
+  // 生成推文：标题 + 摘要 + 标签 + 链接占位
+  var tweet =
+    'Agent 是什么？为什么 AI 必然会走向 Agent\n' +
+    '\n' +
+    'AI 不再只是聊天机器人——它开始自己规划、调工具、完成任务。\n' +
+    '三大 AI 公司同时押注 Agent 不是巧合，背后是一条从 1956 年达特茅斯会议就开始的因果链。\n' +
+    '\n' +
+    '#AI #Agent #LLM #AIAgent #人工智能\n' +
+    '\n' +
+    '全文见公众号「我是Bob大叔」';
+
+  try {
+    await navigator.clipboard.writeText(tweet);
+    showToast('✅ 推文已复制（' + tweet.length + ' 字符），去 X 粘贴发布', 4000);
+  } catch (e) {
+    // 降级：选中文本
+    prompt('复制以下推文内容：', tweet);
+  }
+}
+
+// ========== 构建含 HTTP URL 图片的正文 ==========
+function getHTMLWithHttpImages() {
+  var clone = document.getElementById('articleContent').cloneNode(true);
+  // 把 data URL 的 img 替换为 HTTP URL（如果有）
+  clone.querySelectorAll('img.diagram').forEach(function(img, idx) {
+    if (diagramHttpUrls[idx]) {
+      img.src = diagramHttpUrls[idx];
+    }
+  });
+  return clone.innerHTML;
+}
+
+// ========== 公众号同步（含图 HTTP URL + 封面 HTTP URL） ==========
+function doSyncWeChat() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+
+  // 如果服务器可用，用 HTTP URL 图片（公众号可以抓取 localhost 图片通过 WechatSync 上传）
+  var hasServerImages = diagramHttpUrls.filter(Boolean).length > 0;
+  var content = hasServerImages ? getHTMLWithHttpImages() : getTextOnlyHTML();
+  var payload = { title: TITLE, content: content, desc: DESC };
+
+  // 封面：优先 HTTP URL，降级 data URL
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    var mode = hasServerImages ? '含图 HTTP URL' : '无图（需手动插图）';
+    var coverMode = coverHttpUrl ? '封面已传' : '封面需手动上传';
+    showToast('📤 公众号同步: ' + mode + ' / ' + coverMode, 4000);
+  } else {
+    alert(
+      '请点击 Chrome 工具栏的 WechatSync 图标。\n\n' +
+      (hasServerImages
+        ? '图片已通过本地服务器提供 HTTP URL，WechatSync 应能自动处理。'
+        : '正文无图。同步后在【图 N】标记处手动插入图片。') +
+      '\n\n提示：使用 node scripts/publish-server.mjs 启动服务器可自动处理图片。'
+    );
+  }
+}
+
+// ========== 多平台同步（含图） ==========
+function doSyncOther() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+
+  // 优先用 HTTP URL，降级 data URL
+  var hasServerImages = diagramHttpUrls.filter(Boolean).length > 0;
+  var content = hasServerImages ? getHTMLWithHttpImages() : getFullHTML();
+  var payload = { title: TITLE, content: content, desc: DESC };
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    showToast('📤 多平台同步（含图）');
+  } else {
+    alert(
+      '请点击 Chrome 工具栏的 WechatSync 图标。\n' +
+      '适用于：知乎、掘金、CSDN、SegmentFault 等。'
+    );
+  }
+}
+
+function alertFileProtocol() {
+  alert(
+    '当前为 file:// 本地文件，WechatSync 无法工作。\n\n' +
+    '请在终端运行：\n' +
+    'npx serve ' + location.pathname.replace(/\/[^/]+$/, '') + ' -p 8787\n\n' +
+    '然后打开 http://localhost:8787/ 对应页面。'
+  );
+}
+
+// ========== 素材区 ==========
+function toggleAssets() {
+  document.getElementById('assetsPanel').classList.toggle('collapsed');
+}
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded', function() {
+  if (location.protocol === 'file:') {
+    document.getElementById('fileWarning').classList.add('show');
+  }
+  renderAndInject();
+});
+</script>
+
+</body>
+</html>
