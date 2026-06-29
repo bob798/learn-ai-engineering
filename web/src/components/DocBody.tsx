@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LoopTokenGrowth } from "./visualizations/LoopTokenGrowth";
 import { ToolGranularityCompare } from "./visualizations/ToolGranularityCompare";
@@ -28,6 +28,7 @@ const VIZ_PLACEHOLDER_RE =
 export function DocBody({ html }: { html: string }) {
   const router = useRouter();
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const articleRef = useRef<HTMLElement>(null);
 
   /** Intercept clicks on internal links to use Next.js router (respects basePath) */
   const handleClick = useCallback(
@@ -90,12 +91,15 @@ export function DocBody({ html }: { html: string }) {
     );
   }
 
-  // Render mermaid diagrams after mount
+  // Render mermaid diagrams after React commits to DOM
   useEffect(() => {
-    const codeBlocks = document.querySelectorAll("pre > code.language-mermaid");
+    const el = articleRef.current;
+    if (!el) return;
+
+    const codeBlocks = el.querySelectorAll("pre > code.language-mermaid");
     if (codeBlocks.length === 0) return;
 
-    // Replace code blocks with mermaid containers before loading the library
+    // Replace code blocks with mermaid containers
     const containers: HTMLElement[] = [];
     codeBlocks.forEach((block) => {
       const pre = block.parentElement;
@@ -107,21 +111,22 @@ export function DocBody({ html }: { html: string }) {
       containers.push(div);
     });
 
-    // Load mermaid from CDN
-    if (!(window as any).mermaid) {
+    // Load mermaid from CDN (non-ESM)
+    const initAndRun = () => {
+      const m = (window as any).mermaid;
+      m.initialize({ startOnLoad: false, theme: "base", fontFamily: "inherit" });
+      m.run({ nodes: containers });
+    };
+
+    if ((window as any).mermaid) {
+      initAndRun();
+    } else {
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
-      script.onload = () => {
-        const m = (window as any).mermaid;
-        m.initialize({ startOnLoad: false, theme: "base", fontFamily: "inherit" });
-        m.run({ nodes: containers });
-      };
+      script.onload = initAndRun;
       document.head.appendChild(script);
-    } else {
-      const m = (window as any).mermaid;
-      m.run({ nodes: containers });
     }
   }, [html]);
 
-  return <article className="prose-doc" onClick={handleClick}>{parts}</article>;
+  return <article ref={articleRef} className="prose-doc" onClick={handleClick}>{parts}</article>;
 }
