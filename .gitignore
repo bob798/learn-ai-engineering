@@ -30,3 +30,4 @@ rag/code/logs/
 rag/code/interview_kb/
 rag/code/*_result.json
 rag/code/baseline.json
+code/agent/runs/

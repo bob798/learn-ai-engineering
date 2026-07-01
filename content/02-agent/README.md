@@ -109,6 +109,7 @@
 | 主题 | 范围 | 链接 |
 |---|---|---|
 | **Agent 生态 2026** | 协议战争 · 被改造领域 · 创新空白 · 工程师机会 | [md](research/agent-ecosystem-2026.md) |
+| **Agent Harness 深度拆解** | 8 问题域框架逆向 Aider / OpenHands / LangGraph / SWE-agent / Claude Code · 从 0 到 1 建造路线图 | [md](research/agent-harness-teardown.md) |
 
 ---
 
