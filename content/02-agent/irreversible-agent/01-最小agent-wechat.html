@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一个Agent最小需要什么？</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  /* ========== 工具栏 ========== */
+  .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .toolbar .left { display: flex; align-items: center; gap: 16px; }
+  .toolbar .status {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+  }
+  .toolbar .status.ready { background: rgba(46,125,50,0.3); color: #81c784; }
+  .toolbar button {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .toolbar .btn-sync {
+    background: #4caf50;
+    color: #fff;
+  }
+  .toolbar .btn-sync:hover { background: #388e3c; }
+  .toolbar .btn-sync:disabled { background: #666; cursor: not-allowed; }
+  .toolbar .btn-toggle {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  .toolbar .btn-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* ========== 素材区 ========== */
+  .assets-panel {
+    margin-top: 60px;
+    background: #fff;
+    border-bottom: 3px solid #e0e0e0;
+    overflow: hidden;
+    transition: max-height 0.3s;
+  }
+  .assets-panel.collapsed { max-height: 0; }
+  .assets-panel .inner { padding: 30px 20px 40px; }
+  .assets-panel h2 {
+    text-align: center;
+    font-size: 16px;
+    color: #999;
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+
+  /* 封面 */
+  .cover {
+    width: 900px;
+    height: 500px;
+    margin: 0 auto 40px;
+    border-radius: 8px;
+    position: relative;
+    background: linear-gradient(135deg, #1a0a2e, #2d1b4e, #0f2027);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(120,80,200,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(0,180,220,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover .series-tag {
+    position: relative;
+    display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 20px;
+    padding: 4px 18px;
+    font-size: 13px;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+  }
+  .cover h1 {
+    position: relative;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.3;
+    max-width: 720px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .cover h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, #ff6b6b, #ffa36b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover .subtitle {
+    position: relative;
+    font-size: 17px;
+    color: rgba(255,255,255,0.6);
+    max-width: 580px;
+    line-height: 1.7;
+    text-align: center;
+  }
+  .cover .parts {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 36px;
+    font-size: 14px;
+  }
+  .cover .parts .part {
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.5);
+    transition: all 0.2s;
+  }
+  .cover .parts .part.active {
+    background: rgba(255,107,107,0.15);
+    border-color: rgba(255,107,107,0.5);
+    color: #ff6b6b;
+    font-weight: 600;
+  }
+  .cover .parts .plus { color: rgba(255,255,255,0.25); font-size: 16px; }
+
+  /* ========== 小红书封面（3:4 竖版） ========== */
+  .cover-xhs {
+    width: 1080px;
+    height: 1440px;
+    margin: 0 auto 40px;
+    border-radius: 12px;
+    position: relative;
+    background: linear-gradient(160deg, #0a0a1a 0%, #1a0a2e 30%, #2d1050 60%, #1a0a2e 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .cover-xhs::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 25%, rgba(255,107,107,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(0,180,220,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(120,80,200,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .cover-xhs .top-tag {
+    position: relative;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    padding: 6px 24px;
+    font-size: 16px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 48px;
+  }
+  .cover-xhs .main-title {
+    position: relative;
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1.25;
+    max-width: 860px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .cover-xhs .main-title em {
+    font-style: normal;
+    background: linear-gradient(90deg, #ff6b6b, #ffa36b, #ffdb6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover-xhs .equation {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0 48px;
+  }
+  .cover-xhs .eq-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 26px;
+  }
+  .cover-xhs .eq-item {
+    padding: 14px 28px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+  }
+  .cover-xhs .eq-item .icon {
+    display: block;
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 6px;
+  }
+  .cover-xhs .eq-item .label {
+    display: block;
+    text-align: center;
+    font-size: 22px;
+  }
+  .cover-xhs .eq-op {
+    font-size: 36px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 300;
+  }
+  .cover-xhs .eq-result {
+    padding: 16px 48px;
+    border-radius: 12px;
+    background: rgba(255,107,107,0.2);
+    border: 2px solid rgba(255,107,107,0.5);
+    color: #ff6b6b;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: 4px;
+  }
+  .cover-xhs .punchline {
+    position: relative;
+    max-width: 780px;
+    text-align: center;
+    font-size: 28px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.7;
+    margin-top: 16px;
+  }
+  .cover-xhs .punchline strong {
+    color: rgba(255,255,255,0.85);
+  }
+  .cover-xhs .footer-bar {
+    position: absolute;
+    bottom: 48px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 18px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+  }
+
+  /* ========== file:// 提示条 ========== */
+  .file-warning {
+    display: none;
+    margin-top: 60px;
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 8px;
+    padding: 20px 24px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  .file-warning.show { display: block; }
+  .file-warning h3 { color: #e65100; font-size: 16px; margin-bottom: 8px; }
+  .file-warning code {
+    background: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+    user-select: all;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 10px 24px; border-radius: 8px;
+    font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ========== 正文区 ========== */
+  article {
+    max-width: 680px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px 28px 60px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 顶部工具栏 ==================== -->
+<nav class="toolbar" id="toolbar">
+  <div class="left">
+    <strong>发布工具</strong>
+    <span class="status ready" id="statusBadge">✅ 就绪（纯文本，无图表）</span>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
+    <button class="btn-sync" id="btnDownload" onclick="downloadCover()" style="background:#1976d2;">⬇️ 横版封面</button>
+    <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
+    <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
+    <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
+    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
+    <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
+  </div>
+</nav>
+
+<!-- file:// 协议提示 -->
+<div class="file-warning" id="fileWarning">
+  <h3>⚠️ 当前为本地文件模式（file://）</h3>
+  <p>WechatSync 扩展无法在 <code>file://</code> 页面上运行。请用以下方式解决：</p>
+  <p>在终端运行：<code id="serverCmd">node scripts/publish-server.mjs content/02-agent/irreversible-agent</code></p>
+  <p>然后在 Chrome 打开 <code>http://localhost:8787/01-最小agent-wechat.html</code></p>
+</div>
+
+<!-- toast 通知 -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 素材区 ==================== -->
+<div class="assets-panel" id="assetsPanel">
+<div class="inner">
+  <h2>公众号 / 多平台封面（16:9 横版）</h2>
+  <div class="cover" id="coverEl">
+    <div class="series-tag">不可逆的 Agent · 第 1 篇</div>
+    <h1>一个 Agent 最小<br/>需要<em>什么</em>？</h1>
+    <div class="subtitle">四个零件，几十行代码<br/>把 Agent 从"会说话的说明书"变成"能动手做事的系统"</div>
+    <div class="parts">
+      <span class="part active">LLM</span><span class="plus">+</span>
+      <span class="part active">读写工具</span><span class="plus">+</span>
+      <span class="part active">循环</span><span class="plus">+</span>
+      <span class="part active">状态</span><span class="plus">=</span>
+      <span class="part" style="background:rgba(255,107,107,0.2);border-color:rgba(255,107,107,0.6);color:#ff6b6b;font-weight:700;font-size:15px;">Agent</span>
+    </div>
+  </div>
+
+  <h2>小红书封面（3:4 竖版 · 1080×1440）</h2>
+  <div class="cover-xhs" id="coverXHS">
+    <div class="top-tag">不可逆的 Agent · 第 1 篇</div>
+    <div class="main-title">一个 Agent<br/>最小需要<em>什么</em>？</div>
+    <div class="equation">
+      <div class="eq-row">
+        <div class="eq-item"><span class="icon">🧠</span><span class="label">LLM</span></div>
+        <span class="eq-op">+</span>
+        <div class="eq-item"><span class="icon">🔧</span><span class="label">读写工具</span></div>
+        <span class="eq-op">+</span>
+        <div class="eq-item"><span class="icon">🔄</span><span class="label">循环</span></div>
+        <span class="eq-op">+</span>
+        <div class="eq-item"><span class="icon">📝</span><span class="label">状态</span></div>
+      </div>
+      <span class="eq-op">=</span>
+      <div class="eq-result">Agent</div>
+    </div>
+    <div class="punchline"><strong>聪明在 LLM 里，但"活"在结构里</strong><br/>四个零件，几十行代码，没有黑魔法</div>
+    <div class="footer-bar">公众号「我是Bob大叔」</div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 正文 ==================== -->
+<article id="articleContent">
+
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:8px;line-height:1.5;">一个 Agent 最小需要什么？</h1>
+
+  <p style="text-align:center;color:#999;font-size:14px;margin-bottom:24px;">不可逆的 Agent · 第 1 篇</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:30px;line-height:1.8;">
+    本系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。
+  </section>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我一直以为，Agent 是个复杂的东西。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">打开任何一个 Agent 框架的文档，你会看到一整面墙的概念：规划器、执行器、记忆模块、工具注册表、回调链、状态图。看起来，要搭一个 Agent，得先学会这一整套词汇。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">直到我把市面上能找到的 LLM 应用挨个拆开看了一遍——聊天机器人、代码助手、自动化工作流——我发现一件事：把所有花哨的东西剥掉之后，剩下的核心小得惊人。而且所有 Agent 剩下的都是<strong style="color:#1a1a1a;">同一个东西</strong>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这篇文章就是把这个剥离过程重新走一遍。我们从最简单的形态开始，每次只加一个零件，看看到哪一步，它突然就"活"了。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 第零步 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第零步：一个裸的 LLM</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">从最简单的开始：一个 LLM，你问它答。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">"帮我把客厅灯调暗一点。"</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">它会回答得头头是道——"好的，您可以打开智能家居 App，找到客厅灯，将亮度滑块调至 30%……"</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">然后什么都没有发生。灯还是那么亮。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这不是 Agent，这是一个会说话的说明书。它缺的不是智力——它的"推理"其实已经够用了——它缺的是和世界的<strong style="color:#1a1a1a;">连接</strong>。它不知道你家的灯现在什么状态，也没有任何办法去碰那盏灯。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">AI 领域管这个问题叫 grounding（接地）：模型内部的知识是从训练数据里统计出来的，是滞后的、封闭的，它和眼前这个真实、实时的世界之间，隔着一层玻璃。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">要打破玻璃，需要下一个零件。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 第一步 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第一步：给它一双眼睛——工具（读）</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第一个零件：允许 LLM 调用一个函数，<code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">get_light_status("客厅")</code>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">现在它能"看"了。你说"把客厅灯调暗一点"，它先查一下：当前亮度 80%。于是它的回答从泛泛的说明书，变成了有根据的判断——"当前 80%，调到 40% 比较合适。"</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这就是<strong style="color:#1a1a1a;">感知</strong>。注意，感知不是 LLM 自己长出来的能力，而是外挂的：LLM 负责决定"我需要看什么"，工具负责真的去看。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但它还是只能说，不能做。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 第二步 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第二步：给它一双手——工具（写）</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第二个零件：再给一个函数，<code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">set_light_brightness("客厅", 40)</code>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">现在，同样一句"把客厅灯调暗一点"，它查状态、算目标值、调用函数——灯，真的暗下来了。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这就是<strong style="color:#1a1a1a;">行动</strong>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">停一下。注意刚才发生了一件安静但重大的事：从这一步起，这个系统的输出不再只是文字了。<strong style="color:#1a1a1a;">它开始改变文字之外的世界。</strong></p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;">读工具和写工具，代码上看起来几乎一样，都是一次函数调用。但它们在性质上完全不同：<strong>读错了，大不了再读一次；写错了，世界已经变了。</strong>现在这个差别看起来无所谓——灯调错了再调回来就是。请记住这个伏笔，这个"读与写的不对称"，是整个系列后半部分的主角。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 第三步 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第三步：让它能连续做事——循环</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">现在换一个稍微复杂的任务："如果客厅太亮就调暗，顺便看看卧室。"</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">单次调用不够了。它需要：查客厅 → 判断 → 调暗 → 查卧室 → 判断 → （可能）再调。这是好几步，每一步做什么取决于上一步看到了什么。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第三个零件：一个循环。</p>
+
+  <pre style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;font-size:14px;line-height:1.7;overflow-x:auto;margin:20px 0;"><code>while 任务未完成:
+    LLM 看着目前的情况，决定下一步动作
+    执行动作（读或写）
+    把结果告诉 LLM</code></pre>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个循环就是 ReAct 模式的骨架（Yao et al., 2022）——Reasoning + Acting，想一步、做一步、看结果、再想下一步。它解决的根本问题是：<strong style="color:#1a1a1a;">真实任务是不确定的，你无法在动手之前就规划好一切</strong>。必须边做边看。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">到这里，感知、推理、行动，三件套齐了，还被一个循环串成了闭环。是不是就完成了？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我最初也以为是。但真跑起来会发现一个诡异的 bug。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 第四步 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第四步：那个容易被忽略的零件——状态</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">跑上面那个任务，你可能会看到 Agent 查完客厅、调完亮度之后，突然又去查一遍客厅——它忘了自己刚做过什么。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">因为 LLM 是无状态的。每一次调用，它都是一张白纸，只知道你这一次喂给它的内容。循环的第一圈和第二圈之间，如果没有人把"上一圈发生了什么"带过去，它就是失忆的。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以第四个零件，朴素得几乎不像个零件：<strong style="color:#1a1a1a;">把每一轮的动作和结果，追加到对话历史里，下一轮全部带上。</strong></p>
+
+  <pre style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;font-size:14px;line-height:1.7;overflow-x:auto;margin:20px 0;"><code><span style="color:#569cd6;">history</span> = []
+<span style="color:#c586c0;">while not</span> done:
+    action = llm.think(goal, tools, history)   <span style="color:#6a9955;"># 带着全部历史思考</span>
+    result = execute(action)
+    history.append((action, result))            <span style="color:#6a9955;"># 累积状态</span></code></pre>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个不断变长的 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">history</code>，就是 Agent 的最小记忆。它简陋——就是一个列表——但它完成了一次质变：有了它，Agent 才从"一次次独立的反应"变成"一个连续的行动过程"。它能看到自己的过去了。</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:20px;line-height:1.8;">
+    顺带埋下第二个伏笔：当任务变长、这个列表膨胀到塞不进上下文窗口时怎么办？那就是记忆模块真正登场的时候——但不是今天。
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 终止问题 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">还差一个问题：它怎么知道该停？</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">循环有了，但循环什么时候结束？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个问题比看起来难。目前的答案通常是三层兜底：LLM 自己宣布"任务完成"（最常用，但它有时会在没做完时就宣布做完）；最大迭代次数（防止无限循环烧钱）；外部条件校验（最可靠，但不是所有任务都有可校验的条件）。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;">注意这里面藏着一个裂缝："LLM <strong>以为</strong>做完了"和"任务<strong>真的</strong>做完了"之间，隔着一段距离。在软件世界里，这段距离通常无伤大雅。但如果 Agent 控制的是真实设备呢？"我以为灯关了"和"灯真的关了"——这个裂缝会变成什么？</p>
+  </section>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">先把问题放在这，它是后面某一篇的全部内容。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 总结 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">所以，一个 Agent 最小需要什么</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">把剥离的结果摆在一起：</p>
+
+  <p style="font-size:17px;color:#1a1a1a;margin-bottom:20px;line-height:2;text-align:center;font-weight:600;background:#f0f7ff;padding:16px 20px;border-radius:8px;">一个 LLM（推理）+ 一组读写工具（感知与行动）<br/>+ 一个循环（持续）+ 一份累积的历史（状态）</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">四个零件，几十行代码，没有任何黑魔法。写这篇之前我一直没能用一句话说清"Agent 是什么"，写到这里它自己浮出来了：</p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">Agent 不是一个更聪明的模型，<br/>而是一个让模型的判断能够作用于世界、<br/>并承受世界反馈的结构。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">聪明在 LLM 里，但"活"在结构里。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 故意没做的事 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">我们故意没做的事</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个最小 Agent 能工作，但它的每个零件都藏着一个会在规模变大时爆炸的假设：</p>
+
+  <ul style="padding-left:24px;margin-bottom:20px;">
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;">它走一步看一步——复杂任务需要<strong style="color:#1a1a1a;">规划</strong>（第 2 篇）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;">它的记忆是一个塞进上下文的列表——长任务需要真正的<strong style="color:#1a1a1a;">记忆系统</strong>（第 3 篇）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;">它的工具想调就调——真实系统需要<strong style="color:#1a1a1a;">权限与接口设计</strong>（第 4 篇）</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;">它是一个人在战斗——大任务需要<strong style="color:#1a1a1a;">多 Agent 协作</strong>（第 5 篇）</li>
+  </ul>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">而贯穿这一切的，是今天埋下的那两个伏笔：读与写的不对称、"以为做完"与"真的做完"的裂缝。在软件世界里，它们只是瑕疵；当 Agent 的手伸进物理世界——灯光、阀门、电机——它们会变成设计的全部核心。</p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;text-align:center;margin:28px 0;">因为物理世界，没有 Ctrl+Z。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 互动 ========== -->
+  <section style="background:#f9f9f9;border-radius:8px;padding:24px;margin-top:24px;">
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;margin:0;">留一个问题给你：你现在用的、或者正在构建的 AI 应用里，哪些动作是可逆的，哪些不是？你分得清吗？</p>
+  </section>
+
+  <!-- ========== 系列导航 ========== -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <p style="font-size:14px;color:#999;line-height:1.8;margin-bottom:4px;"><em>本文是《不可逆的 Agent》系列第 1 篇。系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。</em></p>
+    <p style="font-size:15px;color:#333;line-height:1.8;margin-bottom:0;font-weight:600;">下一篇《Agent 怎么"想"——从 ReAct 到 plan-and-execute》首发公众号「我是Bob大叔」，关注不错过。</p>
+  </section>
+
+  <!-- ========== 引流尾部（仅多平台同步时注入，公众号版不显示） ========== -->
+  <section id="crossPlatformCTA" style="display:none;margin-top:32px;padding:24px;background:linear-gradient(135deg,#f8f9ff,#f0f7ff);border-radius:8px;border:1px solid #e0e8f0;">
+    <p style="font-size:17px;color:#1a1a1a;font-weight:700;margin:0 0 12px;line-height:1.6;">《不可逆的 Agent》系列连载中</p>
+    <p style="font-size:15px;color:#555;margin:0 0 8px;line-height:1.8;">当 Agent 的动作有真实世界后果时，该怎么设计？14 篇文章，从软件 Agent 六模块到物理世界约束，一篇一个问题。</p>
+    <p style="font-size:15px;color:#555;margin:0 0 12px;line-height:1.8;">下一篇：《Agent 怎么"想"——从 ReAct 到 plan-and-execute》</p>
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0;line-height:1.8;">系列首发 + 配套代码 → 公众号「我是Bob大叔」</p>
+  </section>
+
+</article>
+
+<script>
+// ========== 全局状态 ==========
+var TITLE = '一个Agent最小需要什么？';
+var DESC = 'Agent不是一个更聪明的模型，而是一个让模型的判断能够作用于世界、并承受世界反馈的结构。四个零件，几十行代码，从零看Agent怎么"活"起来。';
+var coverPng = null;
+var coverHttpUrl = null;
+var coverXHSPng = null;
+
+// ========== Toast ==========
+function showToast(msg, ms) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, ms || 3000);
+}
+
+// ========== 上传图片到本地服务器 ==========
+async function saveImageToServer(name, dataUrl) {
+  try {
+    var resp = await fetch('/save-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, data: dataUrl }),
+    });
+    var result = await resp.json();
+    if (result.ok) {
+      console.log('✅ 已保存: ' + result.url);
+      return result.url;
+    }
+  } catch (e) {
+    console.warn('保存到服务器失败:', e.message);
+  }
+  return null;
+}
+
+// ========== 封面 → PNG ==========
+async function renderCover() {
+  var coverEl = document.getElementById('coverEl');
+  if (!coverEl || typeof html2canvas !== 'function') return;
+  try {
+    var canvas = await html2canvas(coverEl, { scale: 2, useCORS: true, backgroundColor: null });
+    coverPng = canvas.toDataURL('image/png');
+    coverHttpUrl = await saveImageToServer('cover.png', coverPng);
+  } catch (e) {
+    console.warn('封面渲染失败:', e);
+  }
+}
+
+// ========== 下载横版封面 ==========
+async function downloadCover() {
+  if (!coverPng) await renderCover();
+  if (!coverPng) { showToast('封面渲染失败'); return; }
+  var a = document.createElement('a');
+  a.href = coverPng;
+  a.download = '封面-一个Agent最小需要什么-横版.png';
+  a.click();
+  showToast('⬇️ 横版封面已下载');
+}
+
+// ========== 小红书封面渲染 ==========
+async function renderCoverXHS() {
+  var el = document.getElementById('coverXHS');
+  if (!el || typeof html2canvas !== 'function') return;
+  try {
+    var canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null });
+    coverXHSPng = canvas.toDataURL('image/png');
+    await saveImageToServer('cover-xhs.png', coverXHSPng);
+  } catch (e) {
+    console.warn('小红书封面渲染失败:', e);
+  }
+}
+
+// ========== 下载小红书封面 ==========
+async function downloadCoverXHS() {
+  if (!coverXHSPng) await renderCoverXHS();
+  if (!coverXHSPng) { showToast('小红书封面渲染失败'); return; }
+  var a = document.createElement('a');
+  a.href = coverXHSPng;
+  a.download = '封面-一个Agent最小需要什么-小红书.png';
+  a.click();
+  showToast('⬇️ 小红书竖版封面已下载');
+}
+
+// ========== 复制正文 ==========
+async function copyArticleHTML() {
+  var article = document.getElementById('articleContent');
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([article.innerHTML], { type: 'text/html' }),
+        'text/plain': new Blob([article.innerText], { type: 'text/plain' }),
+      })
+    ]);
+    showToast('✅ 已复制富文本，可粘贴到公众号编辑器');
+  } catch (e) {
+    try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); }
+    catch (e2) { showToast('❌ 复制失败'); }
+  }
+}
+
+// ========== 复制推文 ==========
+async function copyForX() {
+  var tweet =
+    '一个 Agent 最小需要什么？\n' +
+    '\n' +
+    '四个零件：LLM + 读写工具 + 循环 + 状态。几十行代码，没有黑魔法。\n' +
+    '\n' +
+    'Agent 不是一个更聪明的模型，而是一个让模型的判断能够作用于世界、并承受世界反馈的结构。\n' +
+    '\n' +
+    '聪明在 LLM 里，但"活"在结构里。\n' +
+    '\n' +
+    '#AI #Agent #LLM #AIAgent\n' +
+    '\n' +
+    '《不可逆的Agent》系列第 1 篇 | 全文见公众号「我是Bob大叔」';
+
+  try {
+    await navigator.clipboard.writeText(tweet);
+    showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000);
+  } catch (e) {
+    prompt('复制以下推文内容：', tweet);
+  }
+}
+
+// ========== 小红书 ==========
+async function copyForXHS() {
+  var note =
+    '一个 Agent 最小需要什么？｜AI Agent 入门\n' +
+    '\n' +
+    '我拆了一堆 Agent 框架后发现：把花哨的概念剥掉，所有 Agent 剩下的核心都是同一个东西。\n' +
+    '\n' +
+    '只需要 4 个零件：\n' +
+    '\n' +
+    '1️⃣ 一个 LLM → 负责"想"\n' +
+    '裸的 LLM 就像一本会说话的说明书——你说"把灯调暗"，它告诉你怎么做，但灯还是亮的。\n' +
+    '\n' +
+    '2️⃣ 读写工具 → 负责"看"和"做"\n' +
+    '给它一个读函数，它能查灯的状态；再给一个写函数，它能真的把灯调暗。\n' +
+    '⚠️ 读错了可以再读，写错了世界已经变了——记住这个不对称。\n' +
+    '\n' +
+    '3️⃣ 一个循环 → 负责"连续做事"\n' +
+    '真实任务不是一步能搞定的。想一步→做一步→看结果→再想，这就是 ReAct 模式。\n' +
+    '\n' +
+    '4️⃣ 累积的历史 → 负责"记住做过什么"\n' +
+    'LLM 是无状态的，不带历史它会忘记上一步做了什么。一个不断变长的列表，就是最小记忆。\n' +
+    '\n' +
+    '一句话总结：\n' +
+    'Agent 不是一个更聪明的模型，而是一个让模型能作用于世界、并承受世界反馈的结构。\n' +
+    '\n' +
+    '聪明在 LLM 里，但"活"在结构里。\n' +
+    '\n' +
+    '这是《不可逆的 Agent》系列第 1 篇\n' +
+    '当 Agent 的动作有真实世界后果时，该怎么设计？\n' +
+    '完整系列 + 配套代码 → 公众号「我是Bob大叔」\n' +
+    '\n' +
+    '#AI #Agent #LLM #AIAgent #人工智能 #AI学习 #编程 #技术干货';
+
+  try {
+    await navigator.clipboard.writeText(note);
+    showToast('✅ 小红书文案已复制（' + note.length + ' 字符），配合封面图发布', 4000);
+  } catch (e) {
+    prompt('复制以下小红书文案：', note);
+  }
+}
+
+// ========== 公众号同步 ==========
+function doSyncWeChat() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+  var payload = {
+    title: TITLE,
+    content: document.getElementById('articleContent').innerHTML,
+    desc: DESC,
+  };
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    showToast('📤 公众号同步中...');
+  } else {
+    alert('请点击 Chrome 工具栏的 WechatSync 图标。');
+  }
+}
+
+// ========== 构建多平台正文（注入引流尾部） ==========
+function getContentWithCTA() {
+  var clone = document.getElementById('articleContent').cloneNode(true);
+  // 显示引流尾部
+  var cta = clone.querySelector('#crossPlatformCTA');
+  if (cta) cta.style.display = 'block';
+  return clone.innerHTML;
+}
+
+// ========== 多平台同步 ==========
+function doSyncOther() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+  var payload = {
+    title: TITLE,
+    content: getContentWithCTA(),
+    desc: DESC,
+  };
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    showToast('📤 多平台同步（含引流尾部）');
+  } else {
+    alert('请点击 Chrome 工具栏的 WechatSync 图标。\n适用于：知乎、掘金、CSDN、SegmentFault 等。\n\n已自动附加公众号引流尾部。');
+  }
+}
+
+function alertFileProtocol() {
+  alert(
+    '当前为 file:// 本地文件，WechatSync 无法工作。\n\n' +
+    '请在终端运行：\n' +
+    'node scripts/publish-server.mjs content/02-agent/irreversible-agent\n\n' +
+    '然后打开 http://localhost:8787/01-最小agent-wechat.html'
+  );
+}
+
+// ========== 素材区 ==========
+function toggleAssets() {
+  document.getElementById('assetsPanel').classList.toggle('collapsed');
+}
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded', function() {
+  if (location.protocol === 'file:') {
+    document.getElementById('fileWarning').classList.add('show');
+  }
+  renderCover();
+  renderCoverXHS();
+});
+</script>
+
+</body>
+</html>

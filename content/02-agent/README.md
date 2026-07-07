@@ -5,17 +5,19 @@
 ## 阅读路径
 
 ```
-① 理解 Agent       concepts/           ← 从这里开始
+① 理解 Agent       concepts/             ← 从这里开始
        ↓
-② 自己造一个       agent-from-scratch/  ← 动手
+② 自己造一个       agent-from-scratch/    ← 动手
        ↓
-③ 深入子方向       deep-topics/         ← 记忆 / 上下文 / 规划 / 论文
+③ 深入子方向       deep-topics/           ← 记忆 / 上下文 / 规划 / 论文
        ↓
-④ 运行时可靠性     harness/             ← 真实事故拆解
+④ 运行时可靠性     harness/               ← 真实事故拆解
        ↓
-⑤ 拆解业界方案     deep-dives/          ← OMC / gstack / Letta
+⑤ 拆解业界方案     deep-dives/            ← OMC / gstack / Letta
        ↓
-⑥ 行业趋势        research/            ← 生态全景
+⑥ 行业趋势        research/              ← 生态全景
+
+📝 对外发布系列     irreversible-agent/    ← 《不可逆的Agent》博客连载
 ```
 
 ---
@@ -113,6 +115,35 @@
 
 ---
 
+## 📝 《不可逆的Agent》博客系列
+
+> 对外发布的连载系列：软件 Agent 六模块 × 物理世界约束 = 具身化的 Agent 工程。核心命题：**物理世界没有 Ctrl+Z**。
+
+| # | 标题 | 阶段 | 状态 |
+|---|---|---|---|
+| 1 | **一个 Agent 最小需要什么** | 底座篇 | 📝 draft |
+| 2 | Agent 怎么"想"——ReAct 到 plan-and-execute | 底座篇 | |
+| 3 | Agent 怎么"记"——短期上下文、长期记忆、RAG 的边界 | 底座篇 | |
+| 4 | Agent 怎么"碰"世界——function calling 到 MCP | 底座篇 | |
+| 5 | 什么时候需要多个 Agent | 底座篇 | |
+| 6 | 你怎么知道 Agent 做对了——评估与可观测性 | 底座篇 | |
+| 7 | 物理世界没有 Ctrl+Z——不可逆性重塑 Agent 设计 | 崩塌篇 | |
+| 8 | 写路径必须进沙箱——动作分级 | 崩塌篇 | |
+| 9 | Agent 必须知道世界现在什么样——设备状态模型 | 崩塌篇 | |
+| 10 | 不能 replay 的世界怎么测试——仿真先行 | 崩塌篇 | |
+| 11 | 灯光归灯光，暖通归暖通——分域 Agent 与冲突仲裁 | 崩塌篇 | |
+| 12 | 把 Modbus 翻译给 LLM 听——老协议抽象成 Agent 工具 | 崩塌篇 | |
+| 13 | 用 Home Assistant 搭一个带安全包络的灯光 Agent | 实战篇 | |
+| 14 | 边缘设备上跑 Agent——GMKtec 上的算力约束 | 实战篇 | |
+
+> 发布建议：先写第 7 篇当开篇宣言（系列的"为什么"），再回头按 1→14 推进。第 7、13 篇最有出圈潜力。
+>
+> 与内部知识体系的关系：博客系列是**对外叙事线**，自由引用 concepts / agent-from-scratch / deep-topics 的内容，但保持独立阅读体验。
+
+[→ 系列目录](irreversible-agent/)
+
+---
+
 ## 目录结构
 
 ```
@@ -141,6 +172,9 @@
 │   ├── omc/
 │   ├── gstack/
 │   └── memgpt-letta/
+│
+├── irreversible-agent/           ← 📝《不可逆的Agent》博客连载
+│   └── 01-最小agent.md
 │
 └── research/                    ← ⑥ 行业趋势
     └── agent-ecosystem-2026.md
