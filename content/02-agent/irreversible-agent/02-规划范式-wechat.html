@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent怎么"想"——走一步看一步，还是先做攻略？</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  /* ========== 工具栏 ========== */
+  .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .toolbar .left { display: flex; align-items: center; gap: 16px; }
+  .toolbar .status {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+  }
+  .toolbar .status.ready { background: rgba(46,125,50,0.3); color: #81c784; }
+  .toolbar button {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .toolbar .btn-sync {
+    background: #4caf50;
+    color: #fff;
+  }
+  .toolbar .btn-sync:hover { background: #388e3c; }
+  .toolbar .btn-sync:disabled { background: #666; cursor: not-allowed; }
+  .toolbar .btn-toggle {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  .toolbar .btn-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* ========== 素材区 ========== */
+  .assets-panel {
+    margin-top: 60px;
+    background: #fff;
+    border-bottom: 3px solid #e0e0e0;
+    overflow: hidden;
+    transition: max-height 0.3s;
+  }
+  .assets-panel.collapsed { max-height: 0; }
+  .assets-panel .inner { padding: 30px 20px 40px; }
+  .assets-panel h2 {
+    text-align: center;
+    font-size: 16px;
+    color: #999;
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+
+  /* 封面 */
+  .cover {
+    width: 900px;
+    height: 500px;
+    margin: 0 auto 40px;
+    border-radius: 8px;
+    position: relative;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(0,180,220,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(255,107,107,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover .series-tag {
+    position: relative;
+    display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 20px;
+    padding: 4px 18px;
+    font-size: 13px;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+  }
+  .cover h1 {
+    position: relative;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.3;
+    max-width: 760px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .cover h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, #4fc3f7, #81d4fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover .subtitle {
+    position: relative;
+    font-size: 17px;
+    color: rgba(255,255,255,0.6);
+    max-width: 580px;
+    line-height: 1.7;
+    text-align: center;
+  }
+  .cover .parts {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 36px;
+    font-size: 14px;
+  }
+  .cover .parts .part {
+    padding: 8px 18px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.5);
+    transition: all 0.2s;
+  }
+  .cover .parts .part.react {
+    background: rgba(79,195,247,0.15);
+    border-color: rgba(79,195,247,0.5);
+    color: #4fc3f7;
+    font-weight: 600;
+  }
+  .cover .parts .part.plan {
+    background: rgba(255,107,107,0.15);
+    border-color: rgba(255,107,107,0.5);
+    color: #ff6b6b;
+    font-weight: 600;
+  }
+  .cover .parts .vs { color: rgba(255,255,255,0.3); font-size: 18px; font-weight: 300; }
+
+  /* ========== 小红书封面（3:4 竖版） ========== */
+  .cover-xhs {
+    width: 1080px;
+    height: 1440px;
+    margin: 0 auto 40px;
+    border-radius: 12px;
+    position: relative;
+    background: linear-gradient(160deg, #0a1628 0%, #0f2027 30%, #203a43 60%, #0f2027 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .cover-xhs::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 25%, rgba(79,195,247,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(255,107,107,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(0,180,220,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .cover-xhs .top-tag {
+    position: relative;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    padding: 6px 24px;
+    font-size: 16px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 48px;
+  }
+  .cover-xhs .main-title {
+    position: relative;
+    font-size: 68px;
+    font-weight: 800;
+    line-height: 1.25;
+    max-width: 860px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .cover-xhs .main-title em {
+    font-style: normal;
+    background: linear-gradient(90deg, #4fc3f7, #81d4fa, #b3e5fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover-xhs .vs-block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    margin: 20px 0 48px;
+  }
+  .cover-xhs .vs-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    font-size: 26px;
+  }
+  .cover-xhs .vs-item {
+    padding: 20px 36px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 28px;
+    text-align: center;
+  }
+  .cover-xhs .vs-item.react {
+    background: rgba(79,195,247,0.12);
+    border: 2px solid rgba(79,195,247,0.4);
+    color: #4fc3f7;
+  }
+  .cover-xhs .vs-item .icon {
+    display: block;
+    text-align: center;
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+  .cover-xhs .vs-item.plan {
+    background: rgba(255,107,107,0.12);
+    border: 2px solid rgba(255,107,107,0.4);
+    color: #ff6b6b;
+  }
+  .cover-xhs .vs-label {
+    font-size: 36px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 300;
+  }
+  .cover-xhs .punchline {
+    position: relative;
+    max-width: 780px;
+    text-align: center;
+    font-size: 28px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.7;
+    margin-top: 16px;
+  }
+  .cover-xhs .punchline strong {
+    color: rgba(255,255,255,0.85);
+  }
+  .cover-xhs .footer-bar {
+    position: absolute;
+    bottom: 48px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 18px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+  }
+
+  /* ========== file:// 提示条 ========== */
+  .file-warning {
+    display: none;
+    margin-top: 60px;
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 8px;
+    padding: 20px 24px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  .file-warning.show { display: block; }
+  .file-warning h3 { color: #e65100; font-size: 16px; margin-bottom: 8px; }
+  .file-warning code {
+    background: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+    user-select: all;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 10px 24px; border-radius: 8px;
+    font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ========== 正文区 ========== */
+  article {
+    max-width: 680px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px 28px 60px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 顶部工具栏 ==================== -->
+<nav class="toolbar" id="toolbar">
+  <div class="left">
+    <strong>发布工具</strong>
+    <span class="status ready" id="statusBadge">✅ 就绪（纯文本，无图表）</span>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
+    <button class="btn-sync" id="btnDownload" onclick="downloadCover()" style="background:#1976d2;">⬇️ 横版封面</button>
+    <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
+    <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
+    <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
+    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
+    <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
+  </div>
+</nav>
+
+<!-- file:// 协议提示 -->
+<div class="file-warning" id="fileWarning">
+  <h3>⚠️ 当前为本地文件模式（file://）</h3>
+  <p>WechatSync 扩展无法在 <code>file://</code> 页面上运行。请用以下方式解决：</p>
+  <p>在终端运行：<code id="serverCmd">node scripts/publish-server.mjs content/02-agent/irreversible-agent</code></p>
+  <p>然后在 Chrome 打开 <code>http://localhost:8787/02-规划范式-wechat.html</code></p>
+</div>
+
+<!-- toast 通知 -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 素材区 ==================== -->
+<div class="assets-panel" id="assetsPanel">
+<div class="inner">
+  <h2>公众号 / 多平台封面（16:9 横版）</h2>
+  <div class="cover" id="coverEl">
+    <div class="series-tag">不可逆的 Agent · 第 2 篇</div>
+    <h1>Agent 怎么<em>"想"</em>？<br/>走一步看一步，还是先做攻略？</h1>
+    <div class="subtitle">ReAct vs Plan-and-Execute<br/>两种规划范式的取舍，以及物理世界为什么几乎注定需要先规划</div>
+    <div class="parts">
+      <span class="part react">走一步看一步</span>
+      <span class="vs">VS</span>
+      <span class="part plan">先做攻略</span>
+    </div>
+  </div>
+
+  <h2>小红书封面（3:4 竖版 · 1080×1440）</h2>
+  <div class="cover-xhs" id="coverXHS">
+    <div class="top-tag">不可逆的 Agent · 第 2 篇</div>
+    <div class="main-title">Agent 怎么<em>"想"</em>？</div>
+    <div class="vs-block">
+      <div class="vs-row">
+        <div class="vs-item react">
+          <span class="icon">🚶</span>
+          走一步看一步<br/><span style="font-size:22px;opacity:0.7;">ReAct</span>
+        </div>
+        <span class="vs-label">VS</span>
+        <div class="vs-item plan">
+          <span class="icon">📋</span>
+          先做攻略<br/><span style="font-size:22px;opacity:0.7;">Plan-and-Execute</span>
+        </div>
+      </div>
+    </div>
+    <div class="punchline"><strong>出错代价决定天平倒向哪边</strong><br/>当 Agent 的手伸进物理世界，先规划不是效率优化，而是唯一的介入窗口</div>
+    <div class="footer-bar">公众号「我是Bob大叔」</div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 正文 ==================== -->
+<article id="articleContent">
+
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:8px;line-height:1.5;">Agent 怎么"想"——走一步看一步，还是先做攻略？</h1>
+
+  <p style="text-align:center;color:#999;font-size:14px;margin-bottom:24px;">不可逆的 Agent · 第 2 篇</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:30px;line-height:1.8;">
+    本系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。
+  </section>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">你旅游时是哪一派？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">一派人出发前做满 Excel 攻略，几点到哪、吃什么、备选方案是什么，全部想好。另一派人订张机票就走，落地再说，走到哪算哪。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">两派谁也说服不了谁——因为这根本不是对错问题，而是一个取舍问题。而这个取舍，恰好就是 Agent 设计里最核心的那个决定。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 打开黑盒 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">打开那个黑盒</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第 1 篇我们搭了一个最小 Agent：LLM + 读写工具 + 循环 + 累积历史。其中有一行代码，我们当时当黑盒直接用了：</p>
+
+  <pre style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;font-size:14px;line-height:1.7;overflow-x:auto;margin:20px 0;"><code>action = llm.think(goal, tools, history)</code></pre>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">"想"就发生在这一行：把当前状况和目标，变成下一步动作。这一篇就是把这个黑盒打开。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">打开之后你会发现，里面藏着一个所有 Agent 框架都必须回答的问题：<strong style="color:#1a1a1a;">想多少，再动手？</strong></p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 翻车现场 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">翻车现场</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">先看不打开会发生什么。给第 1 篇那个最小 Agent 派个更大的任务：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">"优化全屋照明——有人的房间保持舒适亮度，没人的房间关灯。"</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">八个房间。跑起来之后，日志大概是这样的：</p>
+
+  <pre style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;font-size:14px;line-height:1.7;overflow-x:auto;margin:20px 0;"><code>第1轮：查客厅状态 → 亮度80%，有人
+第2轮：客厅调到50%
+第3轮：查卧室 → 没人，灯开着
+第4轮：关卧室灯
+第5轮：查客厅状态        ← 等等，客厅不是查过了？
+第6轮：查书房 → 没人
+第7轮：书房灯调到30%      ← 没人为什么不是关掉？
+第8轮：查厨房……</code></pre>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">三个毛病肉眼可见。<strong style="color:#1a1a1a;">它兜圈子</strong>——第 5 轮又查了一遍客厅，因为历史越来越长，它"看漏"了自己做过什么。<strong style="color:#1a1a1a;">它目标漂移</strong>——第 7 轮忘了"没人就关灯"的规则，做了个自作主张的调整。<strong style="color:#1a1a1a;">它很贵</strong>——八个房间，十几轮循环，每一轮都是一次完整的 LLM 调用，token 账单随着历史累积越滚越大。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个走一步看一步的模式，有个正式的名字。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== ReAct ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">ReAct：边想边做</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">ReAct（Yao et al., 2022）是让工具型 Agent 真正可用的奠基模式，名字就是它的全部：Reason + Act。循环是 思考→动作→观察→再思考，每一轮都基于最新观察决定下一步，直到它认为信息够了、任务完成了。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第 1 篇的最小 Agent 天然就是 ReAct——我们没有刻意设计，它就是这个形态。这不是巧合：ReAct 是 Agent 的"默认物理形态"，实现最简单，而且<strong style="color:#1a1a1a;">随机应变</strong>——环境返回什么意外，它下一轮就能接住。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但翻车现场暴露了它的代价：<strong style="color:#1a1a1a;">短视</strong>。它永远只想下一步，没有全局图景，所以会绕路、会重复、会在长任务里慢慢忘掉最初为什么出发。就像没有攻略的旅行者，自由，但容易在同一条街上走三遍。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">那反过来，先想好再动手呢？</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== Plan-and-Execute ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">Plan-and-Execute：先做攻略</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">另一种活法：接到任务，先不碰任何工具，而是生成一份完整计划——</p>
+
+  <pre style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;font-size:14px;line-height:1.7;overflow-x:auto;margin:20px 0;"><code>计划：优化全屋照明
+1. 查询全部8个房间的状态（占用+亮度）
+2. 有人的房间：调整到50%舒适亮度
+3. 没人的房间：关灯
+4. 复查全部房间，确认符合目标</code></pre>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">然后按计划逐条执行。执行器不需要每步都"深度思考"，照单干活就行——规划用强推理，执行用便宜的调用，成本立刻降下来。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这不是纸上谈兵，你可能每天都在用它。Claude Code——目前最主流的编码 Agent——官方推荐的工作流就是"探索→规划→实施→提交"四阶段，并且给了一条经验法则：如果一个改动你能用一句话说清，跳过规划；说不清，先规划。执行时它会自动创建 todo list，每个条目有 pending、in_progress、completed 三种状态，实时追踪走到了哪一步。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">规划的收益是可测量的。一个安全攻防（CTF）实验里，纯 ReAct 的 Agent 解题成功率 83%；仅仅加上一个规划步骤、并给规划用更强的模型，成功率提到了 95%。规划不是玄学。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;">而且注意一个安静但重要的细节：<strong>那份计划，在执行前是可以被审查的。</strong>你在 Agent 碰任何东西之前，就看到了它打算做什么——"第 3 步要关灯"白纸黑字摆在那。这一点现在看只是个透明度福利，先记住它。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 攻略派的死穴 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">攻略派的死穴</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">那为什么不全用 plan-and-execute？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">因为<strong style="color:#1a1a1a;">计划赶不上变化</strong>。执行到第 3 步，有人走进了书房——计划里"书房没人，关灯"这一条瞬间作废。世界变了，攻略还是旧的。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以实用的 plan-and-execute 必须带一个逃生舱：<strong style="color:#1a1a1a;">重规划</strong>。执行中一旦发现现实和计划的前提不符，回到规划步，基于新状况重新出攻略。计划不是圣旨，是随时可以推翻重写的草稿。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但重规划本身有成本，环境变得越频繁，重规划越多，它就越退化成一个昂贵版的 ReAct。于是问题回到了原点——</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 取舍 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">取舍：那条分界线在哪</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">把两派放在一起，判断维度其实就三个：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">任务可预测性。</strong>步骤越能提前确定，越该规划。"优化全屋照明"步骤清晰，适合攻略派；"帮我查清楚这个 bug 出在哪"充满未知，适合随缘派。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">环境动态性。</strong>世界变得越快，攻略作废越快。家里人员频繁走动，规划的保质期就短；深夜无人的办公楼，一份计划能执行到底。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">出错代价。</strong>这是最容易被忽略、也最重要的一条。错一步无所谓的任务，走一步看一步就好；错一步很贵的任务，你会希望在动手之前就看到完整计划——因为<strong style="color:#1a1a1a;">可审查性只有攻略派才有</strong>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">Claude Code 那条"一句话说不清就先规划"的法则，本质是第一条维度的极简版。实践中的成熟形态往往是混合：粗粒度先规划立骨架，每个步骤内部留一点 ReAct 式的随机应变。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 伏笔 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">伏笔：当"可审查"从福利变成生死线</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">现在回收前面埋的那个细节。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">在软件世界，"计划可被审查"是锦上添花——反正做错了能回滚，审不审查，代价差不太多。所以软件 Agent 选范式，主要看前两条维度：可预测性和动态性。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但把场景换掉：Agent 操作的不是代码，是真实的灯光、阀门、电机。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第三条维度——出错代价——突然压倒了一切。一个走一步看一步的 Agent 操作物理设备，意味着<strong style="color:#1a1a1a;">没有人在任何时刻知道它接下来要干什么</strong>，等于边开车边发明路。而一份执行前的完整计划，是人类或安全系统唯一的介入窗口：在动作发生之前，过目、拦截、修改。</p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">这就是为什么，当 Agent 的手伸进物理世界，<br/>范式的天平几乎注定倒向 plan-and-execute——<br/>计划不再是效率优化，而是给 Agent 装护栏的入口。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">一份执行前的完整计划，可以逐条对着护栏检查，危险的那一步在它发生之前就被拦下。至于这套护栏（专业上叫"安全包络"，Safety Envelope）具体怎么设计，是第 8 篇的全部内容。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 留一个问题 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">留一个问题</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">回到开头的旅游。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">有意思的是，大多数人旅游是攻略派，人生却是随缘派——我们似乎凭直觉就知道，什么事值得提前想清楚，什么事走着看就行。</p>
+
+  <section style="background:#f9f9f9;border-radius:8px;padding:24px;margin-top:24px;">
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;margin:0;">那条直觉的分界线，你能说清楚它是什么吗？下次给 Agent 选"想"的方式时，你画的那条线，和你给自己画的，是同一条吗？</p>
+  </section>
+
+  <!-- ========== 系列导航 ========== -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <p style="font-size:14px;color:#999;line-height:1.8;margin-bottom:4px;"><em>本文是《不可逆的 Agent》系列第 2 篇。系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。上一篇：《一个 Agent 最小需要什么？》。</em></p>
+    <p style="font-size:15px;color:#333;line-height:1.8;margin-bottom:0;font-weight:600;">下一篇《Agent 怎么"记"——当历史塞不进上下文窗口》首发公众号「我是Bob大叔」，关注不错过。</p>
+  </section>
+
+  <!-- ========== 引流尾部（仅多平台同步时注入，公众号版不显示） ========== -->
+  <section id="crossPlatformCTA" style="display:none;margin-top:32px;padding:24px;background:linear-gradient(135deg,#f8f9ff,#f0f7ff);border-radius:8px;border:1px solid #e0e8f0;">
+    <p style="font-size:17px;color:#1a1a1a;font-weight:700;margin:0 0 12px;line-height:1.6;">《不可逆的 Agent》系列连载中</p>
+    <p style="font-size:15px;color:#555;margin:0 0 8px;line-height:1.8;">当 Agent 的动作有真实世界后果时，该怎么设计？14 篇文章，从软件 Agent 六模块到物理世界约束，一篇一个问题。</p>
+    <p style="font-size:15px;color:#555;margin:0 0 12px;line-height:1.8;">下一篇：《Agent 怎么"记"——当历史塞不进上下文窗口》</p>
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0;line-height:1.8;">系列首发 + 配套代码 → 公众号「我是Bob大叔」</p>
+  </section>
+
+</article>
+
+<script>
+// ========== 全局状态 ==========
+var TITLE = 'Agent怎么"想"——走一步看一步，还是先做攻略？';
+var DESC = 'Agent走一步看一步还是先做攻略？这不是对错问题，而是取舍问题。可预测性、动态性、出错代价三个维度决定天平倒向哪边——而当Agent的手伸进物理世界，第三个维度压倒一切。';
+var coverPng = null;
+var coverHttpUrl = null;
+var coverXHSPng = null;
+
+// ========== Toast ==========
+function showToast(msg, ms) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, ms || 3000);
+}
+
+// ========== 上传图片到本地服务器 ==========
+async function saveImageToServer(name, dataUrl) {
+  try {
+    var resp = await fetch('/save-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, data: dataUrl }),
+    });
+    var result = await resp.json();
+    if (result.ok) {
+      console.log('✅ 已保存: ' + result.url);
+      return result.url;
+    }
+  } catch (e) {
+    console.warn('保存到服务器失败:', e.message);
+  }
+  return null;
+}
+
+// ========== 封面 → PNG ==========
+async function renderCover() {
+  var coverEl = document.getElementById('coverEl');
+  if (!coverEl || typeof html2canvas !== 'function') return;
+  try {
+    var canvas = await html2canvas(coverEl, { scale: 2, useCORS: true, backgroundColor: null });
+    coverPng = canvas.toDataURL('image/png');
+    coverHttpUrl = await saveImageToServer('cover.png', coverPng);
+  } catch (e) {
+    console.warn('封面渲染失败:', e);
+  }
+}
+
+// ========== 下载横版封面 ==========
+async function downloadCover() {
+  if (!coverPng) await renderCover();
+  if (!coverPng) { showToast('封面渲染失败'); return; }
+  var a = document.createElement('a');
+  a.href = coverPng;
+  a.download = '封面-Agent怎么想-横版.png';
+  a.click();
+  showToast('⬇️ 横版封面已下载');
+}
+
+// ========== 小红书封面渲染 ==========
+async function renderCoverXHS() {
+  var el = document.getElementById('coverXHS');
+  if (!el || typeof html2canvas !== 'function') return;
+  try {
+    var canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null });
+    coverXHSPng = canvas.toDataURL('image/png');
+    await saveImageToServer('cover-xhs.png', coverXHSPng);
+  } catch (e) {
+    console.warn('小红书封面渲染失败:', e);
+  }
+}
+
+// ========== 下载小红书封面 ==========
+async function downloadCoverXHS() {
+  if (!coverXHSPng) await renderCoverXHS();
+  if (!coverXHSPng) { showToast('小红书封面渲染失败'); return; }
+  var a = document.createElement('a');
+  a.href = coverXHSPng;
+  a.download = '封面-Agent怎么想-小红书.png';
+  a.click();
+  showToast('⬇️ 小红书竖版封面已下载');
+}
+
+// ========== 复制正文 ==========
+async function copyArticleHTML() {
+  var article = document.getElementById('articleContent');
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([article.innerHTML], { type: 'text/html' }),
+        'text/plain': new Blob([article.innerText], { type: 'text/plain' }),
+      })
+    ]);
+    showToast('✅ 已复制富文本，可粘贴到公众号编辑器');
+  } catch (e) {
+    try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); }
+    catch (e2) { showToast('❌ 复制失败'); }
+  }
+}
+
+// ========== 复制推文 ==========
+async function copyForX() {
+  var tweet =
+    'Agent 怎么"想"——走一步看一步，还是先做攻略？\n' +
+    '\n' +
+    'ReAct vs Plan-and-Execute，不是对错问题，是取舍问题。\n' +
+    '\n' +
+    '三个维度决定天平倒向哪边：可预测性、动态性、出错代价。\n' +
+    '\n' +
+    '当 Agent 操作物理设备，第三条维度压倒一切——一份执行前的完整计划，是人类唯一的介入窗口。\n' +
+    '\n' +
+    '#AI #Agent #ReAct #Planning #AIAgent\n' +
+    '\n' +
+    '《不可逆的Agent》系列第 2 篇 | 全文见公众号「我是Bob大叔」';
+
+  try {
+    await navigator.clipboard.writeText(tweet);
+    showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000);
+  } catch (e) {
+    prompt('复制以下推文内容：', tweet);
+  }
+}
+
+// ========== 小红书 ==========
+async function copyForXHS() {
+  var note =
+    'Agent 怎么"想"？走一步看一步 vs 先做攻略｜AI Agent\n' +
+    '\n' +
+    '你旅游是哪一派？做满攻略还是走到哪算哪？Agent 设计里也有这两派。\n' +
+    '\n' +
+    '🚶 ReAct 派：走一步看一步\n' +
+    '想一步→做一步→看结果→再想。随机应变，但容易兜圈子、忘目标、烧 token。\n' +
+    '\n' +
+    '📋 Plan-and-Execute 派：先做攻略\n' +
+    '先出完整计划，再逐条执行。规划用强模型，执行用便宜调用，成本降一大截。\n' +
+    '\n' +
+    '怎么选？看三个维度：\n' +
+    '\n' +
+    '1️⃣ 任务可预测性\n' +
+    '步骤越清晰 → 越该规划\n' +
+    '\n' +
+    '2️⃣ 环境动态性\n' +
+    '世界变得越快 → 攻略作废越快\n' +
+    '\n' +
+    '3️⃣ 出错代价 ⚠️ 最关键\n' +
+    '错一步很贵 → 必须先规划，因为只有攻略派的计划能在执行前被审查\n' +
+    '\n' +
+    '当 Agent 操作的是真实设备（灯光、阀门、电机），出错代价压倒一切。\n' +
+    '一份执行前的完整计划，是人类唯一的介入窗口。\n' +
+    '\n' +
+    '这是《不可逆的 Agent》系列第 2 篇\n' +
+    '完整系列 → 公众号「我是Bob大叔」\n' +
+    '\n' +
+    '#AI #Agent #ReAct #LLM #AIAgent #人工智能 #AI学习 #编程 #技术干货';
+
+  try {
+    await navigator.clipboard.writeText(note);
+    showToast('✅ 小红书文案已复制（' + note.length + ' 字符），配合封面图发布', 4000);
+  } catch (e) {
+    prompt('复制以下小红书文案：', note);
+  }
+}
+
+// ========== 公众号同步 ==========
+function doSyncWeChat() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+  var payload = {
+    title: TITLE,
+    content: document.getElementById('articleContent').innerHTML,
+    desc: DESC,
+  };
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    showToast('📤 公众号同步中...');
+  } else {
+    alert('请点击 Chrome 工具栏的 WechatSync 图标。');
+  }
+}
+
+// ========== 构建多平台正文（注入引流尾部） ==========
+function getContentWithCTA() {
+  var clone = document.getElementById('articleContent').cloneNode(true);
+  var cta = clone.querySelector('#crossPlatformCTA');
+  if (cta) cta.style.display = 'block';
+  return clone.innerHTML;
+}
+
+// ========== 多平台同步 ==========
+function doSyncOther() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+  var payload = {
+    title: TITLE,
+    content: getContentWithCTA(),
+    desc: DESC,
+  };
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    showToast('📤 多平台同步（含引流尾部）');
+  } else {
+    alert('请点击 Chrome 工具栏的 WechatSync 图标。\n适用于：知乎、掘金、CSDN、SegmentFault 等。\n\n已自动附加公众号引流尾部。');
+  }
+}
+
+function alertFileProtocol() {
+  alert(
+    '当前为 file:// 本地文件，WechatSync 无法工作。\n\n' +
+    '请在终端运行：\n' +
+    'node scripts/publish-server.mjs content/02-agent/irreversible-agent\n\n' +
+    '然后打开 http://localhost:8787/02-规划范式-wechat.html'
+  );
+}
+
+// ========== 素材区 ==========
+function toggleAssets() {
+  document.getElementById('assetsPanel').classList.toggle('collapsed');
+}
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded', function() {
+  if (location.protocol === 'file:') {
+    document.getElementById('fileWarning').classList.add('show');
+  }
+  renderCover();
+  renderCoverXHS();
+});
+</script>
+
+</body>
+</html>
