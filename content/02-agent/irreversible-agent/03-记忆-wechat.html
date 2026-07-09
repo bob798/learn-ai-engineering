@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent怎么"记"——为什么记忆非分成好几种不可？</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  /* ========== 工具栏 ========== */
+  .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .toolbar .left { display: flex; align-items: center; gap: 16px; }
+  .toolbar .status {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+  }
+  .toolbar .status.ready { background: rgba(46,125,50,0.3); color: #81c784; }
+  .toolbar button {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .toolbar .btn-sync { background: #4caf50; color: #fff; }
+  .toolbar .btn-sync:hover { background: #388e3c; }
+  .toolbar .btn-sync:disabled { background: #666; cursor: not-allowed; }
+  .toolbar .btn-toggle { background: rgba(255,255,255,0.15); color: #fff; }
+  .toolbar .btn-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* ========== 素材区 ========== */
+  .assets-panel {
+    margin-top: 60px;
+    background: #fff;
+    border-bottom: 3px solid #e0e0e0;
+    overflow: hidden;
+    transition: max-height 0.3s;
+  }
+  .assets-panel.collapsed { max-height: 0; }
+  .assets-panel .inner { padding: 30px 20px 40px; }
+  .assets-panel h2 {
+    text-align: center;
+    font-size: 16px;
+    color: #999;
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+
+  /* 封面 */
+  .cover {
+    width: 900px;
+    height: 500px;
+    margin: 0 auto 40px;
+    border-radius: 8px;
+    position: relative;
+    background: linear-gradient(135deg, #1a0a2e, #2d1050, #1a2a3e);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(156,39,176,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(255,183,77,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover .series-tag {
+    position: relative;
+    display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 20px;
+    padding: 4px 18px;
+    font-size: 13px;
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+  }
+  .cover h1 {
+    position: relative;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.3;
+    max-width: 760px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .cover h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, #ce93d8, #f48fb1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover .subtitle {
+    position: relative;
+    font-size: 17px;
+    color: rgba(255,255,255,0.6);
+    max-width: 600px;
+    line-height: 1.7;
+    text-align: center;
+  }
+  .cover .layers {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 36px;
+    font-size: 13px;
+  }
+  .cover .layers .layer {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.5);
+  }
+  .cover .layers .layer.ram {
+    background: rgba(255,183,77,0.15);
+    border-color: rgba(255,183,77,0.5);
+    color: #ffb74d;
+    font-weight: 600;
+  }
+  .cover .layers .layer.disk {
+    background: rgba(156,39,176,0.15);
+    border-color: rgba(156,39,176,0.5);
+    color: #ce93d8;
+    font-weight: 600;
+  }
+  .cover .layers .layer.book {
+    background: rgba(100,181,246,0.15);
+    border-color: rgba(100,181,246,0.5);
+    color: #90caf9;
+    font-weight: 600;
+  }
+  .cover .layers .arrow { color: rgba(255,255,255,0.25); font-size: 16px; }
+
+  /* ========== 小红书封面 ========== */
+  .cover-xhs {
+    width: 1080px;
+    height: 1440px;
+    margin: 0 auto 40px;
+    border-radius: 12px;
+    position: relative;
+    background: linear-gradient(160deg, #0a0a1a 0%, #1a0a2e 30%, #2d1050 60%, #1a0a2e 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .cover-xhs::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 25%, rgba(156,39,176,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(255,183,77,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover-xhs .top-tag {
+    position: relative;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    padding: 6px 24px;
+    font-size: 16px;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 48px;
+  }
+  .cover-xhs .main-title {
+    position: relative;
+    font-size: 68px;
+    font-weight: 800;
+    line-height: 1.25;
+    max-width: 860px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .cover-xhs .main-title em {
+    font-style: normal;
+    background: linear-gradient(90deg, #ce93d8, #f48fb1, #ffb74d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover-xhs .mem-stack {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0 48px;
+  }
+  .cover-xhs .mem-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 36px;
+    border-radius: 12px;
+    font-size: 26px;
+    font-weight: 600;
+    min-width: 500px;
+    justify-content: center;
+  }
+  .cover-xhs .mem-item .icon { font-size: 36px; }
+  .cover-xhs .mem-item.ram {
+    background: rgba(255,183,77,0.12);
+    border: 2px solid rgba(255,183,77,0.4);
+    color: #ffb74d;
+  }
+  .cover-xhs .mem-item.disk {
+    background: rgba(156,39,176,0.12);
+    border: 2px solid rgba(156,39,176,0.4);
+    color: #ce93d8;
+  }
+  .cover-xhs .mem-item.book {
+    background: rgba(100,181,246,0.12);
+    border: 2px solid rgba(100,181,246,0.4);
+    color: #90caf9;
+  }
+  .cover-xhs .mem-arrow {
+    color: rgba(255,255,255,0.2);
+    font-size: 28px;
+  }
+  .cover-xhs .punchline {
+    position: relative;
+    max-width: 780px;
+    text-align: center;
+    font-size: 28px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.7;
+    margin-top: 16px;
+  }
+  .cover-xhs .punchline strong { color: rgba(255,255,255,0.85); }
+  .cover-xhs .footer-bar {
+    position: absolute;
+    bottom: 48px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 18px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+  }
+
+  /* ========== file:// 提示条 ========== */
+  .file-warning {
+    display: none;
+    margin-top: 60px;
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 8px;
+    padding: 20px 24px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  .file-warning.show { display: block; }
+  .file-warning h3 { color: #e65100; font-size: 16px; margin-bottom: 8px; }
+  .file-warning code {
+    background: #fff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+    user-select: all;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 10px 24px; border-radius: 8px;
+    font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ========== 正文区 ========== */
+  article {
+    max-width: 680px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px 28px 60px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 顶部工具栏 ==================== -->
+<nav class="toolbar" id="toolbar">
+  <div class="left">
+    <strong>发布工具</strong>
+    <span class="status ready" id="statusBadge">✅ 就绪（纯文本，无图表）</span>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
+    <button class="btn-sync" id="btnDownload" onclick="downloadCover()" style="background:#1976d2;">⬇️ 横版封面</button>
+    <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
+    <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
+    <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
+    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
+    <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
+  </div>
+</nav>
+
+<!-- file:// 协议提示 -->
+<div class="file-warning" id="fileWarning">
+  <h3>⚠️ 当前为本地文件模式（file://）</h3>
+  <p>WechatSync 扩展无法在 <code>file://</code> 页面上运行。请用以下方式解决：</p>
+  <p>在终端运行：<code id="serverCmd">node scripts/publish-server.mjs content/02-agent/irreversible-agent</code></p>
+  <p>然后在 Chrome 打开 <code>http://localhost:8787/03-记忆-wechat.html</code></p>
+</div>
+
+<!-- toast 通知 -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 素材区 ==================== -->
+<div class="assets-panel" id="assetsPanel">
+<div class="inner">
+  <h2>公众号 / 多平台封面（16:9 横版）</h2>
+  <div class="cover" id="coverEl">
+    <div class="series-tag">不可逆的 Agent · 第 3 篇</div>
+    <h1>Agent 怎么<em>"记"</em>？<br/>为什么记忆非分成好几种不可？</h1>
+    <div class="subtitle">记忆的难点不是"存"，是"取"<br/>上下文窗口有限，逼出了一整套分层架构</div>
+    <div class="layers">
+      <span class="layer ram">短期记忆 = RAM</span>
+      <span class="arrow">→</span>
+      <span class="layer disk">长期记忆 = 硬盘</span>
+      <span class="arrow">→</span>
+      <span class="layer book">RAG = 参考书</span>
+    </div>
+  </div>
+
+  <h2>小红书封面（3:4 竖版 · 1080×1440）</h2>
+  <div class="cover-xhs" id="coverXHS">
+    <div class="top-tag">不可逆的 Agent · 第 3 篇</div>
+    <div class="main-title">Agent 怎么<em>"记"</em>？</div>
+    <div class="mem-stack">
+      <div class="mem-item ram"><span class="icon">⚡</span>短期记忆 = RAM</div>
+      <div class="mem-arrow">↓</div>
+      <div class="mem-item disk"><span class="icon">💾</span>长期记忆 = 硬盘</div>
+      <div class="mem-arrow">↓</div>
+      <div class="mem-item book"><span class="icon">📚</span>RAG = 参考书</div>
+    </div>
+    <div class="punchline"><strong>记忆的本质不是"记住一切"</strong><br/>而是在记不下一切的前提下，聪明地决定记什么</div>
+    <div class="footer-bar">公众号「我是Bob大叔」</div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 正文 ==================== -->
+<article id="articleContent">
+
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:8px;line-height:1.5;">Agent 怎么"记"——为什么记忆非分成好几种不可？</h1>
+
+  <p style="text-align:center;color:#999;font-size:14px;margin-bottom:24px;">不可逆的 Agent · 第 3 篇</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:30px;line-height:1.8;">
+    本系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。
+  </section>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我一开始觉得，给 Agent 做记忆是件简单的事：不就是把聊过的东西存下来吗？存数据库啊，硬盘那么便宜，全存下来不就行了。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">直到我真去做，才发现自己把问题理解反了。记忆的难点从来不是"存"——存永远有地方。难点是<strong style="color:#1a1a1a;">取</strong>：模型每次能看的东西是有限的，你必须决定，这一轮，把哪些记忆重新摆到它面前。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">想通这一点之后，那些看起来很唬人的术语——短期记忆、长期记忆、情景记忆、语义记忆——突然就不神秘了。它们不是谁设计出来的分类学，而是被同一个约束，从几个不同方向逼出来的。这篇文章就是把这个"被逼"的过程走一遍。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 记忆是什么 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">先说清楚：记忆到底是什么</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">回到第 1 篇那个最小 Agent。LLM 有一个反直觉的性质：<strong style="color:#1a1a1a;">它本身是失忆的</strong>。每次调用都是一张白纸，只知道你这一次喂给它的文字，不会自动记得上一句。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">那我们平时用 AI 助手，它明明记得刚才聊的？因为系统每次发消息，都偷偷把之前的全部对话重新塞了进去。它不是"记住"了，是"每次都重读一遍"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以在 Agent 里，<strong style="color:#1a1a1a;">记忆不是模型的能力，是你在外面搭的一套机制</strong>——决定哪些过去的信息，这一轮要重新喂给它。第 1 篇那个不断变长的 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">history</code> 列表，就是最原始的记忆：每轮循环把之前所有动作和结果都带上，模型才知道自己干过什么。</p>
+
+  <p style="font-size:17px;color:#1a1a1a;margin-bottom:20px;line-height:2;text-align:center;font-weight:600;background:#f0f7ff;padding:16px 20px;border-radius:8px;">模型天生失忆，记忆是你外挂给它的。<br/>记住这句，下面全从它推出来。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 为什么不能全记 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">那为什么不能全记？</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">既然记忆就是"把过去喂回去"，最简单的方案不就是——<strong style="color:#1a1a1a;">全喂</strong>？每一轮，把从头到尾发生的一切都塞进去。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第 1 篇的 Agent 就是这么干的。它能工作，直到它不能。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">给它派个长任务，你会亲眼看到它变蠢：对话到后面开始忘事、前言不搭后语、重复问已经问过的东西。因为那个 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">history</code> 列表在无限膨胀，而模型能看的窗口就那么大。塞不下的时候，旧的信息要么被硬挤出去，要么把窗口撑爆——就算撑得下，越长也越慢越贵。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这就是第一堵墙：<strong style="color:#1a1a1a;">上下文窗口是有限的。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">于是你被逼着做第一次区分：哪些信息必须留在窗口里，哪些可以先挪到窗口外。留在窗口里的，就是<strong style="color:#1a1a1a;">短期记忆</strong>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">短期记忆不是"最近的记忆"这么简单，它的准确定义是：<strong style="color:#1a1a1a;">这一轮，你付得起、也值得占用那块宝贵窗口的那部分信息。</strong> 管理它有两招最常用——滑动窗口（只留最近 N 轮，老的丢掉）和摘要压缩（把一长段老对话总结成一小段，省地方）。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;">第一堵墙，逼出了短期记忆。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 会话会结束 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第二堵墙：会话会结束</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">短期记忆再怎么精打细算，都有个死穴：<strong style="color:#1a1a1a;">它活不过这次对话。</strong> 窗口一关，全部清零。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">你今天告诉 Agent"我家没有客厅，只有一个开放式空间"，明天新开一个对话，它又不认识你了。因为 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">history</code> 只活在单次会话里。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">可你显然希望它明天还记得。于是你被逼着把该留的东西，写到<strong style="color:#1a1a1a;">会话之外</strong>去存起来，下次再捞回来。这就是<strong style="color:#1a1a1a;">长期记忆</strong>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">短期和长期的分界线，本质不是时间长短，是<strong style="color:#1a1a1a;">会话的生命周期</strong>：活在这次对话里的，是短期；要跨越对话、持久存在的，是长期。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这也是 2026 年区分"玩具 Agent"和"生产级 Agent"的分水岭——前者每次对话都是一条失忆的金鱼，后者能跨会话地认识你、记得上周的决定、知道自己学过什么。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;">第二堵墙，逼出了长期记忆。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 情景与语义 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第三堵墙：长期记忆里，两种东西性质不同</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">你以为存到长期库就完事了。但很快会发现，存进去的东西根本不是一类：</p>
+
+  <ul style="padding-left:24px;margin-bottom:20px;">
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;">"昨天 8 点，你让我关了书房的灯"——这是一件<strong style="color:#1a1a1a;">具体发生过的事</strong>。</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;">"这个用户习惯睡前把灯调成暖色"——这是从很多次事件里<strong style="color:#1a1a1a;">提炼出的规律</strong>。</li>
+  </ul>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这两者天差地别。事件是海量的、琐碎的、大部分再也用不上；规律是稀少的、精炼的、几乎每次都有用。把它们混在一个库里存取，效率极差——你想找"用户的偏好"，却要在几千条流水账里翻。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">于是长期记忆内部又被劈开：</p>
+
+  <ul style="padding-left:24px;margin-bottom:20px;">
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">情景记忆</strong>（episodic）：具体发生过的事，带时间戳的流水账。</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">语义记忆</strong>（semantic）：从情景里提炼出的稳定事实和偏好。</li>
+  </ul>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这两个术语听着学术，其实就是"日记"和"总结"的区别。而中间那个把日记熬成总结的东西，是记忆系统里最难也最关键的一环——它得定期回看情景流水，提炼出稳定的规律，写进语义库。我自己实现时管它叫 consolidator（整合器），它干的活，几乎就是人睡觉时大脑在做的事：把一天的琐碎经历，压缩成可复用的经验。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;">第三堵墙，把长期记忆劈成了情景和语义。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 程序记忆 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">还有一种，它在另一个维度</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">前面三种记忆，记的都是"<strong style="color:#1a1a1a;">内容</strong>"——发生了什么、知道什么。但 2026 年的成熟实践里，还有第四种，记的是"<strong style="color:#1a1a1a;">怎么做</strong>"：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">程序记忆</strong>（procedural）：Agent 自己摸索出来的、有效的操作方法。比如"调这个牌子的灯，得先发个唤醒指令，再发亮度，否则不响应"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">它不是知识，是技能。这个区分人脑里也有——你"知道"法国首都是巴黎（语义），和你"会"骑自行车（程序），是两套完全不同的系统。有些失忆症患者忘了所有事实，却还会骑车，就是因为这两套系统是分开的。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== RAG ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">那 RAG 算不算记忆？</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">讲到这，必须澄清一个常被混为一谈的东西：RAG。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">RAG（检索增强生成）看起来和长期记忆很像——都是"从外部库里捞信息塞进上下文"。但它们性质不同，界线值得划清：</p>
+
+  <p style="font-size:17px;color:#1a1a1a;margin-bottom:20px;line-height:2;text-align:center;font-weight:600;background:#f0f7ff;padding:16px 20px;border-radius:8px;">记忆是"我经历过的"，RAG 是"我可以查到的"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">长期记忆存的是 Agent 自己的经历和从中提炼的规律（你说过什么、它做过什么）。RAG 检索的是外部的、客观的知识（产品手册、技术文档、维基）——那不是 Agent 的经历，是它随时可以翻阅的参考书。机制像（都靠向量检索），但一个是"回忆"，一个是"查阅"。混在一起想，你会在设计时把用户的私人偏好和公共文档丢进同一个库，然后发现取的时候一团乱。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 怎么搭 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">所以，怎么搭一套记忆</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">现在把四种记忆和 RAG 摆在一起，用一个你一定熟悉的比喻收束——<strong style="color:#1a1a1a;">它就是一台电脑的存储层级</strong>：</p>
+
+  <ul style="padding-left:24px;margin-bottom:20px;">
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">短期记忆 = 内存（RAM）</strong>：当前正在用的、必须最快拿到的，但一断电（会话结束）就没。容量小、最金贵，所以要滑动窗口和压缩。</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">长期记忆 = 硬盘</strong>：断电也不丢，容量大，但要用的时候得先"读进内存"（检索回上下文）。里面又分情景（流水日志）和语义（提炼出的索引）。</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">RAG = 一柜子参考书</strong>：不是你的记忆，是随时可查的外部资料，只读、不参与你的"经历"。</li>
+  </ul>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个比喻不是我编的巧合。2026 年主流的记忆框架，从 MemGPT 到 Letta，走的正是"把 LLM 上下文当操作系统的虚拟内存来管"这条路：核心记忆常驻窗口（RAM），召回记忆放外部可搜索存储（磁盘缓存），归档记忆进冷存储、用时才查（Packer et al., 2023）。这套分层被验证是有效的——最初的 MemGPT 在深度记忆检索任务上做到了 93.4%。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">搭的时候，一条信息进来，你只问一个问题：<strong style="color:#1a1a1a;">它该待在哪一层？</strong> 这一轮就要用、且很关键→留在 RAM（短期）；这次用不上但以后可能要→写回硬盘（长期），是事件就进情景、是规律就进语义；它压根不是"我的经历"而是外部资料→那不归记忆管，进 RAG 的书柜。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 巧合 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">一个更大的巧合，其实不是巧合</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">写到这我才意识到一件事：上面这套分类——短期/长期、情景/语义、陈述/程序——和心理学里人脑记忆的分类，几乎一模一样。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这不是 AI 在模仿人脑。是人脑和 LLM，撞上了同一堵墙：<strong style="color:#1a1a1a;">注意力和存储都是有限的，所以都必须分层管理，都必须决定什么留在眼前、什么沉入背景、什么彻底忘掉。</strong> 记忆的本质，从来不是"记住一切"——恰恰相反，是<strong style="color:#1a1a1a;">在记不下一切的前提下，聪明地决定记什么</strong>。</p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">如果注意力无限，就不需要记忆系统，全塞进去就好。<br/>正因为有限，筛选、压缩、召回才成为一门手艺。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 伏笔 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">伏笔：物理 Agent 还得多记一样东西</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但这套记忆系统，全部记的是 Agent 自己的"信息世界"——它说过的话、做过的决定、查过的资料。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">一旦 Agent 的手伸进物理世界，会冒出一个软件 Agent 从来不用操心的问题：</p>
+
+  <p style="font-size:17px;color:#1a1a1a;margin-bottom:20px;line-height:2;text-align:center;font-weight:600;background:#fff3e0;padding:16px 20px;border-radius:8px;border:1px solid #ffe0b2;">它记得自己把灯关了。<br/>但如果有人手动把灯又开了呢？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">它的记忆说"灯是关的"，现实里灯是亮的。记忆和世界，脱钩了。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">软件世界里几乎不会发生这种事——你写进变量的值，不会有别人在背后偷偷改掉。但物理世界充满了不受 Agent 控制的变化：人、天气、其他设备、物理故障。于是物理 Agent 必须额外维护一样东西——不是"我记得世界是什么样"，而是"世界<strong style="color:#1a1a1a;">现在</strong>真的是什么样"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">那是一种指向当下、而非过去的"记忆"。它有个专门的名字，也是下一篇之后某一篇的主角：设备状态模型，或者说，一个微缩的数字孪生。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <!-- ========== 留一个问题 ========== -->
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">留一个问题</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">最后，一个你可以拿去想一晚上的问题。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">你的记忆，是硬盘那种"存下来就不再变"的，还是每次回忆都在悄悄重构、甚至篡改的？（心理学的答案偏后者——人的记忆每次调取都在被改写。）</p>
+
+  <section style="background:#f9f9f9;border-radius:8px;padding:24px;margin-top:24px;">
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;margin:0;">如果是后者，那么当你给 Agent 设计记忆时，你到底是在给它一个忠实的硬盘，还是在给它一个会自我欺骗的大脑？哪一种，才是你真正想要的？</p>
+  </section>
+
+  <!-- ========== 系列导航 ========== -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <p style="font-size:14px;color:#999;line-height:1.8;margin-bottom:4px;"><em>本文是《不可逆的 Agent》系列第 3 篇。系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。上一篇：《Agent 怎么"想"》。</em></p>
+    <p style="font-size:15px;color:#333;line-height:1.8;margin-bottom:0;font-weight:600;">下一篇《Agent 怎么"碰"世界——从 function calling 到 MCP》首发公众号「我是Bob大叔」，关注不错过。</p>
+  </section>
+
+  <!-- ========== 引流尾部 ========== -->
+  <section id="crossPlatformCTA" style="display:none;margin-top:32px;padding:24px;background:linear-gradient(135deg,#f8f9ff,#f0f7ff);border-radius:8px;border:1px solid #e0e8f0;">
+    <p style="font-size:17px;color:#1a1a1a;font-weight:700;margin:0 0 12px;line-height:1.6;">《不可逆的 Agent》系列连载中</p>
+    <p style="font-size:15px;color:#555;margin:0 0 8px;line-height:1.8;">当 Agent 的动作有真实世界后果时，该怎么设计？14 篇文章，从软件 Agent 六模块到物理世界约束，一篇一个问题。</p>
+    <p style="font-size:15px;color:#555;margin:0 0 12px;line-height:1.8;">下一篇：《Agent 怎么"碰"世界——从 function calling 到 MCP》</p>
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0;line-height:1.8;">系列首发 + 配套代码 → 公众号「我是Bob大叔」</p>
+  </section>
+
+</article>
+
+<script>
+// ========== 全局状态 ==========
+var TITLE = 'Agent怎么"记"——为什么记忆非分成好几种不可？';
+var DESC = '记忆的难点从来不是"存"，而是"取"。上下文窗口有限，你必须决定这一轮把哪些记忆摆到模型面前。短期、长期、情景、语义——不是分类学，是被同一个约束逼出来的。';
+var coverPng = null;
+var coverHttpUrl = null;
+var coverXHSPng = null;
+
+// ========== Toast ==========
+function showToast(msg, ms) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, ms || 3000);
+}
+
+// ========== 上传图片到本地服务器 ==========
+async function saveImageToServer(name, dataUrl) {
+  try {
+    var resp = await fetch('/save-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, data: dataUrl }),
+    });
+    var result = await resp.json();
+    if (result.ok) {
+      console.log('✅ 已保存: ' + result.url);
+      return result.url;
+    }
+  } catch (e) {
+    console.warn('保存到服务器失败:', e.message);
+  }
+  return null;
+}
+
+// ========== 封面 → PNG ==========
+async function renderCover() {
+  var coverEl = document.getElementById('coverEl');
+  if (!coverEl || typeof html2canvas !== 'function') return;
+  try {
+    var canvas = await html2canvas(coverEl, { scale: 2, useCORS: true, backgroundColor: null });
+    coverPng = canvas.toDataURL('image/png');
+    coverHttpUrl = await saveImageToServer('cover.png', coverPng);
+  } catch (e) {
+    console.warn('封面渲染失败:', e);
+  }
+}
+
+// ========== 下载横版封面 ==========
+async function downloadCover() {
+  if (!coverPng) await renderCover();
+  if (!coverPng) { showToast('封面渲染失败'); return; }
+  var a = document.createElement('a');
+  a.href = coverPng;
+  a.download = '封面-Agent怎么记-横版.png';
+  a.click();
+  showToast('⬇️ 横版封面已下载');
+}
+
+// ========== 小红书封面渲染 ==========
+async function renderCoverXHS() {
+  var el = document.getElementById('coverXHS');
+  if (!el || typeof html2canvas !== 'function') return;
+  try {
+    var canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null });
+    coverXHSPng = canvas.toDataURL('image/png');
+    await saveImageToServer('cover-xhs.png', coverXHSPng);
+  } catch (e) {
+    console.warn('小红书封面渲染失败:', e);
+  }
+}
+
+// ========== 下载小红书封面 ==========
+async function downloadCoverXHS() {
+  if (!coverXHSPng) await renderCoverXHS();
+  if (!coverXHSPng) { showToast('小红书封面渲染失败'); return; }
+  var a = document.createElement('a');
+  a.href = coverXHSPng;
+  a.download = '封面-Agent怎么记-小红书.png';
+  a.click();
+  showToast('⬇️ 小红书竖版封面已下载');
+}
+
+// ========== 复制正文 ==========
+async function copyArticleHTML() {
+  var article = document.getElementById('articleContent');
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([article.innerHTML], { type: 'text/html' }),
+        'text/plain': new Blob([article.innerText], { type: 'text/plain' }),
+      })
+    ]);
+    showToast('✅ 已复制富文本，可粘贴到公众号编辑器');
+  } catch (e) {
+    try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); }
+    catch (e2) { showToast('❌ 复制失败'); }
+  }
+}
+
+// ========== 复制推文 ==========
+async function copyForX() {
+  var tweet =
+    'Agent 怎么"记"——为什么记忆非分成好几种不可？\n' +
+    '\n' +
+    '记忆的难点不是"存"，是"取"。上下文窗口有限，逼出了一整套分层：\n' +
+    '\n' +
+    '⚡ 短期记忆 = RAM（活在窗口里）\n' +
+    '💾 长期记忆 = 硬盘（情景 + 语义）\n' +
+    '📚 RAG ≠ 记忆（参考书，不是经历）\n' +
+    '\n' +
+    '人脑和 LLM 撞上了同一堵墙：注意力有限，所以都必须聪明地决定记什么。\n' +
+    '\n' +
+    '#AI #Agent #Memory #LLM #AIAgent\n' +
+    '\n' +
+    '《不可逆的Agent》系列第 3 篇 | 全文见公众号「我是Bob大叔」';
+
+  try {
+    await navigator.clipboard.writeText(tweet);
+    showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000);
+  } catch (e) {
+    prompt('复制以下推文内容：', tweet);
+  }
+}
+
+// ========== 小红书 ==========
+async function copyForXHS() {
+  var note =
+    'Agent 怎么"记"？为什么记忆非分好几种不可｜AI Agent\n' +
+    '\n' +
+    '给 Agent 做记忆，难的不是"存"，是"取"——模型每次能看的窗口就那么大，你必须决定放什么进去。\n' +
+    '\n' +
+    '三堵墙，逼出了一整套记忆分层：\n' +
+    '\n' +
+    '🧱 第一堵墙：上下文窗口有限\n' +
+    '→ 逼出【短期记忆】= 内存 RAM\n' +
+    '只留最关键的在窗口里，老的压缩或丢掉\n' +
+    '\n' +
+    '🧱 第二堵墙：会话会结束\n' +
+    '→ 逼出【长期记忆】= 硬盘\n' +
+    '跨会话持久存储，下次再捞回来\n' +
+    '\n' +
+    '🧱 第三堵墙：长期记忆里两种东西性质不同\n' +
+    '→ 劈成【情景记忆】（流水账）+ 【语义记忆】（提炼的规律）\n' +
+    '\n' +
+    '还有：\n' +
+    '🔧 程序记忆 = 技能（怎么做，不是知道什么）\n' +
+    '📚 RAG ≠ 记忆！记忆是"经历过的"，RAG 是"查到的"\n' +
+    '\n' +
+    '一句话：记忆的本质不是记住一切，而是在记不下一切的前提下，聪明地决定记什么。\n' +
+    '\n' +
+    '这是《不可逆的 Agent》系列第 3 篇\n' +
+    '完整系列 → 公众号「我是Bob大叔」\n' +
+    '\n' +
+    '#AI #Agent #Memory #LLM #AIAgent #人工智能 #AI学习 #编程 #技术干货';
+
+  try {
+    await navigator.clipboard.writeText(note);
+    showToast('✅ 小红书文案已复制（' + note.length + ' 字符），配合封面图发布', 4000);
+  } catch (e) {
+    prompt('复制以下小红书文案：', note);
+  }
+}
+
+// ========== 公众号同步 ==========
+function doSyncWeChat() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+  var payload = {
+    title: TITLE,
+    content: document.getElementById('articleContent').innerHTML,
+    desc: DESC,
+  };
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    showToast('📤 公众号同步中...');
+  } else {
+    alert('请点击 Chrome 工具栏的 WechatSync 图标。');
+  }
+}
+
+// ========== 构建多平台正文 ==========
+function getContentWithCTA() {
+  var clone = document.getElementById('articleContent').cloneNode(true);
+  var cta = clone.querySelector('#crossPlatformCTA');
+  if (cta) cta.style.display = 'block';
+  return clone.innerHTML;
+}
+
+// ========== 多平台同步 ==========
+function doSyncOther() {
+  if (location.protocol === 'file:') { alertFileProtocol(); return; }
+  var payload = {
+    title: TITLE,
+    content: getContentWithCTA(),
+    desc: DESC,
+  };
+  if (coverHttpUrl) payload.thumb = coverHttpUrl;
+  else if (coverPng) payload.thumb = coverPng;
+
+  if (typeof window.syncPost === 'function') {
+    window.syncPost(payload);
+    showToast('📤 多平台同步（含引流尾部）');
+  } else {
+    alert('请点击 Chrome 工具栏的 WechatSync 图标。\n适用于：知乎、掘金、CSDN、SegmentFault 等。\n\n已自动附加公众号引流尾部。');
+  }
+}
+
+function alertFileProtocol() {
+  alert(
+    '当前为 file:// 本地文件，WechatSync 无法工作。\n\n' +
+    '请在终端运行：\n' +
+    'node scripts/publish-server.mjs content/02-agent/irreversible-agent\n\n' +
+    '然后打开 http://localhost:8787/03-记忆-wechat.html'
+  );
+}
+
+// ========== 素材区 ==========
+function toggleAssets() {
+  document.getElementById('assetsPanel').classList.toggle('collapsed');
+}
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded', function() {
+  if (location.protocol === 'file:') {
+    document.getElementById('fileWarning').classList.add('show');
+  }
+  renderCover();
+  renderCoverXHS();
+});
+</script>
+
+</body>
+</html>
