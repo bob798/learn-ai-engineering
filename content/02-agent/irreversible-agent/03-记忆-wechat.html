@@ -420,7 +420,9 @@
 
   <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第 1 篇的 Agent 就是这么干的。它能工作，直到它不能。</p>
 
-  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">给它派个长任务，你会亲眼看到它变蠢：对话到后面开始忘事、前言不搭后语、重复问已经问过的东西。因为那个 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">history</code> 列表在无限膨胀，而模型能看的窗口就那么大。塞不下的时候，旧的信息要么被硬挤出去，要么把窗口撑爆——就算撑得下，越长也越慢越贵。</p>
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">给它派个长任务，你会亲眼看到它变蠢：对话到后面开始忘事、前言不搭后语、重复问已经问过的东西。因为那个 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">history</code> 列表在无限膨胀，而模型能看的窗口就那么大。塞不下的时候，旧的信息要么被硬挤出去，要么把窗口撑爆。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">说句公道话：只要历史还没超出窗口，"全喂"其实工作得相当好——有评测显示，把完整对话直接塞进上下文，准确率甚至能略微超过精心设计的记忆系统。它真正的问题不是"笨"，而是<strong style="color:#1a1a1a;">撑不住</strong>：窗口有上限，而且越长越慢、越长越贵。当任务的历史注定超出那个上限时，"全喂"就不再是一个选项。</p>
 
   <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这就是第一堵墙：<strong style="color:#1a1a1a;">上下文窗口是有限的。</strong></p>
 
@@ -474,6 +476,8 @@
 
   <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这两个术语听着学术，其实就是"日记"和"总结"的区别。而中间那个把日记熬成总结的东西，是记忆系统里最难也最关键的一环——它得定期回看情景流水，提炼出稳定的规律，写进语义库。我自己实现时管它叫 consolidator（整合器），它干的活，几乎就是人睡觉时大脑在做的事：把一天的琐碎经历，压缩成可复用的经验。</p>
 
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这里有个值得留意的坑：整合到底该用"摘要"还是"提炼"？两者不一样。摘要是把长文压短，而 MemGPT 那类靠滚动摘要的做法有个已知缺陷——摘要链会随时间累积误差，越总结越失真（Packer et al., 2023 的后续研究指出了这一点）。更稳的思路是提炼加去重：不是把旧记忆压缩成更短的话，而是识别出稳定的事实、合并重复、丢掉噪声。2026 年已经有系统把这一步做成后台异步的"整合守护进程"，专门把情景记忆提炼晋升到语义层——和 consolidator 是同一个思路。</p>
+
   <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
     <p style="font-size:15px;color:#5d4037;margin:0;">第三堵墙，把长期记忆劈成了情景和语义。</p>
   </section>
@@ -515,7 +519,7 @@
     <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">RAG = 一柜子参考书</strong>：不是你的记忆，是随时可查的外部资料，只读、不参与你的"经历"。</li>
   </ul>
 
-  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个比喻不是我编的巧合。2026 年主流的记忆框架，从 MemGPT 到 Letta，走的正是"把 LLM 上下文当操作系统的虚拟内存来管"这条路：核心记忆常驻窗口（RAM），召回记忆放外部可搜索存储（磁盘缓存），归档记忆进冷存储、用时才查（Packer et al., 2023）。这套分层被验证是有效的——最初的 MemGPT 在深度记忆检索任务上做到了 93.4%。</p>
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这个比喻不是我编的巧合。2026 年主流的记忆框架，从 MemGPT 到 Letta，走的正是"把 LLM 上下文当操作系统的虚拟内存来管"这条路：核心记忆常驻窗口（RAM），召回记忆放外部可搜索存储（磁盘缓存），归档记忆进冷存储、用时才查（Packer et al., 2023）。这套分层被验证是有效的——在专门测长程记忆的 DMR 基准上，MemGPT 达到 93.4% 准确率，而作为对照，只靠"递归摘要"（也就是前面说的压缩那一招）的基线只有 35.3%。差距说明了一件事：<strong style="color:#1a1a1a;">光靠压缩短期记忆远远不够，你必须分层。</strong></p>
 
   <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">搭的时候，一条信息进来，你只问一个问题：<strong style="color:#1a1a1a;">它该待在哪一层？</strong> 这一轮就要用、且很关键→留在 RAM（短期）；这次用不上但以后可能要→写回硬盘（长期），是事件就进情景、是规律就进语义；它压根不是"我的经历"而是外部资料→那不归记忆管，进 RAG 的书柜。</p>
 
@@ -564,6 +568,30 @@
   <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
     <p style="font-size:14px;color:#999;line-height:1.8;margin-bottom:4px;"><em>本文是《不可逆的 Agent》系列第 3 篇。系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。上一篇：《Agent 怎么"想"》。</em></p>
     <p style="font-size:15px;color:#333;line-height:1.8;margin-bottom:0;font-weight:600;">下一篇《Agent 怎么"碰"世界——从 function calling 到 MCP》首发公众号「我是Bob大叔」，关注不错过。</p>
+  </section>
+
+  <!-- ========== 参考文献 ========== -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <h3 style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:12px;">参考与延伸阅读</h3>
+
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>关于记忆分层与 OS 式虚拟内存范式：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Packer et al. (2023), <em>MemGPT: Towards LLMs as Operating Systems</em>. arXiv:2310.08560 —— 提出把 LLM 上下文当操作系统虚拟内存管理的分层范式，DMR 基准 93.4%（对照递归摘要基线 35.3%）的来源。项目后演化为生产级框架 Letta。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Rasmussen et al. (2025), <em>Zep: A Temporal Knowledge Graph Architecture for Agent Memory</em>. arXiv:2501.13956 —— 温度知识图谱路线；文中"完整对话基线准确率反而略高"的对照数据出自此文。</li>
+    </ul>
+
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>关于四类记忆（工作/情景/语义/程序）与生产实践：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">四类记忆的划分是 2026 年生产级 Agent 的通用共识，可参考各主流框架（LangMem、Letta、Mem0、Zep）的工程文档与对比综述。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Chhikara et al. (2025), <em>Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory</em>. arXiv:2504.19413 —— "抽取+更新"两阶段的长期记忆维护。</li>
+    </ul>
+
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>关于 consolidation（整合而非摘要）：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">多篇 2026 研究指出滚动摘要会累积误差，主张以去重/提炼式的异步整合把情景记忆晋升到语义层——与文中 consolidator 思路一致。具体实现细节因系统而异，此处不绑定单一来源。</li>
+    </ul>
+
+    <p style="font-size:13px;color:#999;line-height:1.8;margin:0;font-style:italic;">注：文中灯光 Agent 的翻车日志为示意性构造，用于说明现象；consolidator 的具体实现（触发时机、提炼策略）为作者在自有项目中的设计。</p>
   </section>
 
   <!-- ========== 引流尾部 ========== -->
