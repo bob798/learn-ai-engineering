@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent怎么"碰"世界——从function calling到MCP</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  /* ========== 工具栏 ========== */
+  .toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #1a1a2e; color: #fff; padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .toolbar .left { display: flex; align-items: center; gap: 16px; }
+  .toolbar .status { font-size: 13px; padding: 4px 12px; border-radius: 12px; background: rgba(255,255,255,0.1); }
+  .toolbar .status.ready { background: rgba(46,125,50,0.3); color: #81c784; }
+  .toolbar button { border: none; border-radius: 6px; padding: 8px 20px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .toolbar .btn-sync { background: #4caf50; color: #fff; }
+  .toolbar .btn-sync:hover { background: #388e3c; }
+  .toolbar .btn-toggle { background: rgba(255,255,255,0.15); color: #fff; }
+  .toolbar .btn-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* ========== 素材区 ========== */
+  .assets-panel { margin-top: 60px; background: #fff; border-bottom: 3px solid #e0e0e0; overflow: hidden; transition: max-height 0.3s; }
+  .assets-panel.collapsed { max-height: 0; }
+  .assets-panel .inner { padding: 30px 20px 40px; }
+  .assets-panel h2 { text-align: center; font-size: 16px; color: #999; margin-bottom: 24px; font-weight: 400; }
+
+  /* 横版封面 */
+  .cover {
+    width: 900px; height: 500px; margin: 0 auto 40px; border-radius: 8px;
+    position: relative;
+    background: linear-gradient(135deg, #1a0a2e, #2d1b4e, #0f2027);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(120,80,200,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(0,180,220,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover .series-tag {
+    position: relative; display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.4); border-radius: 20px;
+    padding: 4px 18px; font-size: 13px; letter-spacing: 3px; margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+  }
+  .cover h1 { position: relative; font-size: 40px; font-weight: 700; line-height: 1.3; max-width: 760px; margin-bottom: 20px; text-align: center; }
+  .cover h1 em { font-style: normal; background: linear-gradient(90deg, #ff6b6b, #ffa36b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover .subtitle { position: relative; font-size: 17px; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.7; text-align: center; }
+  .cover .chain {
+    position: relative; display: flex; align-items: center; gap: 8px; margin-top: 36px; font-size: 13px;
+  }
+  .cover .chain .node {
+    padding: 8px 16px; border-radius: 8px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.6);
+  }
+  .cover .chain .node.highlight {
+    background: rgba(255,107,107,0.15); border-color: rgba(255,107,107,0.5); color: #ff6b6b; font-weight: 600;
+  }
+  .cover .chain .arrow { color: rgba(255,255,255,0.25); font-size: 16px; }
+
+  /* 小红书封面 */
+  .cover-xhs {
+    width: 1080px; height: 1440px; margin: 0 auto 40px; border-radius: 12px;
+    position: relative;
+    background: linear-gradient(160deg, #0a0a1a 0%, #1a0a2e 30%, #2d1050 60%, #1a0a2e 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden;
+  }
+  .cover-xhs::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 25%, rgba(255,107,107,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,180,220,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(120,80,200,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .cover-xhs .top-tag {
+    position: relative; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 24px;
+    padding: 6px 24px; font-size: 16px; letter-spacing: 4px; color: rgba(255,255,255,0.6); margin-bottom: 48px;
+  }
+  .cover-xhs .main-title {
+    position: relative; font-size: 68px; font-weight: 800; line-height: 1.25;
+    max-width: 860px; text-align: center; margin-bottom: 40px;
+  }
+  .cover-xhs .main-title em { font-style: normal; background: linear-gradient(90deg, #ff6b6b, #ffa36b, #ffdb6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover-xhs .chain-v {
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: 16px; margin: 20px 0 48px;
+  }
+  .cover-xhs .chain-node {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 36px; border-radius: 12px; font-size: 26px; font-weight: 600; min-width: 460px; justify-content: center;
+    background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);
+  }
+  .cover-xhs .chain-node .icon { font-size: 36px; }
+  .cover-xhs .chain-node.highlight {
+    background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.4); color: #ff6b6b;
+  }
+  .cover-xhs .chain-arrow { color: rgba(255,255,255,0.2); font-size: 28px; }
+  .cover-xhs .punchline {
+    position: relative; max-width: 780px; text-align: center;
+    font-size: 28px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-top: 16px;
+  }
+  .cover-xhs .punchline strong { color: rgba(255,255,255,0.85); }
+  .cover-xhs .footer-bar {
+    position: absolute; bottom: 48px; left: 0; right: 0;
+    text-align: center; font-size: 18px; color: rgba(255,255,255,0.3); letter-spacing: 2px;
+  }
+
+  /* file:// 提示 */
+  .file-warning { display: none; margin-top: 60px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 20px 24px; max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.8; font-size: 15px; }
+  .file-warning.show { display: block; }
+  .file-warning h3 { color: #e65100; font-size: 16px; margin-bottom: 8px; }
+  .file-warning code { background: #fff; padding: 3px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #e0e0e0; user-select: all; }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  article { max-width: 680px; margin: 0 auto; background: #fff; padding: 40px 28px 60px; }
+</style>
+</head>
+<body>
+
+<nav class="toolbar" id="toolbar">
+  <div class="left">
+    <strong>发布工具</strong>
+    <span class="status ready" id="statusBadge">✅ 就绪（纯文本，无图表）</span>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
+    <button class="btn-sync" id="btnDownload" onclick="downloadCover()" style="background:#1976d2;">⬇️ 横版封面</button>
+    <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
+    <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
+    <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
+    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
+    <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
+  </div>
+</nav>
+
+<div class="file-warning" id="fileWarning">
+  <h3>⚠️ 当前为本地文件模式（file://）</h3>
+  <p>在终端运行：<code>node scripts/publish-server.mjs content/02-agent/irreversible-agent</code></p>
+  <p>然后打开 <code>http://localhost:8787/04-工具与接口-wechat.html</code></p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 素材区 ==================== -->
+<div class="assets-panel" id="assetsPanel">
+<div class="inner">
+  <h2>公众号 / 多平台封面（16:9 横版）</h2>
+  <div class="cover" id="coverEl">
+    <div class="series-tag">不可逆的 Agent · 第 4 篇</div>
+    <h1>Agent 怎么<em>"碰"</em>世界？</h1>
+    <div class="subtitle">从 function calling 到 MCP<br/>LLM 从不调用，它只是写了一张纸条</div>
+    <div class="chain">
+      <span class="node">LLM 提议</span>
+      <span class="arrow">→</span>
+      <span class="node">function calling</span>
+      <span class="arrow">→</span>
+      <span class="node">tool 执行</span>
+      <span class="arrow">→</span>
+      <span class="node highlight">MCP 标准化</span>
+    </div>
+  </div>
+
+  <h2>小红书封面（3:4 竖版 · 1080×1440）</h2>
+  <div class="cover-xhs" id="coverXHS">
+    <div class="top-tag">不可逆的 Agent · 第 4 篇</div>
+    <div class="main-title">Agent 怎么<em>"碰"</em>世界？</div>
+    <div class="chain-v">
+      <div class="chain-node"><span class="icon">📝</span>LLM 写纸条（提议）</div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-node"><span class="icon">🔌</span>function calling（翻译）</div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-node"><span class="icon">🔧</span>tool 执行（动手）</div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-node highlight"><span class="icon">🔗</span>MCP 标准化（通用插头）</div>
+    </div>
+    <div class="punchline"><strong>LLM 从不调用，它只是生成了一个请求</strong><br/>提议的是模型，动手的永远是外面的代码</div>
+    <div class="footer-bar">公众号「我是Bob大叔」</div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 正文 ==================== -->
+<article id="articleContent">
+
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:8px;line-height:1.5;">Agent 怎么"碰"世界——从 function calling 到 MCP</h1>
+
+  <p style="text-align:center;color:#999;font-size:14px;margin-bottom:24px;">不可逆的 Agent · 第 4 篇</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:30px;line-height:1.8;">
+    本系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。
+  </section>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">前三篇，我们给 Agent 装了脑子（推理）、给了它记忆、教它规划。但有一件最基本的事，我们一直当黑盒用着从没打开：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">它到底是<strong style="color:#1a1a1a;">怎么碰到那盏灯的</strong>？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">第 1 篇我说"给 Agent 一个 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">set_light</code> 工具，它就能关灯了"。可一个语言模型——一个只会输出文字的东西——是怎么让一盏真实的灯熄灭的？这一篇就是把这个黑盒彻底打开。打开之后你会看到一个反直觉的真相，而这个真相，恰好是整个物理 Agent 安全体系的地基。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">第一层真相：LLM 其实碰不到任何东西</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">先破除一个几乎所有人都有的误解。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我们总说"Agent 自己在操作""模型调用了工具"，这话给人一种画面：模型像一只手，伸出去把灯关了。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">这个画面是错的。</strong> LLM 在物理上就没有"手"。它是一个文本生成模型，输入文字、输出文字，仅此而已。它做不了任何别的事。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">那它怎么关灯？答案是：<strong style="color:#1a1a1a;">它不关灯，它只是写了一张纸条。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">当你让它"把客厅灯关掉"，它真正做的，是生成一段结构化的文字，大意是：</p>
+
+  <pre style="background:#1e1e1e;color:#d4d4d4;padding:20px;border-radius:6px;font-size:14px;line-height:1.7;overflow-x:auto;margin:20px 0;"><code>{ "调用": "set_light", "参数": { "房间": "客厅", "状态": "关" } }</code></pre>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这段文字本身关不了任何灯。真正去关灯的，是<strong style="color:#1a1a1a;">外面的一段代码</strong>——它读到这张纸条，解析出"哦，模型想调 set_light"，然后由它去执行真正的操作。</p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">LLM 从不调用，它只是生成了一个调用请求。<br/>提议的是模型，动手的永远是外面的代码。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">记住这个"提议与执行的分离"。它现在看只是个技术细节，到文章结尾它会变成整篇的命门。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">为什么需要这层"纸条"——function calling</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">你可能会问：为什么要这么绕？让模型直接说人话"帮我把灯关了"，不行吗？</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">不行，因为<strong style="color:#1a1a1a;">外部代码没法可靠地理解人话</strong>。"把灯关了""关一下灯""灯不用开着"——同一个意图有一万种说法，代码没法稳定地从自由文本里解析出"到底调哪个函数、填什么参数"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">于是需要一种约定：让模型把"我想干什么"表达成一种<strong style="color:#1a1a1a;">机器能稳定解析的结构化格式</strong>。这个能力，就叫 <strong style="color:#1a1a1a;">function calling（函数调用）</strong>。它是模型被专门训练出来的一项本领——不说人话，而是吐出规整的、带名字和参数的调用请求。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;"><strong>function calling 是 LLM 从"只会聊天"到"能表达可执行意图"的翻译层。</strong>有了它，模型的想法才能被外部世界接住。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">厘清三个总被搞混的词：function calling、tool、MCP</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这三个词经常混用，但它们是三个不同层次的东西。用一个餐厅的比方一次讲清：</p>
+
+  <ul style="padding-left:24px;margin-bottom:20px;">
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">Tool（工具）是"菜"。</strong>一个工具 = 一个函数（比如 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">set_light</code>）+ 它的真实实现 + 一段给模型看的描述。</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">Function calling 是"点菜的能力"。</strong>是模型从菜单里"点选"某道菜的机制。</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">MCP 是"标准化的菜单格式"。</strong>它规定菜单该怎么写，好让任何餐厅的菜单，任何顾客都看得懂。</li>
+  </ul>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以它们不是竞品，是一条链上的三环：你定义 <strong style="color:#1a1a1a;">tool</strong>，模型用 <strong style="color:#1a1a1a;">function calling</strong> 去点选，<strong style="color:#1a1a1a;">MCP</strong> 让这套菜单标准化。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">模型怎么知道该点哪道菜？</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">答案全在<strong style="color:#1a1a1a;">描述</strong>里。你每次请求时，会把"可用工具清单 + 每个工具的描述"一起喂给模型。模型读这份清单来做两个判断：</p>
+
+  <ul style="padding-left:24px;margin-bottom:20px;">
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">要不要用工具</strong>："法国首都是哪"——直接答；"客厅现在几度"——清单里有个 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">get_temp</code> 说能查，那就调它。</li>
+    <li style="font-size:16px;line-height:2;margin-bottom:6px;"><strong style="color:#1a1a1a;">怎么用</strong>：靠工具描述里的参数说明，知道要填一个 <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:14px;color:#c7254e;border:1px solid #e8e8e8;">room</code>、值是房间名。</li>
+  </ul>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以<strong style="color:#1a1a1a;">工具描述写得好不好，直接决定模型用得对不对</strong>。给工具写描述，本质是在给一个新员工写操作手册——这是 Agent 工程里一个被严重低估的手艺。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">工具一多，就掉进 N×M 的地狱</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">真实世界里，你想让 Agent 接入 Gmail、GitHub、日历、灯光系统、数据库……几十上百个。难点不在数量，在<strong style="color:#1a1a1a;">每个工具说的话都不一样</strong>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这就是 <strong style="color:#1a1a1a;">N×M 问题</strong>：N 个工具 × M 个模型 = N×M 套适配代码。在 MCP 出现之前，如果你有 10 个 AI 应用和 100 个工具，可能需要写 1000 个不同的集成。</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:20px;line-height:1.8;">
+    常见误解："那大家都用 HTTP 不就统一了？" 没用。HTTP 只统一了"怎么把字节传过去"，没统一"传的内容长什么样"。就像大家都用声波说话，不代表中国人和法国人能互相听懂。N×M 是应用层的语义分裂，传输层的统一解决不了。
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">MCP：给所有工具装一个通用插头</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">解药是：<strong style="color:#1a1a1a;">别让每个工具各说各话，让它们说同一种语言。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这就是 MCP（Model Context Protocol，模型上下文协议）。2024 年 11 月由 Anthropic 提出，官方比喻是"<strong style="color:#1a1a1a;">AI 应用的 USB-C</strong>"：以前每种设备一种接口，现在一个通用口，插上就能用。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">效果是把 <strong style="color:#1a1a1a;">N×M 塌缩成 N+M</strong>：每个工具实现一次 MCP server，每个模型实现一次 MCP client，然后自由组合。集成成本从"相乘"变成"相加"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">MCP 不是 HTTP 的替代品，是驾在 HTTP 之上、专门给模型和工具沟通用的一层语言。HTTP 是邮路，MCP 是信里的标准公文格式。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">而且这不再是"一种新兴方案"。2025 年 12 月，Anthropic 把 MCP 捐给了 Linux 基金会，OpenAI、Google、微软共同参与——它已经从"某一家的协议"变成了跨厂商的行业标准。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">但是——我们只讲了"碰出去"，没讲"碰的反馈"</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这条链是<strong style="color:#1a1a1a;">单向</strong>的——它只讲了指令怎么发出去。可一次真正的"碰"，是双向的：动作发出去之后，<strong style="color:#1a1a1a;">结果怎么回来？</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">你发出"关灯"，然后呢？灯真的关了吗？返回的"成功"可信吗？在物理世界，"模型以为灯关了"和"灯真的关了"之间，隔着一整个真实世界的不确定性。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;"><strong>碰世界不只是碰出去，更是接住碰回来的反馈。</strong>这个"结果回传与确认"，是后面某一篇的全部内容。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">命门：当"接入"变得太容易</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">现在回到开头那个让你记住的东西：<strong style="color:#1a1a1a;">提议与执行的分离。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">MCP 让接入变得前所未有地简单——2026 年已有上万个 MCP server、SDK 月下载量以千万计。任何能力，包装成一个 MCP server，就能插进任何 Agent。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但请把这句话念慢一点：<strong style="color:#1a1a1a;">任何能力，都能轻松插进去。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">查天气的能力，无所谓。可如果插进去的是"删除数据库""转账""开门锁""打开阀门"呢？MCP 不区分这些——在协议眼里，关灯和转账都只是一次工具调用。<strong style="color:#1a1a1a;">接入的门槛降到了地板上，但风险的门槛没有跟着降。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这不是危言耸听。随着 MCP 铺开，安全事故接踵而至：跨租户数据泄露、工具投毒攻击、两个月内三十多个漏洞。行业被迫补课——把认证授权标准化、给敏感操作加上"人在环中"的审批。</p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">正因为 LLM 只能"提议"、不能"执行"，<br/>中间那层代码才成了唯一能把关的地方——<br/>在动作真的发生之前，检查它、拦截它、或者交给人确认。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">把同样的逻辑挪到物理世界：Agent 接入的不再是数据库，是电机、阀门、门锁。一次错误的工具调用，另一端就是一扇真实打开的门。而物理世界，没有回滚。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以物理 Agent 的工具层，比软件 Agent 多一道无法省略的关：问题不再是"能不能接入"，而是"<strong style="color:#1a1a1a;">接入之后，谁来为每一次调用把关</strong>"。那道关卡怎么设计——是第 8 篇的全部内容。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">留一个问题</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">你给 Agent 接的每一个工具，本质上都是在授予它一项<strong style="color:#1a1a1a;">能力</strong>。</p>
+
+  <section style="background:#f9f9f9;border-radius:8px;padding:24px;margin-top:24px;">
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;margin:0;">能力的门槛，和风险的门槛，从来不是同一道。而我们造的工具，正在让前一道飞速降低。那么，守住后一道的，该是谁？</p>
+  </section>
+
+  <!-- 参考文献 -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <h3 style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:12px;">参考与依据</h3>
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>MCP 的定位、起源与标准化：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Anthropic 于 2024 年 11 月推出 MCP，定位为"AI 应用的 USB-C"。2025 年 12 月捐赠给 Linux 基金会，OpenAI、Google、微软共同参与治理。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">N×M → N+M：MCP 官方与多方分析均以此描述其核心价值。</li>
+    </ul>
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>MCP 安全事故与"人在环中"审批：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">2026 年初出现多起生产安全事件（跨租户泄露、工具投毒等），两个月内 30 余个 CVE。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Pinterest 等公司生产架构对敏感操作明确采用 human-in-the-loop 审批。</li>
+    </ul>
+    <p style="font-size:13px;color:#999;line-height:1.8;margin:0;font-style:italic;">注：文中 JSON 纸条等为示意性构造。具体统计数字来自 2026 年上半年公开行业报道。</p>
+  </section>
+
+  <!-- 系列导航 -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <p style="font-size:14px;color:#999;line-height:1.8;margin-bottom:4px;"><em>本文是《不可逆的 Agent》系列第 4 篇。系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。上一篇：《Agent 怎么"记"》。</em></p>
+    <p style="font-size:15px;color:#333;line-height:1.8;margin-bottom:0;font-weight:600;">下一篇《什么时候需要多个 Agent？》首发公众号「我是Bob大叔」，关注不错过。</p>
+  </section>
+
+  <!-- 引流尾部 -->
+  <section id="crossPlatformCTA" style="display:none;margin-top:32px;padding:24px;background:linear-gradient(135deg,#f8f9ff,#f0f7ff);border-radius:8px;border:1px solid #e0e8f0;">
+    <p style="font-size:17px;color:#1a1a1a;font-weight:700;margin:0 0 12px;line-height:1.6;">《不可逆的 Agent》系列连载中</p>
+    <p style="font-size:15px;color:#555;margin:0 0 8px;line-height:1.8;">当 Agent 的动作有真实世界后果时，该怎么设计？14 篇文章，从软件 Agent 六模块到物理世界约束，一篇一个问题。</p>
+    <p style="font-size:15px;color:#555;margin:0 0 12px;line-height:1.8;">下一篇：《什么时候需要多个 Agent？》</p>
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0;line-height:1.8;">系列首发 + 配套代码 → 公众号「我是Bob大叔」</p>
+  </section>
+
+</article>
+
+<script>
+var TITLE = 'Agent怎么"碰"世界——从function calling到MCP';
+var DESC = 'LLM从不调用，它只是生成了一个调用请求。提议的是模型，动手的永远是外面的代码。正因为这层分离，中间那层代码才成了唯一能把关的地方。';
+var coverPng = null, coverHttpUrl = null, coverXHSPng = null;
+
+function showToast(msg, ms) { var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, ms || 3000); }
+
+async function saveImageToServer(name, dataUrl) {
+  try { var r = await fetch('/save-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, data: dataUrl }) }); var j = await r.json(); if (j.ok) return j.url; } catch (e) {} return null;
+}
+
+async function renderCover() { var el = document.getElementById('coverEl'); if (!el || typeof html2canvas !== 'function') return; try { var c = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null }); coverPng = c.toDataURL('image/png'); coverHttpUrl = await saveImageToServer('cover.png', coverPng); } catch (e) {} }
+async function downloadCover() { if (!coverPng) await renderCover(); if (!coverPng) { showToast('封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverPng; a.download = '封面-Agent怎么碰世界-横版.png'; a.click(); showToast('⬇️ 横版封面已下载'); }
+async function renderCoverXHS() { var el = document.getElementById('coverXHS'); if (!el || typeof html2canvas !== 'function') return; try { var c = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null }); coverXHSPng = c.toDataURL('image/png'); await saveImageToServer('cover-xhs.png', coverXHSPng); } catch (e) {} }
+async function downloadCoverXHS() { if (!coverXHSPng) await renderCoverXHS(); if (!coverXHSPng) { showToast('小红书封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverXHSPng; a.download = '封面-Agent怎么碰世界-小红书.png'; a.click(); showToast('⬇️ 小红书竖版封面已下载'); }
+
+async function copyArticleHTML() { var article = document.getElementById('articleContent'); try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([article.innerHTML], { type: 'text/html' }), 'text/plain': new Blob([article.innerText], { type: 'text/plain' }) })]); showToast('✅ 已复制富文本'); } catch (e) { try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); } catch (e2) { showToast('❌ 复制失败'); } } }
+
+async function copyForX() {
+  var tweet = 'Agent 怎么"碰"世界？\n\nLLM 从不调用工具，它只是写了一张纸条。\n\n提议的是模型，动手的永远是外面的代码。function calling 是翻译层，tool 是执行层，MCP 是标准化层。\n\n当接入变得太容易，守住风险门槛的该是谁？\n\n#AI #Agent #MCP #FunctionCalling #AIAgent\n\n《不可逆的Agent》系列第 4 篇 | 全文见公众号「我是Bob大叔」';
+  try { await navigator.clipboard.writeText(tweet); showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000); } catch (e) { prompt('复制：', tweet); }
+}
+
+async function copyForXHS() {
+  var note = 'Agent 怎么"碰"世界？从 function calling 到 MCP｜AI Agent\n\n一个只会输出文字的 LLM，是怎么让一盏真实的灯熄灭的？\n\n答案：它不关灯，它只是写了一张纸条。\n\n📝 LLM 提议 → 生成结构化调用请求\n🔌 function calling → 翻译成机器能解析的格式\n🔧 tool → 外面的代码真正去执行\n🔗 MCP → 标准化的通用插头（AI 的 USB-C）\n\nMCP 解决了什么？\nN×M 地狱 → N+M：10 个应用 × 100 个工具，从 1000 个集成降到 110 个\n\n但问题来了：\n接入太容易了。关灯和转账在协议眼里都只是一次工具调用。\n能力的门槛降到地板上，风险的门槛没跟着降。\n\n所以：提议与执行的分离，不是技术细节，是安全的地基。\n\n这是《不可逆的 Agent》系列第 4 篇\n完整系列 → 公众号「我是Bob大叔」\n\n#AI #Agent #MCP #FunctionCalling #LLM #人工智能 #AI学习 #编程 #技术干货';
+  try { await navigator.clipboard.writeText(note); showToast('✅ 小红书文案已复制（' + note.length + ' 字符）', 4000); } catch (e) { prompt('复制：', note); }
+}
+
+function doSyncWeChat() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: document.getElementById('articleContent').innerHTML, desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 公众号同步中...'); } else { alert('请点击 Chrome 工具栏的 WechatSync 图标。'); } }
+function getContentWithCTA() { var c = document.getElementById('articleContent').cloneNode(true); var cta = c.querySelector('#crossPlatformCTA'); if (cta) cta.style.display = 'block'; return c.innerHTML; }
+function doSyncOther() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: getContentWithCTA(), desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 多平台同步（含引流尾部）'); } else { alert('请点击 WechatSync 图标。\n适用于：知乎、掘金、CSDN 等。'); } }
+function alertFileProtocol() { alert('当前为 file:// 本地文件。\n\n请运行：\nnode scripts/publish-server.mjs content/02-agent/irreversible-agent\n\n然后打开 http://localhost:8787/04-工具与接口-wechat.html'); }
+function toggleAssets() { document.getElementById('assetsPanel').classList.toggle('collapsed'); }
+
+window.addEventListener('DOMContentLoaded', function() {
+  if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');
+  renderCover(); renderCoverXHS();
+});
+</script>
+
+</body>
+</html>
