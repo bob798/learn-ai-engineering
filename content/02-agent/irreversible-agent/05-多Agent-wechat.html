@@ -124,6 +124,58 @@
     text-align: center; font-size: 18px; color: rgba(255,255,255,0.3); letter-spacing: 2px;
   }
 
+  /* ========== 小红书轮播卡片（3:4 竖版） ========== */
+  .xhs-carousel { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 0 auto 40px; }
+  .xhs-card {
+    width: 1080px; height: 1440px; border-radius: 12px; position: relative;
+    background: linear-gradient(160deg, #0a0a1a 0%, #1a0a2e 30%, #2d1050 60%, #1a0a2e 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden; flex-shrink: 0;
+  }
+  .xhs-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 25%, rgba(255,107,107,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,180,220,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(120,80,200,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .xhs-card .card-num {
+    position: absolute; top: 48px; right: 60px;
+    font-size: 20px; color: rgba(255,255,255,0.25); letter-spacing: 2px;
+  }
+  .xhs-card .card-series {
+    position: relative; border: 1.5px solid rgba(255,255,255,0.25); border-radius: 24px;
+    padding: 6px 24px; font-size: 15px; letter-spacing: 4px; color: rgba(255,255,255,0.45); margin-bottom: 48px;
+  }
+  .xhs-card .card-title {
+    position: relative; font-size: 64px; font-weight: 800; line-height: 1.3;
+    max-width: 860px; text-align: center; margin-bottom: 48px;
+  }
+  .xhs-card .card-title em {
+    font-style: normal; background: linear-gradient(90deg, #ff6b6b, #ffa36b, #ffdb6b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .xhs-card .card-body {
+    position: relative; max-width: 840px; text-align: center;
+    font-size: 32px; color: rgba(255,255,255,0.65); line-height: 1.8;
+  }
+  .xhs-card .card-body strong { color: rgba(255,255,255,0.95); font-weight: 700; }
+  .xhs-card .card-body .highlight-box {
+    display: inline-block; margin: 24px 0; padding: 20px 40px; border-radius: 12px;
+    background: rgba(255,107,107,0.12); border: 2px solid rgba(255,107,107,0.4);
+    color: #ff6b6b; font-size: 40px; font-weight: 800;
+  }
+  .xhs-card .card-body .dim { color: rgba(255,255,255,0.4); }
+  .xhs-card .card-cta {
+    position: relative; margin-top: 60px; padding: 20px 48px; border-radius: 12px;
+    background: rgba(255,107,107,0.15); border: 2px solid rgba(255,107,107,0.4);
+    color: #ff6b6b; font-size: 28px; font-weight: 700; letter-spacing: 2px;
+  }
+  .xhs-card .footer-bar {
+    position: absolute; bottom: 48px; left: 0; right: 0;
+    text-align: center; font-size: 18px; color: rgba(255,255,255,0.3); letter-spacing: 2px;
+  }
+
   /* file:// 提示 */
   .file-warning { display: none; margin-top: 60px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 20px 24px; max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.8; font-size: 15px; }
   .file-warning.show { display: block; }
@@ -147,6 +199,7 @@
     <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
     <button class="btn-sync" id="btnDownload" onclick="downloadCover()" style="background:#1976d2;">⬇️ 横版封面</button>
     <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
+    <button class="btn-sync" id="btnDownloadCarousel" onclick="downloadCarousel()" style="background:#ff2442;">📕 轮播卡片×3</button>
     <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
     <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
     <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
@@ -191,6 +244,48 @@
     </div>
     <div class="punchline"><strong>我是真的需要军队，<br/>还是没把手里这一个人用好？</strong></div>
     <div class="footer-bar">公众号「我是Bob大叔」</div>
+  </div>
+
+  <h2>小红书轮播卡片（3:4 × 3 张）</h2>
+  <div class="xhs-carousel">
+    <!-- 第1张：钩子 -->
+    <div class="xhs-card" id="card1">
+      <div class="card-num">1 / 3</div>
+      <div class="card-series">不可逆的 Agent · 第 5 篇</div>
+      <div class="card-title">多 Agent 协作<br/>生产失败率最高<em> 87%</em></div>
+      <div class="card-body">
+        <p>不是模型不够聪明</p>
+        <p><strong>是"协作"本身出了问题</strong></p>
+        <p class="dim" style="margin-top:32px;font-size:28px;">角色误解 · 重复劳动 · 错误传染 · 验证跳过</p>
+      </div>
+      <div class="footer-bar">→ 滑动看原因和解法</div>
+    </div>
+
+    <!-- 第2张：核心论点 -->
+    <div class="xhs-card" id="card2">
+      <div class="card-num">2 / 3</div>
+      <div class="card-title" style="font-size:52px;">这根本不是 AI 问题<br/>是<em>分布式系统</em>问题</div>
+      <div class="card-body">
+        <div class="highlight-box">5 个 Agent = 25 倍复杂度</div>
+        <p style="margin-top:32px;">协调成本随交互数<strong>平方级增长</strong></p>
+        <p style="margin-top:24px;">微服务架构的人<br/>十五年前就全趟过一遍了</p>
+        <p class="dim" style="margin-top:40px;font-size:26px;">怎么拆？沿领域拆，不沿功能横切<br/>要不要总指挥？默认编排，慎用协同<br/>冲突仲裁？确定性规则，别让 LLM 商量</p>
+      </div>
+      <div class="footer-bar">→ 滑动看物理世界的额外考量</div>
+    </div>
+
+    <!-- 第3张：悬念+引流 -->
+    <div class="xhs-card" id="card3">
+      <div class="card-num">3 / 3</div>
+      <div class="card-title" style="font-size:52px;">物理世界拆分<br/>是为了<em>"关住爆炸"</em></div>
+      <div class="card-body">
+        <p><strong>如果灯光 Agent 疯了</strong></p>
+        <p>你要确保它绝对碰不到<br/>暖通主机和门禁系统</p>
+        <p style="margin-top:32px;" class="dim">给每个 Agent 画一个物理的牢笼<br/>把爆炸半径锁死在它自己的域内</p>
+      </div>
+      <div class="card-cta">完整版 → 公众号「我是Bob大叔」</div>
+      <div class="footer-bar">《不可逆的 Agent》系列连载中</div>
+    </div>
   </div>
 </div>
 </div>
@@ -298,6 +393,29 @@ async function renderCover() { var el = document.getElementById('coverEl'); if (
 async function downloadCover() { if (!coverPng) await renderCover(); if (!coverPng) { showToast('封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverPng; a.download = '封面-别急着上多Agent-横版.png'; a.click(); showToast('⬇️ 横版封面已下载'); }
 async function renderCoverXHS() { var el = document.getElementById('coverXHS'); if (!el || typeof html2canvas !== 'function') return; try { var c = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null }); coverXHSPng = c.toDataURL('image/png'); await saveImageToServer('cover-xhs.png', coverXHSPng); } catch (e) {} }
 async function downloadCoverXHS() { if (!coverXHSPng) await renderCoverXHS(); if (!coverXHSPng) { showToast('小红书封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverXHSPng; a.download = '封面-别急着上多Agent-小红书.png'; a.click(); showToast('⬇️ 小红书竖版封面已下载'); }
+
+// ========== 轮播卡片批量下载 ==========
+async function downloadCarousel() {
+  if (typeof html2canvas !== 'function') { showToast('html2canvas 未加载'); return; }
+  showToast('🔄 正在渲染 3 张卡片…');
+  for (var i = 1; i <= 3; i++) {
+    var el = document.getElementById('card' + i);
+    if (!el) continue;
+    try {
+      var canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null });
+      var dataUrl = canvas.toDataURL('image/png');
+      var a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = '小红书-别急着上多Agent-' + i + '.png';
+      a.click();
+      await saveImageToServer('xhs-card-' + i + '.png', dataUrl);
+      await new Promise(function(r) { setTimeout(r, 500); });
+    } catch (e) {
+      console.warn('卡片' + i + '渲染失败:', e);
+    }
+  }
+  showToast('✅ 3 张轮播卡片已下载');
+}
 
 async function copyArticleHTML() { var article = document.getElementById('articleContent'); try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([article.innerHTML], { type: 'text/html' }), 'text/plain': new Blob([article.innerText], { type: 'text/plain' }) })]); showToast('✅ 已复制富文本'); } catch (e) { try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); } catch (e2) { showToast('❌ 复制失败'); } } }
 
