@@ -395,12 +395,12 @@ async function downloadCoverXHS() { if (!coverXHSPng) await renderCoverXHS(); if
 async function copyArticleHTML() { var article = document.getElementById('articleContent'); try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([article.innerHTML], { type: 'text/html' }), 'text/plain': new Blob([article.innerText], { type: 'text/plain' }) })]); showToast('✅ 已复制富文本'); } catch (e) { try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); } catch (e2) { showToast('❌ 复制失败'); } } }
 
 async function copyForX() {
-  var tweet = 'Agent 怎么"碰"世界？\n\nLLM 从不调用工具，它只是写了一张纸条。\n\n提议的是模型，动手的永远是外面的代码。function calling 是翻译层，tool 是执行层，MCP 是标准化层。\n\n当接入变得太容易，守住风险门槛的该是谁？\n\n#AI #Agent #MCP #FunctionCalling #AIAgent\n\n《不可逆的Agent》系列第 4 篇 | 全文见公众号「我是Bob大叔」';
+  var tweet = '"LLM 调用了工具"——这句话有严重的误导性。\n\nLLM 从不调用任何东西。它只是写了一张纸条。真正动手的，永远是外面的代码。\n\n这个"提议与执行的分离"不是技术细节。当 MCP 让接入变得太容易，它是唯一能把关的地方。\n\n系列第 4 篇 → 公众号「我是Bob大叔」';
   try { await navigator.clipboard.writeText(tweet); showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000); } catch (e) { prompt('复制：', tweet); }
 }
 
 async function copyForXHS() {
-  var note = 'Agent 怎么"碰"世界？从 function calling 到 MCP｜AI Agent\n\n一个只会输出文字的 LLM，是怎么让一盏真实的灯熄灭的？\n\n答案：它不关灯，它只是写了一张纸条。\n\n📝 LLM 提议 → 生成结构化调用请求\n🔌 function calling → 翻译成机器能解析的格式\n🔧 tool → 外面的代码真正去执行\n🔗 MCP → 标准化的通用插头（AI 的 USB-C）\n\nMCP 解决了什么？\nN×M 地狱 → N+M：10 个应用 × 100 个工具，从 1000 个集成降到 110 个\n\n但问题来了：\n接入太容易了。关灯和转账在协议眼里都只是一次工具调用。\n能力的门槛降到地板上，风险的门槛没跟着降。\n\n所以：提议与执行的分离，不是技术细节，是安全的地基。\n\n这是《不可逆的 Agent》系列第 4 篇\n完整系列 → 公众号「我是Bob大叔」\n\n#AI #Agent #MCP #FunctionCalling #LLM #人工智能 #AI学习 #编程 #技术干货';
+  var note = '我一直说"模型调用了工具"，直到有一天我停下来想：一个只会输出文字的东西，是怎么让一盏真实的灯灭掉的？\n\n答案让我愣了一下——它不关灯。它只是写了一张纸条。真正去关灯的是外面一段代码，读到纸条才动手。\n\n这个分离看着像技术细节。但当 MCP 让任何能力都能一键插入 Agent——包括删库、转账、开门锁——它就成了唯一的安全闸门。\n\n关灯和转账，在协议眼里长得一模一样。\n\n完整版 → 公众号「我是Bob大叔」第 4 篇\n\n#AI #Agent #MCP #人工智能 #技术干货';
   try { await navigator.clipboard.writeText(note); showToast('✅ 小红书文案已复制（' + note.length + ' 字符）', 4000); } catch (e) { prompt('复制：', note); }
 }
 

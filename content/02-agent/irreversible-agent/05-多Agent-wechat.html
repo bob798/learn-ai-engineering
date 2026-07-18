@@ -302,12 +302,12 @@ async function downloadCoverXHS() { if (!coverXHSPng) await renderCoverXHS(); if
 async function copyArticleHTML() { var article = document.getElementById('articleContent'); try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([article.innerHTML], { type: 'text/html' }), 'text/plain': new Blob([article.innerText], { type: 'text/plain' }) })]); showToast('✅ 已复制富文本'); } catch (e) { try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); } catch (e2) { showToast('❌ 复制失败'); } } }
 
 async function copyForX() {
-  var tweet = '别急着上多 Agent——一个被高估的答案\n\n多 Agent 生产失败率 41%-87%，绝大多数失败不是模型不够聪明，是协作本身出了问题。\n\n这根本不是 AI 问题，是分布式系统问题。微服务架构的人十五年前就全趟过一遍了。\n\n我是真的需要一支军队，还是只是没把手里这一个人用好？\n\n#AI #Agent #MultiAgent #DistributedSystems #AIAgent\n\n《不可逆的Agent》系列第 5 篇 | 全文见公众号「我是Bob大叔」';
+  var tweet = '多 Agent 生产失败率 41%-87%。绝大多数不是模型不聪明，是协作本身出了问题。\n\n这根本不是 AI 问题。是分布式系统问题，微服务的人十五年前就全趟过一遍了。\n\n我是真的需要一支军队，还是没把手里这一个人用好？\n\n系列第 5 篇 → 公众号「我是Bob大叔」';
   try { await navigator.clipboard.writeText(tweet); showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000); } catch (e) { prompt('复制：', tweet); }
 }
 
 async function copyForXHS() {
-  var note = '别急着上多 Agent——一个被高估的答案｜AI Agent\n\n多 Agent 生产失败率 41%-87%，绝大多数失败不是模型不聪明，是协作本身出了问题。\n\n🔢 一组冷水数字\n• 7 个主流框架、1600+ 真实轨迹，失败率 41%-87%\n• 原因不是模型笨，是角色误解、重复劳动、错误传染\n• 单 Agent 常以更低成本追平甚至超过多 Agent\n\n💥 为什么拆开反而更糟？\n• 协调成本是平方级的：5 个 Agent = 25 倍复杂度\n• 这不是 AI 问题，是分布式系统问题\n• 微服务架构的人十五年前全趟过一遍了\n\n✂️ 真要拆，怎么拆？\n• 高内聚低耦合：沿天然裂缝拆\n• 按领域拆（灯光/暖通/安防），别横切（感知/决策/执行）\n\n🎯 要不要总指挥？\n• 编排（有指挥）vs 协同（无指挥）\n• 默认用编排。协同"在图上优雅，在故障中痛苦"\n\n⚠️ 三件必须提前想好的事\n• 冲突仲裁：确定性规则，别让 LLM 商量\n• 结果汇聚：显式设计，别随缘\n• 失败补偿：Saga 模式——逆序执行补偿动作\n\n🔒 物理世界的额外理由：故障隔离\n• 拆分是为了"关住爆炸"\n• 给每个 Agent 画一个物理的牢笼\n\n灵魂拷问：我是真的需要军队，还是没把手里这一个人用好？\n\n这是《不可逆的 Agent》系列第 5 篇\n完整系列 → 公众号「我是Bob大叔」\n\n#AI #Agent #MultiAgent #分布式系统 #LLM #人工智能 #AI学习 #编程 #技术干货';
+  var note = '多 Agent 协作，生产失败率最高 87%。\n\n不是模型不够聪明。是协作本身出了问题——角色误解、重复劳动、一个 Agent 的幻觉被下一个当真话接着用。\n\n更扎心的是：很多时候一个 Agent 就能干得更好，还更便宜。\n\n这根本不是 AI 问题。是分布式系统问题，微服务架构的人十五年前就全趟过一遍了。\n\n什么时候才真的需要拆？怎么拆才不爆炸？\n\n完整版 → 公众号「我是Bob大叔」第 5 篇\n\n#AI #Agent #多Agent #分布式系统 #技术干货';
   try { await navigator.clipboard.writeText(note); showToast('✅ 小红书文案已复制（' + note.length + ' 字符）', 4000); } catch (e) { prompt('复制：', note); }
 }
 
