@@ -337,7 +337,9 @@
     <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
     <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
     <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
-    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" onclick="copyXHSTitle()" style="background:#ff2442;">📕 标题</button>
+    <button class="btn-sync" onclick="copyXHSBody()" style="background:#ff2442;">📕 正文</button>
+    <button class="btn-sync" onclick="copyXHSTags()" style="background:#ff2442;">📕 话题</button>
     <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
     <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
   </div>
@@ -697,26 +699,19 @@ async function copyForX() {
 }
 
 // ========== 小红书 ==========
-async function copyForXHS() {
-  var note =
-    '我以为搭一个 Agent 得先学会一整面墙的概念——规划器、执行器、记忆模块、回调链。\n' +
-    '\n' +
-    '直到我把市面上的 Agent 框架挨个拆开，发现剥掉花哨的东西之后，核心只有四个零件，几十行代码，没有黑魔法。\n' +
-    '\n' +
-    '更意外的是：所有 Agent 剩下的都是同一个东西。\n' +
-    '\n' +
-    '但有个伏笔藏在里面——读错了大不了再读，写错了世界已经变了。这个"读写不对称"后面会变成整个系列的主角。\n' +
-    '\n' +
-    '完整版 → 公众号「我是Bob大叔」第 1 篇\n' +
-    '\n' +
-    '#AI #Agent #LLM #人工智能 #技术干货';
+async function copyXHSTitle() {
+  var title = 'Agent只需要四个零件，几十行代码';
+  try { await navigator.clipboard.writeText(title); showToast('✅ 标题已复制（' + title.length + '/20字）', 4000); } catch (e) { prompt('复制标题：', title); }
+}
 
-  try {
-    await navigator.clipboard.writeText(note);
-    showToast('✅ 小红书文案已复制（' + note.length + ' 字符），配合封面图发布', 4000);
-  } catch (e) {
-    prompt('复制以下小红书文案：', note);
-  }
+async function copyXHSBody() {
+  var body = '我以为搭一个Agent得先学会一整面墙的概念——规划器、执行器、记忆模块、回调链。\n\n直到我把市面上的Agent框架挨个拆开，发现剥掉花哨的东西之后，核心只有四个零件，几十行代码，没有黑魔法。\n\n更意外的是：所有Agent剩下的都是同一个东西。\n\n但有个伏笔藏在里面——读错了大不了再读，写错了世界已经变了。\n\n完整版 → 公众号「我是Bob大叔」第1篇';
+  try { await navigator.clipboard.writeText(body); showToast('✅ 正文已复制（' + body.length + '字）', 4000); } catch (e) { prompt('复制正文：', body); }
+}
+
+async function copyXHSTags() {
+  var tags = '#AI #AIAgent #人工智能 #LLM #技术干货';
+  try { await navigator.clipboard.writeText(tags); showToast('✅ 话题已复制，逐个添加到 # 话题', 4000); } catch (e) { prompt('复制话题：', tags); }
 }
 
 // ========== 公众号同步 ==========

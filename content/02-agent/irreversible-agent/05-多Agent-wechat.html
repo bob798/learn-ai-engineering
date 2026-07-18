@@ -202,7 +202,9 @@
     <button class="btn-sync" id="btnDownloadCarousel" onclick="downloadCarousel()" style="background:#ff2442;">📕 轮播卡片×3</button>
     <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
     <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
-    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" onclick="copyXHSTitle()" style="background:#ff2442;">📕 标题</button>
+    <button class="btn-sync" onclick="copyXHSBody()" style="background:#ff2442;">📕 正文</button>
+    <button class="btn-sync" onclick="copyXHSTags()" style="background:#ff2442;">📕 话题</button>
     <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
     <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
   </div>
@@ -424,9 +426,19 @@ async function copyForX() {
   try { await navigator.clipboard.writeText(tweet); showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000); } catch (e) { prompt('复制：', tweet); }
 }
 
-async function copyForXHS() {
-  var note = '多 Agent 协作，生产失败率最高 87%。\n\n不是模型不够聪明。是协作本身出了问题——角色误解、重复劳动、一个 Agent 的幻觉被下一个当真话接着用。\n\n更扎心的是：很多时候一个 Agent 就能干得更好，还更便宜。\n\n这根本不是 AI 问题。是分布式系统问题，微服务架构的人十五年前就全趟过一遍了。\n\n什么时候才真的需要拆？怎么拆才不爆炸？\n\n完整版 → 公众号「我是Bob大叔」第 5 篇\n\n#AI #Agent #多Agent #分布式系统 #技术干货';
-  try { await navigator.clipboard.writeText(note); showToast('✅ 小红书文案已复制（' + note.length + ' 字符）', 4000); } catch (e) { prompt('复制：', note); }
+async function copyXHSTitle() {
+  var title = '多Agent协作，生产失败率最高87%';
+  try { await navigator.clipboard.writeText(title); showToast('✅ 标题已复制（' + title.length + '/20字）', 4000); } catch (e) { prompt('复制标题：', title); }
+}
+
+async function copyXHSBody() {
+  var body = '不是模型不够聪明。是协作本身出了问题——角色误解、重复劳动、一个Agent的幻觉被下一个当真话接着用。\n\n更扎心的是：很多时候一个Agent就能干得更好，还更便宜。\n\n这根本不是AI问题。是分布式系统问题，微服务架构的人十五年前就全趟过一遍了。\n\n什么时候才真的需要拆？怎么拆才不爆炸？\n\n完整版 → 公众号「我是Bob大叔」第5篇';
+  try { await navigator.clipboard.writeText(body); showToast('✅ 正文已复制（' + body.length + '字）', 4000); } catch (e) { prompt('复制正文：', body); }
+}
+
+async function copyXHSTags() {
+  var tags = '#AI #AIAgent #人工智能 #多Agent #分布式系统';
+  try { await navigator.clipboard.writeText(tags); showToast('✅ 话题已复制，逐个添加到 # 话题', 4000); } catch (e) { prompt('复制话题：', tags); }
 }
 
 function doSyncWeChat() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: document.getElementById('articleContent').innerHTML, desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 公众号同步中...'); } else { alert('请点击 Chrome 工具栏的 WechatSync 图标。'); } }

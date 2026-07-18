@@ -330,7 +330,9 @@
     <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
     <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
     <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
-    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" onclick="copyXHSTitle()" style="background:#ff2442;">📕 标题</button>
+    <button class="btn-sync" onclick="copyXHSBody()" style="background:#ff2442;">📕 正文</button>
+    <button class="btn-sync" onclick="copyXHSTags()" style="background:#ff2442;">📕 话题</button>
     <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
     <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
   </div>
@@ -723,26 +725,19 @@ async function copyForX() {
 }
 
 // ========== 小红书 ==========
-async function copyForXHS() {
-  var note =
-    '我以为给 AI 做记忆就是存数据库。硬盘便宜，全存下来不就行了。\n' +
-    '\n' +
-    '直到它跑了二十几轮后开始忘事、重复提问、前言不搭后语。\n' +
-    '\n' +
-    '问题理解反了——难的不是"存"，是"取"。模型每次能看的窗口就那么大，你必须决定这一轮把什么摆到它面前。\n' +
-    '\n' +
-    '然后你会发现：短期记忆、长期记忆、情景记忆、语义记忆——这些术语不是谁发明的分类学，是被同一堵墙逼出来的。哪堵墙？\n' +
-    '\n' +
-    '完整版 → 公众号「我是Bob大叔」第 3 篇\n' +
-    '\n' +
-    '#AI #Agent #Memory #人工智能 #技术干货';
+async function copyXHSTitle() {
+  var title = '我以为给AI做记忆就是存数据库';
+  try { await navigator.clipboard.writeText(title); showToast('✅ 标题已复制（' + title.length + '/20字）', 4000); } catch (e) { prompt('复制标题：', title); }
+}
 
-  try {
-    await navigator.clipboard.writeText(note);
-    showToast('✅ 小红书文案已复制（' + note.length + ' 字符），配合封面图发布', 4000);
-  } catch (e) {
-    prompt('复制以下小红书文案：', note);
-  }
+async function copyXHSBody() {
+  var body = '硬盘便宜，全存下来不就行了。\n\n直到它跑了二十几轮后开始忘事、重复提问、前言不搭后语。\n\n问题理解反了——难的不是"存"，是"取"。模型每次能看的窗口就那么大，你必须决定这一轮把什么摆到它面前。\n\n然后你会发现：短期记忆、长期记忆、情景记忆、语义记忆——这些术语不是谁发明的分类学，是被同一堵墙逼出来的。哪堵墙？\n\n完整版 → 公众号「我是Bob大叔」第3篇';
+  try { await navigator.clipboard.writeText(body); showToast('✅ 正文已复制（' + body.length + '字）', 4000); } catch (e) { prompt('复制正文：', body); }
+}
+
+async function copyXHSTags() {
+  var tags = '#AI #AIAgent #人工智能 #记忆系统 #技术干货';
+  try { await navigator.clipboard.writeText(tags); showToast('✅ 话题已复制，逐个添加到 # 话题', 4000); } catch (e) { prompt('复制话题：', tags); }
 }
 
 // ========== 公众号同步 ==========

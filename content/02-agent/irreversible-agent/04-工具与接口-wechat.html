@@ -144,7 +144,9 @@
     <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
     <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
     <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
-    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" onclick="copyXHSTitle()" style="background:#ff2442;">📕 标题</button>
+    <button class="btn-sync" onclick="copyXHSBody()" style="background:#ff2442;">📕 正文</button>
+    <button class="btn-sync" onclick="copyXHSTags()" style="background:#ff2442;">📕 话题</button>
     <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
     <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
   </div>
@@ -399,9 +401,19 @@ async function copyForX() {
   try { await navigator.clipboard.writeText(tweet); showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000); } catch (e) { prompt('复制：', tweet); }
 }
 
-async function copyForXHS() {
-  var note = '我一直说"模型调用了工具"，直到有一天我停下来想：一个只会输出文字的东西，是怎么让一盏真实的灯灭掉的？\n\n答案让我愣了一下——它不关灯。它只是写了一张纸条。真正去关灯的是外面一段代码，读到纸条才动手。\n\n这个分离看着像技术细节。但当 MCP 让任何能力都能一键插入 Agent——包括删库、转账、开门锁——它就成了唯一的安全闸门。\n\n关灯和转账，在协议眼里长得一模一样。\n\n完整版 → 公众号「我是Bob大叔」第 4 篇\n\n#AI #Agent #MCP #人工智能 #技术干货';
-  try { await navigator.clipboard.writeText(note); showToast('✅ 小红书文案已复制（' + note.length + ' 字符）', 4000); } catch (e) { prompt('复制：', note); }
+async function copyXHSTitle() {
+  var title = 'LLM从不调用工具，它只是写了张纸条';
+  try { await navigator.clipboard.writeText(title); showToast('✅ 标题已复制（' + title.length + '/20字）', 4000); } catch (e) { prompt('复制标题：', title); }
+}
+
+async function copyXHSBody() {
+  var body = '我一直说"模型调用了工具"，直到有一天我停下来想：一个只会输出文字的东西，是怎么让一盏真实的灯灭掉的？\n\n答案让我愣了一下——它不关灯。它只是写了一张纸条。真正去关灯的是外面一段代码，读到纸条才动手。\n\n这个分离看着像技术细节。但当MCP让任何能力都能一键插入Agent——包括删库、转账、开门锁——它就成了唯一的安全闸门。\n\n关灯和转账，在协议眼里长得一模一样。\n\n完整版 → 公众号「我是Bob大叔」第4篇';
+  try { await navigator.clipboard.writeText(body); showToast('✅ 正文已复制（' + body.length + '字）', 4000); } catch (e) { prompt('复制正文：', body); }
+}
+
+async function copyXHSTags() {
+  var tags = '#AI #AIAgent #人工智能 #MCP #技术干货';
+  try { await navigator.clipboard.writeText(tags); showToast('✅ 话题已复制，逐个添加到 # 话题', 4000); } catch (e) { prompt('复制话题：', tags); }
 }
 
 function doSyncWeChat() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: document.getElementById('articleContent').innerHTML, desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 公众号同步中...'); } else { alert('请点击 Chrome 工具栏的 WechatSync 图标。'); } }

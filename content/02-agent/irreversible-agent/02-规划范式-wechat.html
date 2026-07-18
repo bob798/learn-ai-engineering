@@ -337,7 +337,9 @@
     <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
     <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
     <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
-    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" onclick="copyXHSTitle()" style="background:#ff2442;">📕 标题</button>
+    <button class="btn-sync" onclick="copyXHSBody()" style="background:#ff2442;">📕 正文</button>
+    <button class="btn-sync" onclick="copyXHSTags()" style="background:#ff2442;">📕 话题</button>
     <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
     <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
   </div>
@@ -675,26 +677,19 @@ async function copyForX() {
 }
 
 // ========== 小红书 ==========
-async function copyForXHS() {
-  var note =
-    '给 Agent 派了个"优化全屋照明"的任务，八个房间。跑到第 5 轮，它又去查了一遍客厅——它忘了自己刚查过。第 7 轮，没人的书房它没关灯，自作主张调到了 30%。\n' +
-    '\n' +
-    '这就是"走一步看一步"的代价：短视、兜圈子、目标漂移。\n' +
-    '\n' +
-    '但反过来"先做攻略"也有死穴——计划赶不上变化，有人走进书房，攻略瞬间作废。\n' +
-    '\n' +
-    '到底怎么选？有一个维度你可能没想到，而它在物理世界会压倒一切。\n' +
-    '\n' +
-    '完整版 → 公众号「我是Bob大叔」第 2 篇\n' +
-    '\n' +
-    '#AI #Agent #ReAct #人工智能 #技术干货';
+async function copyXHSTitle() {
+  var title = 'Agent跑了5轮，又查了一遍客厅';
+  try { await navigator.clipboard.writeText(title); showToast('✅ 标题已复制（' + title.length + '/20字）', 4000); } catch (e) { prompt('复制标题：', title); }
+}
 
-  try {
-    await navigator.clipboard.writeText(note);
-    showToast('✅ 小红书文案已复制（' + note.length + ' 字符），配合封面图发布', 4000);
-  } catch (e) {
-    prompt('复制以下小红书文案：', note);
-  }
+async function copyXHSBody() {
+  var body = '给Agent派了个"优化全屋照明"的任务，八个房间。跑到第5轮，它又去查了一遍客厅——它忘了自己刚查过。第7轮，没人的书房它没关灯，自作主张调到了30%。\n\n这就是"走一步看一步"的代价：短视、兜圈子、目标漂移。\n\n但反过来"先做攻略"也有死穴——计划赶不上变化，有人走进书房，攻略瞬间作废。\n\n到底怎么选？有一个维度你可能没想到，而它在物理世界会压倒一切。\n\n完整版 → 公众号「我是Bob大叔」第2篇';
+  try { await navigator.clipboard.writeText(body); showToast('✅ 正文已复制（' + body.length + '字）', 4000); } catch (e) { prompt('复制正文：', body); }
+}
+
+async function copyXHSTags() {
+  var tags = '#AI #AIAgent #人工智能 #ReAct #技术干货';
+  try { await navigator.clipboard.writeText(tags); showToast('✅ 话题已复制，逐个添加到 # 话题', 4000); } catch (e) { prompt('复制话题：', tags); }
 }
 
 // ========== 公众号同步 ==========
