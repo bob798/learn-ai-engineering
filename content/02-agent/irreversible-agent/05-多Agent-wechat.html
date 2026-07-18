@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>别急着上多Agent——一个被高估的答案</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  /* ========== 工具栏 ========== */
+  .toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #1a1a2e; color: #fff; padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .toolbar .left { display: flex; align-items: center; gap: 16px; }
+  .toolbar .status { font-size: 13px; padding: 4px 12px; border-radius: 12px; background: rgba(255,255,255,0.1); }
+  .toolbar .status.ready { background: rgba(46,125,50,0.3); color: #81c784; }
+  .toolbar button { border: none; border-radius: 6px; padding: 8px 20px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .toolbar .btn-sync { background: #4caf50; color: #fff; }
+  .toolbar .btn-sync:hover { background: #388e3c; }
+  .toolbar .btn-toggle { background: rgba(255,255,255,0.15); color: #fff; }
+  .toolbar .btn-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* ========== 素材区 ========== */
+  .assets-panel { margin-top: 60px; background: #fff; border-bottom: 3px solid #e0e0e0; overflow: hidden; transition: max-height 0.3s; }
+  .assets-panel.collapsed { max-height: 0; }
+  .assets-panel .inner { padding: 30px 20px 40px; }
+  .assets-panel h2 { text-align: center; font-size: 16px; color: #999; margin-bottom: 24px; font-weight: 400; }
+
+  /* 横版封面 */
+  .cover {
+    width: 900px; height: 500px; margin: 0 auto 40px; border-radius: 8px;
+    position: relative;
+    background: linear-gradient(135deg, #1a0a2e, #2d1b4e, #0f2027);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(120,80,200,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(0,180,220,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover .series-tag {
+    position: relative; display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.4); border-radius: 20px;
+    padding: 4px 18px; font-size: 13px; letter-spacing: 3px; margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+  }
+  .cover h1 { position: relative; font-size: 40px; font-weight: 700; line-height: 1.3; max-width: 760px; margin-bottom: 20px; text-align: center; }
+  .cover h1 em { font-style: normal; background: linear-gradient(90deg, #ff6b6b, #ffa36b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover .subtitle { position: relative; font-size: 17px; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.7; text-align: center; }
+  .cover .vs-layout {
+    position: relative; display: flex; align-items: center; gap: 20px; margin-top: 36px; font-size: 14px;
+  }
+  .cover .vs-layout .vs-node {
+    padding: 10px 20px; border-radius: 8px; font-weight: 600; text-align: center;
+  }
+  .cover .vs-layout .vs-node.default {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+  }
+  .cover .vs-layout .vs-node.expensive {
+    background: rgba(255,107,107,0.15); border: 1px solid rgba(255,107,107,0.5);
+    color: #ff6b6b;
+  }
+  .cover .vs-layout .vs-badge {
+    font-size: 18px; font-weight: 800; color: rgba(255,255,255,0.3);
+  }
+
+  /* 小红书封面 */
+  .cover-xhs {
+    width: 1080px; height: 1440px; margin: 0 auto 40px; border-radius: 12px;
+    position: relative;
+    background: linear-gradient(160deg, #0a0a1a 0%, #1a0a2e 30%, #2d1050 60%, #1a0a2e 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden;
+  }
+  .cover-xhs::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 25%, rgba(255,107,107,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,180,220,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(120,80,200,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .cover-xhs .top-tag {
+    position: relative; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 24px;
+    padding: 6px 24px; font-size: 16px; letter-spacing: 4px; color: rgba(255,255,255,0.6); margin-bottom: 48px;
+  }
+  .cover-xhs .main-title {
+    position: relative; font-size: 68px; font-weight: 800; line-height: 1.25;
+    max-width: 860px; text-align: center; margin-bottom: 40px;
+  }
+  .cover-xhs .main-title em { font-style: normal; background: linear-gradient(90deg, #ff6b6b, #ffa36b, #ffdb6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover-xhs .chain-v {
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: 16px; margin: 20px 0 48px;
+  }
+  .cover-xhs .chain-node {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 36px; border-radius: 12px; font-size: 26px; font-weight: 600; min-width: 620px; justify-content: center;
+    background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);
+  }
+  .cover-xhs .chain-node .icon { font-size: 36px; }
+  .cover-xhs .chain-node.highlight {
+    background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.4); color: #ff6b6b;
+  }
+  .cover-xhs .chain-arrow { color: rgba(255,255,255,0.2); font-size: 28px; }
+  .cover-xhs .punchline {
+    position: relative; max-width: 780px; text-align: center;
+    font-size: 28px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-top: 16px;
+  }
+  .cover-xhs .punchline strong { color: rgba(255,255,255,0.85); }
+  .cover-xhs .footer-bar {
+    position: absolute; bottom: 48px; left: 0; right: 0;
+    text-align: center; font-size: 18px; color: rgba(255,255,255,0.3); letter-spacing: 2px;
+  }
+
+  /* file:// 提示 */
+  .file-warning { display: none; margin-top: 60px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 20px 24px; max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.8; font-size: 15px; }
+  .file-warning.show { display: block; }
+  .file-warning h3 { color: #e65100; font-size: 16px; margin-bottom: 8px; }
+  .file-warning code { background: #fff; padding: 3px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #e0e0e0; user-select: all; }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  article { max-width: 680px; margin: 0 auto; background: #fff; padding: 40px 28px 60px; }
+</style>
+</head>
+<body>
+
+<nav class="toolbar" id="toolbar">
+  <div class="left">
+    <strong>发布工具</strong>
+    <span class="status ready" id="statusBadge">✅ 就绪（纯文本，无图表）</span>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
+    <button class="btn-sync" id="btnDownload" onclick="downloadCover()" style="background:#1976d2;">⬇️ 横版封面</button>
+    <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
+    <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
+    <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
+    <button class="btn-sync" id="btnCopyXHS" onclick="copyForXHS()" style="background:#ff2442;">📕 小红书</button>
+    <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
+    <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
+  </div>
+</nav>
+
+<div class="file-warning" id="fileWarning">
+  <h3>⚠️ 当前为本地文件模式（file://）</h3>
+  <p>在终端运行：<code>node scripts/publish-server.mjs content/02-agent/irreversible-agent</code></p>
+  <p>然后打开 <code>http://localhost:8787/05-多Agent-wechat.html</code></p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 素材区 ==================== -->
+<div class="assets-panel" id="assetsPanel">
+<div class="inner">
+  <h2>公众号 / 多平台封面（16:9 横版）</h2>
+  <div class="cover" id="coverEl">
+    <div class="series-tag">不可逆的 Agent · 第 5 篇</div>
+    <h1>别急着上<em>多 Agent</em></h1>
+    <div class="subtitle">失败率 41%-87%，协调成本平方级增长<br/>一个被高估的答案，一笔常常亏本的买卖</div>
+    <div class="vs-layout">
+      <div class="vs-node default">单 Agent 才是默认</div>
+      <div class="vs-badge">VS</div>
+      <div class="vs-node expensive">多 Agent 是昂贵选择</div>
+    </div>
+  </div>
+
+  <h2>小红书封面（3:4 竖版 · 1080×1440）</h2>
+  <div class="cover-xhs" id="coverXHS">
+    <div class="top-tag">不可逆的 Agent · 第 5 篇</div>
+    <div class="main-title">别急着上<em>多 Agent</em></div>
+    <div class="chain-v">
+      <div class="chain-node"><span class="icon">1️⃣</span>1 个 Agent = 功能</div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-node highlight"><span class="icon">5️⃣</span>5 个 Agent = 25 倍复杂度</div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-node highlight"><span class="icon">5️⃣0️⃣</span>50 个 Agent = 分布式系统问题</div>
+    </div>
+    <div class="punchline"><strong>我是真的需要军队，<br/>还是没把手里这一个人用好？</strong></div>
+    <div class="footer-bar">公众号「我是Bob大叔」</div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 正文 ==================== -->
+<article id="articleContent">
+
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:8px;line-height:1.5;">别急着上多 Agent——一个被高估的答案</h1>
+
+  <p style="text-align:center;color:#999;font-size:14px;margin-bottom:24px;">不可逆的 Agent · 第 5 篇</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:30px;line-height:1.8;">
+    本系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。
+  </section>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">前四篇，我们一直在做同一件事：让<strong style="color:#1a1a1a;">一个</strong> Agent 变强——会推理、有记忆、能规划、能碰世界。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">顺着这个势头，下一步好像理所当然：一个 Agent 这么能干，那多来几个，组一支队伍，不就更强了？让一个当规划师、一个当执行者、一个当质检员，分工协作，岂不美哉。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这一篇我想泼盆冷水。因为<strong style="color:#1a1a1a;">多 Agent 是整个 AI 工程里，最被高估、也最容易踩坑的一个答案</strong>。我不是要说它没用，而是想说清楚：它是一笔昂贵的、常常亏本的买卖，你得知道自己在为什么付钱，才值得付。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">先看一组让人清醒的数字</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">大家对多 Agent 的印象，多半来自那些惊艳的演示：几个 Agent 你一言我一语，配合着把一个复杂任务解决了。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但演示和生产是两回事。2025 年一项很严肃的研究（MAST，基于 7 个主流框架、1600 多条真实执行轨迹，发表于 NeurIPS 2025）给出的数字是：<strong style="color:#1a1a1a;">多 Agent 系统在生产环境中的失败率，在 41% 到 87% 之间。</strong> 更值得玩味的是失败的原因——研究明确指出，绝大多数失败不是因为模型不够聪明，而是因为<strong style="color:#1a1a1a;">协作本身出了问题</strong>：Agent 误解了自己的角色、重复劳动、把该做的验证跳过了、一个 Agent 的错误顺着交接链污染了全局。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">研究者甚至下了一个冷峻的判断：<strong style="color:#1a1a1a;">光靠基础模型能力的提升，不足以解决这一整类失败。</strong> 换句话说，这不是"等模型再强一点就好了"的问题，这是架构问题。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">还有一个更扎心的观察在多篇研究里反复出现：<strong style="color:#1a1a1a;">更简单的单 Agent 方案，常常以低得多的成本，追平甚至超过多 Agent 设计。</strong></p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">多 Agent 不是默认选项，单 Agent 才是。<br/>你需要有很强的理由，才配得上拆。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">为什么拆开反而更糟？</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">反直觉，但有其必然。问题的根子在于——<strong style="color:#1a1a1a;">协作是有成本的，而且这个成本长得很快。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">单个 Agent 内部，信息是流畅的：它看到的、想到的、做过的，都在同一个上下文里。可一旦拆成多个 Agent，它们之间就得<strong style="color:#1a1a1a;">通信</strong>，而每一次通信都是一次信息的转手。转手就会丢：这个 Agent 以为传清楚了，那个 Agent 理解偏了；一个 Agent 产生的幻觉，被下一个 Agent 当成事实接着用，错误不但没被纠正，反而被放大。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">更要命的是通信成本的增长方式。这里有个数字值得记住：<strong style="color:#1a1a1a;">协调成本不随 Agent 的数量增长，而随它们之间"交互"的数量增长。</strong> n 个对等的 Agent 自由通信，交互数是 n(n-1)/2——是<strong style="color:#1a1a1a;">平方级</strong>的。从 1 个 Agent 变成 5 个，你的问题空间不是变大 5 倍，是变大<strong style="color:#1a1a1a;"> 25 倍</strong>。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这句话我看到时会心一笑。因为——</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">说句大实话：这根本不是 AI 问题</h2>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">这是一个分布式系统问题。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我做了 8 年 B2B SaaS，拆过不少系统。上面讲的每一个坑——服务之间通信丢信息、一个节点故障拖垮全局、交互复杂度平方级爆炸、出了事没人知道是谁的锅——<strong style="color:#1a1a1a;">微服务架构的人，十五年前就全趟过一遍了。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">行业里现在有句话说得很到位：一个 AI Agent 是个"功能"，五十个 Agent 是"一个没人在认真讨论的分布式系统问题"。而大多数团队是怎么走到多 Agent 的？<strong style="color:#1a1a1a;">是"意外"走到的，不是"选择"走到的</strong>——先做了一个 Agent，跑通了，加到五个，加到十个，某天突然发现自己在维护一个失控的分布式系统，却从没用分布式系统的思维去设计它。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这就是为什么，讲多 Agent 如果只从"AI"的角度讲，是讲不透的。真正的方法论，藏在软件工程几十年攒下的分布式系统经验里。下面这几条，都是从那儿借来的。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">真要拆，第一问：按什么拆？</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">多 Agent 不是"拆成几个"的数量问题，是"沿哪条缝拆"的维度问题。拆错了维度，通信成本立刻爆炸。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">借软件工程一条最经典的原则：<strong style="color:#1a1a1a;">高内聚，低耦合。</strong> 拆出来的每个 Agent，内部应该是紧密相关的一件事（高内聚），Agent 之间应该尽量少打交道（低耦合）。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">放到物理场景就很直观：按<strong style="color:#1a1a1a;">领域</strong>拆——灯光归一个 Agent、暖通归一个 Agent、安防归一个 Agent。为什么这样拆好？因为这些领域内部的知识和动作是自成一体的（灯光 Agent 不需要懂暖通的任何东西），而领域之间的交互相对稀少、边界清晰。反过来，如果你按"感知 Agent、决策 Agent、执行 Agent"这样横切，那么处理任何一件小事都得三个 Agent 来回通信——耦合度爆表，这是典型的拆错缝。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;"><strong>沿着"内部抱团、彼此少来往"的天然裂缝去拆。</strong>拆分的质量，八成在这一步就决定了。</p>
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">拆完的根本抉择：要不要一个总指挥？</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">假设你拆好了。接下来是多 Agent 架构里最根本、最需要想清楚的一个选择——<strong style="color:#1a1a1a;">这群 Agent，是有一个中央大脑指挥，还是各自为政、自发协作？</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这两条路有正式的名字：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">编排（Orchestration）：有总指挥。</strong> 一个协调者掌控全局，它决定谁先干、谁后干，给每个 Agent 派活、收结果、统一处理错误。就像一个乐队指挥。supervisor（主管）、router（路由）这些模式都属于编排。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">协同（Choreography）：没总指挥。</strong> 没有中央控制，每个 Agent 监听环境里的事件，按自己的规则行动，直接把接力棒传给下一个。研究 Agent 发布一个"研究完成"事件，分析 Agent 听到了就自己接着干。就像一群舞者各自听音乐起舞，不需要有人喊拍子。</p>
+
+  <section style="background:#fff8e1;border-left:4px solid #ffb300;padding:16px 20px;margin:20px 0;line-height:1.8;">
+    <p style="font-size:15px;color:#5d4037;margin:0;"><strong>只有当这些 Agent 是真正对等的、任务是并行且只读的、且任何一个 Agent 的错误判断都不会污染到下游时，才用协同；除此之外的一切情况，用编排。</strong></p>
+  </section>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">为什么默认编排？因为协同虽然在架构图上很优雅（去中心化、易扩展），但<strong style="color:#1a1a1a;">在出事的时候很惨</strong>。当系统出了问题，你想知道"它现在到底在干什么"，编排系统有一个总指挥可以问，协同系统没有——行为分散在所有 Agent 的局部决策里，你得把每个 Agent 的日志拼起来才能还原发生了什么。协同"在图上优雅，在故障中痛苦"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">运行一个总指挥当然有成本——一个带主管和若干专员的多 Agent 系统，token 消耗往往是单 Agent 的约十倍：主管付规划的钱，每个专员付自己上下文和工具的钱，每个结果还要回到主管那里汇总。但这笔钱买到的是一样关键的东西：<strong style="color:#1a1a1a;">那个总指挥不做具体的认知工作，它的价值在于——它始终知道整个系统做过什么。</strong> 这个"知道全局"的能力，出事时就是命。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">冲突与失败：三件必须提前想好的事</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">Agent 们跑起来了，还有三件事必须设计，不能碰运气：</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">一、冲突了听谁的（仲裁）。</strong> 灯光 Agent 为省电想关灯，安防 Agent 为监控想留灯——它们要的是相反的东西。这不是"谁的方案更好"，是"谁的优先级更高"。<strong style="color:#1a1a1a;">关键原则：这个裁决必须是确定性的规则</strong>（比如"安全 > 舒适 > 节能"写死在系统里），不能临时让一个 LLM 去商量——否则你只是给系统又加了一层会幻觉的不确定性。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">二、多个答案怎么合成（汇聚）。</strong> 几个 Agent 各给一个结果，最终怎么定？投票、加权、还是一个主 Agent 拍板。方式不重要，重要的是<strong style="color:#1a1a1a;">这一步必须显式设计</strong>，而不是让它随缘发生。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">三、做错了怎么撤（补偿）。</strong> 这是最难、也最少被讨论的。软件工程里有个经典解法叫<strong style="color:#1a1a1a;"> Saga 补偿模式</strong>：一个多步骤流程，如果中间某步失败了，就按<strong style="color:#1a1a1a;">逆序</strong>执行一系列"补偿动作"，把之前做的撤销掉，让系统回到一致的状态。做支付系统的人对它不陌生——分布式事务不能简单回滚时，就用补偿来"抵消"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我在这里特意提它，是因为它藏着一个通向本系列核心的思想。请记住这个词——<strong style="color:#1a1a1a;">补偿</strong>。它不是"撤销"，不是让时间倒流回到过去；它是<strong style="color:#1a1a1a;">执行一个新的、方向相反的动作，去抵消已经造成的后果</strong>。这个区别在软件里无关紧要，但当我们走到物理世界，它会变成生与死的区别。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">伏笔：在物理世界，拆分是为了"关住爆炸"</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">到这里，多 Agent 的通用方法论就讲完了。但物理 Agent 有一个软件世界完全没有的、拆分的理由——它甚至比"聚焦"和"效率"都重要。</p>
+
+  <p style="font-size:18px;color:#1a1a1a;font-weight:700;margin:24px 0;line-height:1.8;text-align:center;padding:20px;background:linear-gradient(135deg,#f5f0ff,#f0f7ff);border-radius:8px;border:1px solid #e0d8f0;">故障隔离。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">在软件里，我们拆分是为了让每个 Agent 更专注、系统更好维护。但当 Agent 的手伸进真实设备，拆分多了一层救命的含义：<strong style="color:#1a1a1a;">如果灯光 Agent 疯了，你要确保它绝对、物理地碰不到暖通主机和门禁系统。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">分域不再只是"让灯光 Agent 更懂灯光"，而是<strong style="color:#1a1a1a;">给每个 Agent 画一个物理的牢笼</strong>——当某个 Agent 失控、或被"投毒"、或只是产生了一个灾难性的错误判断时，损害被死死关在它自己的域内，蔓延不出去。这就是"把爆炸半径关进笼子"。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">而这一点，和前面 MAST 研究里那个可怕的发现连在一起就更沉重了：多 Agent 的失败常常<strong style="color:#1a1a1a;">不留痕迹</strong>——它不是某次明确的崩溃，而是从"一连串微小失误和协作漂移"里慢慢累积出来的，没有清晰可查的源头。在软件里，这顶多是难以调试。在物理世界里，<strong style="color:#1a1a1a;">一个无法定位、无法追溯的错误，意味着你可能在它酿成不可逆的后果之前，根本没机会发现它。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以物理 Agent 的分域，是一种深刻的悲观主义设计：它不假设你能及时发现错误，它假设错误<strong style="color:#1a1a1a;">一定会</strong>发生、且<strong style="color:#1a1a1a;">可能发现不了</strong>，于是提前把每一个 Agent 能造成的最大伤害，用物理的边界锁死。</p>
+
+  <section style="background:#f7f7f7;border-left:4px solid #ddd;padding:12px 16px;font-size:14px;color:#888;margin-bottom:20px;line-height:1.8;">
+    这套分域 Agent 与冲突仲裁在真实楼宇里具体怎么落地——灯光、暖通、安防各自的边界怎么划、优先级怎么定、那个确定性的仲裁者怎么实现——是第 11 篇的全部内容。这一篇，先让你记住那个悲观的出发点。
+  </section>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">留一个问题</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">回到开头。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我们太容易被"一支 AI 军队协同作战"的画面打动，却忘了一件事：<strong style="color:#1a1a1a;">军队越大，指挥越难，哗变的代价也越大。</strong> 一个人能干好的事，拆给一支队伍，你换来的不一定是效率，可能只是一堆新的、你还没学会管理的混乱。</p>
+
+  <section style="background:#f9f9f9;border-radius:8px;padding:24px;margin-top:24px;">
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;margin:0 0 12px;">所以下次你想"多加几个 Agent"的时候，先问自己一个问题：<strong style="color:#1a1a1a;">我是真的需要一支军队，还是只是没把手里这一个人用好？</strong></p>
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;margin:0;">而如果你真的需要军队——你有没有想好，当其中一个士兵开了不该开的枪，谁来负责，以及，你能不能把他一个人的错误，关在他一个人的房间里？</p>
+  </section>
+
+  <!-- 参考文献 -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <h3 style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:12px;">参考与依据</h3>
+
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>多 Agent 失败率与失败根因（"泼冷水"部分的实证基础）：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Cemri et al. (2025), <em>Why Do Multi-Agent LLM Systems Fail?</em> —— 即 MAST（Multi-Agent System Failure Taxonomy）研究，基于 AutoGen、ChatDev、CrewAI 等 7 个框架的 1600+ 条执行轨迹，归纳出 14 种失败模式、三大类根因（系统设计问题、Agent 间错位、任务验证失败），并给出 41%–87% 的生产失败率区间。发表于 NeurIPS 2025。研究明确结论：基础模型能力提升不足以解决整个失败谱系。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">多项研究（如 Xu et al. 2026; Xia et al. 2024）观察到，单 Agent 基线常以更低成本追平或超过多 Agent 设计。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">失败"无可追溯源头"的特性，见 <em>Who Broke the System? Failure Localization in LLM-Based Multi-Agent Systems</em>（arXiv 2607.07989）。</li>
+    </ul>
+
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>编排 vs 协同、交互复杂度、协调成本：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">编排（supervisor/router）与协同（swarm/事件驱动）的定义与取舍，综合自多份 2026 年架构分析。"仅在 Agent 对等、任务并行只读、错误不污染下游时才用协同，否则用编排"这一判断规则，及"n 个对等 Agent 交互数为 n(n-1)/2、成本随交互而非数量增长"的论点，来自 Mavridis (2026) 的架构分析（avraam.dev）。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">"一个 Agent 是功能，五十个 Agent 是分布式系统问题""团队多是意外而非选择地走到多 Agent"等观点，来自 Bhaumik 的多 Agent 编排模式分享（2026）。</li>
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">带主管的多 Agent 系统 token 消耗约为单 Agent 一个数量级的观察，同见上述架构分析。</li>
+    </ul>
+
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>Saga 补偿模式：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Saga/补偿模式（失败时按逆序执行补偿动作以恢复一致状态）是分布式事务的成熟模式，此处借入多 Agent 失败恢复语境。</li>
+    </ul>
+
+    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>软件工程原则：</strong></p>
+    <ul style="padding-left:20px;margin-bottom:16px;">
+      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">高内聚低耦合、故障隔离、编排 vs 协同等，均为分布式系统/微服务架构的既有原则，本文将其迁移至多 Agent 设计。</li>
+    </ul>
+
+    <p style="font-size:13px;color:#999;line-height:1.8;margin:0;font-style:italic;">注：文中灯光/暖通/安防 Agent 的冲突场景为示意性构造，用于说明仲裁与故障隔离；具体失败率数字来自上述研究，不同框架与任务下差异较大。</p>
+  </section>
+
+  <!-- 系列导航 -->
+  <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
+    <p style="font-size:14px;color:#999;line-height:1.8;margin-bottom:4px;"><em>本文是《不可逆的 Agent》系列第 5 篇。系列回答一个问题：当 Agent 的动作有真实世界后果时，该怎么设计。上一篇：《Agent 怎么"碰"世界》。</em></p>
+    <p style="font-size:15px;color:#333;line-height:1.8;margin-bottom:0;font-weight:600;">下一篇《你怎么知道 Agent 做对了？——评估与可观测性》首发公众号「我是Bob大叔」，关注不错过。</p>
+  </section>
+
+  <!-- 引流尾部 -->
+  <section id="crossPlatformCTA" style="display:none;margin-top:32px;padding:24px;background:linear-gradient(135deg,#f8f9ff,#f0f7ff);border-radius:8px;border:1px solid #e0e8f0;">
+    <p style="font-size:17px;color:#1a1a1a;font-weight:700;margin:0 0 12px;line-height:1.6;">《不可逆的 Agent》系列连载中</p>
+    <p style="font-size:15px;color:#555;margin:0 0 8px;line-height:1.8;">当 Agent 的动作有真实世界后果时，该怎么设计？14 篇文章，从软件 Agent 六模块到物理世界约束，一篇一个问题。</p>
+    <p style="font-size:15px;color:#555;margin:0 0 12px;line-height:1.8;">下一篇：《你怎么知道 Agent 做对了？——评估与可观测性》</p>
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0;line-height:1.8;">系列首发 + 配套代码 → 公众号「我是Bob大叔」</p>
+  </section>
+
+</article>
+
+<script>
+var TITLE = '别急着上多Agent——一个被高估的答案';
+var DESC = '多Agent失败率41%-87%，协调成本平方级增长。这不是AI问题，是分布式系统问题。拆之前先问：我是真的需要军队，还是没把手里这一个人用好？';
+var coverPng = null, coverHttpUrl = null, coverXHSPng = null;
+
+function showToast(msg, ms) { var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, ms || 3000); }
+
+async function saveImageToServer(name, dataUrl) {
+  try { var r = await fetch('/save-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, data: dataUrl }) }); var j = await r.json(); if (j.ok) return j.url; } catch (e) {} return null;
+}
+
+async function renderCover() { var el = document.getElementById('coverEl'); if (!el || typeof html2canvas !== 'function') return; try { var c = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null }); coverPng = c.toDataURL('image/png'); coverHttpUrl = await saveImageToServer('cover.png', coverPng); } catch (e) {} }
+async function downloadCover() { if (!coverPng) await renderCover(); if (!coverPng) { showToast('封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverPng; a.download = '封面-别急着上多Agent-横版.png'; a.click(); showToast('⬇️ 横版封面已下载'); }
+async function renderCoverXHS() { var el = document.getElementById('coverXHS'); if (!el || typeof html2canvas !== 'function') return; try { var c = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null }); coverXHSPng = c.toDataURL('image/png'); await saveImageToServer('cover-xhs.png', coverXHSPng); } catch (e) {} }
+async function downloadCoverXHS() { if (!coverXHSPng) await renderCoverXHS(); if (!coverXHSPng) { showToast('小红书封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverXHSPng; a.download = '封面-别急着上多Agent-小红书.png'; a.click(); showToast('⬇️ 小红书竖版封面已下载'); }
+
+async function copyArticleHTML() { var article = document.getElementById('articleContent'); try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([article.innerHTML], { type: 'text/html' }), 'text/plain': new Blob([article.innerText], { type: 'text/plain' }) })]); showToast('✅ 已复制富文本'); } catch (e) { try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); } catch (e2) { showToast('❌ 复制失败'); } } }
+
+async function copyForX() {
+  var tweet = '别急着上多 Agent——一个被高估的答案\n\n多 Agent 生产失败率 41%-87%，绝大多数失败不是模型不够聪明，是协作本身出了问题。\n\n这根本不是 AI 问题，是分布式系统问题。微服务架构的人十五年前就全趟过一遍了。\n\n我是真的需要一支军队，还是只是没把手里这一个人用好？\n\n#AI #Agent #MultiAgent #DistributedSystems #AIAgent\n\n《不可逆的Agent》系列第 5 篇 | 全文见公众号「我是Bob大叔」';
+  try { await navigator.clipboard.writeText(tweet); showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000); } catch (e) { prompt('复制：', tweet); }
+}
+
+async function copyForXHS() {
+  var note = '别急着上多 Agent——一个被高估的答案｜AI Agent\n\n多 Agent 生产失败率 41%-87%，绝大多数失败不是模型不聪明，是协作本身出了问题。\n\n🔢 一组冷水数字\n• 7 个主流框架、1600+ 真实轨迹，失败率 41%-87%\n• 原因不是模型笨，是角色误解、重复劳动、错误传染\n• 单 Agent 常以更低成本追平甚至超过多 Agent\n\n💥 为什么拆开反而更糟？\n• 协调成本是平方级的：5 个 Agent = 25 倍复杂度\n• 这不是 AI 问题，是分布式系统问题\n• 微服务架构的人十五年前全趟过一遍了\n\n✂️ 真要拆，怎么拆？\n• 高内聚低耦合：沿天然裂缝拆\n• 按领域拆（灯光/暖通/安防），别横切（感知/决策/执行）\n\n🎯 要不要总指挥？\n• 编排（有指挥）vs 协同（无指挥）\n• 默认用编排。协同"在图上优雅，在故障中痛苦"\n\n⚠️ 三件必须提前想好的事\n• 冲突仲裁：确定性规则，别让 LLM 商量\n• 结果汇聚：显式设计，别随缘\n• 失败补偿：Saga 模式——逆序执行补偿动作\n\n🔒 物理世界的额外理由：故障隔离\n• 拆分是为了"关住爆炸"\n• 给每个 Agent 画一个物理的牢笼\n\n灵魂拷问：我是真的需要军队，还是没把手里这一个人用好？\n\n这是《不可逆的 Agent》系列第 5 篇\n完整系列 → 公众号「我是Bob大叔」\n\n#AI #Agent #MultiAgent #分布式系统 #LLM #人工智能 #AI学习 #编程 #技术干货';
+  try { await navigator.clipboard.writeText(note); showToast('✅ 小红书文案已复制（' + note.length + ' 字符）', 4000); } catch (e) { prompt('复制：', note); }
+}
+
+function doSyncWeChat() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: document.getElementById('articleContent').innerHTML, desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 公众号同步中...'); } else { alert('请点击 Chrome 工具栏的 WechatSync 图标。'); } }
+function getContentWithCTA() { var c = document.getElementById('articleContent').cloneNode(true); var cta = c.querySelector('#crossPlatformCTA'); if (cta) cta.style.display = 'block'; return c.innerHTML; }
+function doSyncOther() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: getContentWithCTA(), desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 多平台同步（含引流尾部）'); } else { alert('请点击 WechatSync 图标。\n适用于：知乎、掘金、CSDN 等。'); } }
+function alertFileProtocol() { alert('当前为 file:// 本地文件。\n\n请运行：\nnode scripts/publish-server.mjs content/02-agent/irreversible-agent\n\n然后打开 http://localhost:8787/05-多Agent-wechat.html'); }
+function toggleAssets() { document.getElementById('assetsPanel').classList.toggle('collapsed'); }
+
+window.addEventListener('DOMContentLoaded', function() {
+  if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');
+  renderCover(); renderCoverXHS();
+});
+</script>
+
+</body>
+</html>
