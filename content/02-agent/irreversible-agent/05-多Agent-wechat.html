@@ -264,33 +264,13 @@
 
   <!-- 参考文献 -->
   <section style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;">
-    <h3 style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:12px;">参考与依据</h3>
-
-    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>多 Agent 失败率与失败根因（"泼冷水"部分的实证基础）：</strong></p>
+    <h3 style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:12px;">参考</h3>
     <ul style="padding-left:20px;margin-bottom:16px;">
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Cemri et al. (2025), <em>Why Do Multi-Agent LLM Systems Fail?</em> —— 即 MAST（Multi-Agent System Failure Taxonomy）研究，基于 AutoGen、ChatDev、CrewAI 等 7 个框架的 1600+ 条执行轨迹，归纳出 14 种失败模式、三大类根因（系统设计问题、Agent 间错位、任务验证失败），并给出 41%–87% 的生产失败率区间。发表于 NeurIPS 2025。研究明确结论：基础模型能力提升不足以解决整个失败谱系。</li>
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">多项研究（如 Xu et al. 2026; Xia et al. 2024）观察到，单 Agent 基线常以更低成本追平或超过多 Agent 设计。</li>
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">失败"无可追溯源头"的特性，见 <em>Who Broke the System? Failure Localization in LLM-Based Multi-Agent Systems</em>（arXiv 2607.07989）。</li>
+      <li style="font-size:13px;color:#666;line-height:1.8;margin-bottom:4px;">Cemri et al. (2025), <em>Why Do Multi-Agent LLM Systems Fail?</em> (MAST). NeurIPS 2025. 7 个框架、1600+ 条轨迹，41%–87% 失败率，来源于此。</li>
+      <li style="font-size:13px;color:#666;line-height:1.8;margin-bottom:4px;"><em>Who Broke the System?</em> (arXiv 2607.07989) —— 多 Agent 失败无可追溯源头的特性。</li>
+      <li style="font-size:13px;color:#666;line-height:1.8;margin-bottom:4px;">编排 vs 协同判断规则、交互数 n(n-1)/2、token 消耗约 10 倍：Mavridis (2026)。"50 个 Agent 是分布式系统问题"：Bhaumik (2026)。</li>
+      <li style="font-size:13px;color:#666;line-height:1.8;margin-bottom:4px;">Saga 补偿模式、高内聚低耦合、故障隔离：分布式系统/微服务既有原则，迁移至多 Agent 设计。</li>
     </ul>
-
-    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>编排 vs 协同、交互复杂度、协调成本：</strong></p>
-    <ul style="padding-left:20px;margin-bottom:16px;">
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">编排（supervisor/router）与协同（swarm/事件驱动）的定义与取舍，综合自多份 2026 年架构分析。"仅在 Agent 对等、任务并行只读、错误不污染下游时才用协同，否则用编排"这一判断规则，及"n 个对等 Agent 交互数为 n(n-1)/2、成本随交互而非数量增长"的论点，来自 Mavridis (2026) 的架构分析（avraam.dev）。</li>
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">"一个 Agent 是功能，五十个 Agent 是分布式系统问题""团队多是意外而非选择地走到多 Agent"等观点，来自 Bhaumik 的多 Agent 编排模式分享（2026）。</li>
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">带主管的多 Agent 系统 token 消耗约为单 Agent 一个数量级的观察，同见上述架构分析。</li>
-    </ul>
-
-    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>Saga 补偿模式：</strong></p>
-    <ul style="padding-left:20px;margin-bottom:16px;">
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">Saga/补偿模式（失败时按逆序执行补偿动作以恢复一致状态）是分布式事务的成熟模式，此处借入多 Agent 失败恢复语境。</li>
-    </ul>
-
-    <p style="font-size:14px;color:#666;margin-bottom:8px;line-height:1.8;"><strong>软件工程原则：</strong></p>
-    <ul style="padding-left:20px;margin-bottom:16px;">
-      <li style="font-size:14px;color:#666;line-height:1.8;margin-bottom:4px;">高内聚低耦合、故障隔离、编排 vs 协同等，均为分布式系统/微服务架构的既有原则，本文将其迁移至多 Agent 设计。</li>
-    </ul>
-
-    <p style="font-size:13px;color:#999;line-height:1.8;margin:0;font-style:italic;">注：文中灯光/暖通/安防 Agent 的冲突场景为示意性构造，用于说明仲裁与故障隔离；具体失败率数字来自上述研究，不同框架与任务下差异较大。</p>
   </section>
 
   <!-- 引流尾部 -->
