@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技术转 FDE，最大的门槛不是技术</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  /* ========== 工具栏 ========== */
+  .toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #1a1a2e; color: #fff; padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .toolbar .left { display: flex; align-items: center; gap: 16px; }
+  .toolbar .status { font-size: 13px; padding: 4px 12px; border-radius: 12px; background: rgba(255,255,255,0.1); }
+  .toolbar .status.ready { background: rgba(46,125,50,0.3); color: #81c784; }
+  .toolbar button { border: none; border-radius: 6px; padding: 8px 20px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .toolbar .btn-sync { background: #4caf50; color: #fff; }
+  .toolbar .btn-sync:hover { background: #388e3c; }
+  .toolbar .btn-toggle { background: rgba(255,255,255,0.15); color: #fff; }
+  .toolbar .btn-toggle:hover { background: rgba(255,255,255,0.25); }
+
+  /* ========== 素材区 ========== */
+  .assets-panel { margin-top: 60px; background: #fff; border-bottom: 3px solid #e0e0e0; overflow: hidden; transition: max-height 0.3s; }
+  .assets-panel.collapsed { max-height: 0; }
+  .assets-panel .inner { padding: 30px 20px 40px; }
+  .assets-panel h2 { text-align: center; font-size: 16px; color: #999; margin-bottom: 24px; font-weight: 400; }
+
+  /* 横版封面 16:9 */
+  .cover {
+    width: 900px; height: 500px; margin: 0 auto 40px; border-radius: 8px;
+    position: relative;
+    background: linear-gradient(135deg, #0d1b2a, #1b2838, #0a1628);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(255,165,0,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(0,180,220,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .cover .series-tag {
+    position: relative; display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.4); border-radius: 20px;
+    padding: 4px 18px; font-size: 13px; letter-spacing: 3px; margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+  }
+  .cover h1 { position: relative; font-size: 40px; font-weight: 700; line-height: 1.3; max-width: 760px; margin-bottom: 20px; text-align: center; }
+  .cover h1 em { font-style: normal; background: linear-gradient(90deg, #ffa500, #ffcc44); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover .subtitle { position: relative; font-size: 17px; color: rgba(255,255,255,0.6); max-width: 600px; line-height: 1.7; text-align: center; }
+  .cover .vs-layout {
+    position: relative; display: flex; align-items: center; gap: 20px; margin-top: 36px; font-size: 14px;
+  }
+  .cover .vs-layout .vs-node {
+    padding: 10px 20px; border-radius: 8px; font-weight: 600; text-align: center;
+  }
+  .cover .vs-layout .vs-node.left-node {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8);
+  }
+  .cover .vs-layout .vs-node.right-node {
+    background: rgba(255,165,0,0.15); border: 1px solid rgba(255,165,0,0.5);
+    color: #ffa500;
+  }
+  .cover .vs-layout .vs-arrow {
+    font-size: 24px; color: rgba(255,255,255,0.3);
+  }
+
+  /* 小红书封面 3:4 竖版 */
+  .cover-xhs {
+    width: 1080px; height: 1440px; margin: 0 auto 40px; border-radius: 12px;
+    position: relative;
+    background: linear-gradient(160deg, #0a1220 0%, #0d1b2e 30%, #1a2840 60%, #0d1b2e 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden;
+  }
+  .cover-xhs::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 25%, rgba(255,165,0,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,180,220,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255,165,0,0.04) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .cover-xhs .top-tag {
+    position: relative; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 24px;
+    padding: 6px 24px; font-size: 16px; letter-spacing: 4px; color: rgba(255,255,255,0.6); margin-bottom: 48px;
+  }
+  .cover-xhs .main-title {
+    position: relative; font-size: 64px; font-weight: 800; line-height: 1.25;
+    max-width: 860px; text-align: center; margin-bottom: 40px;
+  }
+  .cover-xhs .main-title em { font-style: normal; background: linear-gradient(90deg, #ffa500, #ffcc44, #ffe066); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover-xhs .insight-block {
+    position: relative; display: flex; flex-direction: column; gap: 20px; margin: 20px 0 48px;
+  }
+  .cover-xhs .insight-row {
+    display: flex; align-items: center; gap: 20px;
+    padding: 20px 36px; border-radius: 12px; font-size: 28px; font-weight: 600;
+    min-width: 700px; justify-content: flex-start;
+  }
+  .cover-xhs .insight-row.dim-row {
+    background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);
+  }
+  .cover-xhs .insight-row.highlight-row {
+    background: rgba(255,165,0,0.1); border: 2px solid rgba(255,165,0,0.4); color: #ffa500;
+  }
+  .cover-xhs .insight-row .icon { font-size: 36px; }
+  .cover-xhs .punchline {
+    position: relative; max-width: 780px; text-align: center;
+    font-size: 28px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-top: 16px;
+  }
+  .cover-xhs .punchline strong { color: rgba(255,255,255,0.85); }
+  .cover-xhs .footer-bar {
+    position: absolute; bottom: 48px; left: 0; right: 0;
+    text-align: center; font-size: 18px; color: rgba(255,255,255,0.3); letter-spacing: 2px;
+  }
+
+  /* 小红书轮播卡片 3:4 */
+  .xhs-carousel { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 0 auto 40px; }
+  .xhs-card {
+    width: 1080px; height: 1440px; border-radius: 12px; position: relative;
+    background: linear-gradient(160deg, #0a1220 0%, #0d1b2e 30%, #1a2840 60%, #0d1b2e 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    color: #fff; overflow: hidden; flex-shrink: 0;
+  }
+  .xhs-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 25%, rgba(255,165,0,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,180,220,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255,165,0,0.04) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .xhs-card .card-num {
+    position: absolute; top: 48px; right: 60px;
+    font-size: 20px; color: rgba(255,255,255,0.25); letter-spacing: 2px;
+  }
+  .xhs-card .card-series {
+    position: relative; border: 1.5px solid rgba(255,255,255,0.25); border-radius: 24px;
+    padding: 6px 24px; font-size: 15px; letter-spacing: 4px; color: rgba(255,255,255,0.45); margin-bottom: 48px;
+  }
+  .xhs-card .card-title {
+    position: relative; font-size: 64px; font-weight: 800; line-height: 1.3;
+    max-width: 860px; text-align: center; margin-bottom: 48px;
+  }
+  .xhs-card .card-title em {
+    font-style: normal; background: linear-gradient(90deg, #ffa500, #ffcc44, #ffe066);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .xhs-card .card-body {
+    position: relative; max-width: 840px; text-align: center;
+    font-size: 32px; color: rgba(255,255,255,0.65); line-height: 1.8;
+  }
+  .xhs-card .card-body strong { color: rgba(255,255,255,0.95); font-weight: 700; }
+  .xhs-card .card-body .highlight-box {
+    display: inline-block; margin: 24px 0; padding: 20px 40px; border-radius: 12px;
+    background: rgba(255,165,0,0.12); border: 2px solid rgba(255,165,0,0.4);
+    color: #ffa500; font-size: 36px; font-weight: 800;
+  }
+  .xhs-card .card-body .dim { color: rgba(255,255,255,0.4); }
+  .xhs-card .card-body .question-list {
+    text-align: left; margin: 24px auto 0; max-width: 720px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .xhs-card .card-body .question-list .q {
+    padding: 16px 24px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.12);
+    font-size: 28px; color: rgba(255,255,255,0.75);
+  }
+  .xhs-card .card-cta {
+    position: relative; margin-top: 60px; padding: 20px 48px; border-radius: 12px;
+    background: rgba(255,165,0,0.15); border: 2px solid rgba(255,165,0,0.4);
+    color: #ffa500; font-size: 28px; font-weight: 700; letter-spacing: 2px;
+  }
+  .xhs-card .footer-bar {
+    position: absolute; bottom: 48px; left: 0; right: 0;
+    text-align: center; font-size: 18px; color: rgba(255,255,255,0.3); letter-spacing: 2px;
+  }
+
+  /* file:// 提示 */
+  .file-warning { display: none; margin-top: 60px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 20px 24px; max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.8; font-size: 15px; }
+  .file-warning.show { display: block; }
+  .file-warning h3 { color: #e65100; font-size: 16px; margin-bottom: 8px; }
+  .file-warning code { background: #fff; padding: 3px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #e0e0e0; user-select: all; }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  article { max-width: 680px; margin: 0 auto; background: #fff; padding: 40px 28px 60px; }
+</style>
+</head>
+<body>
+
+<nav class="toolbar" id="toolbar">
+  <div class="left">
+    <strong>发布工具</strong>
+    <span class="status ready" id="statusBadge">✅ 就绪（纯文本，无图表）</span>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn-toggle" onclick="toggleAssets()">素材区</button>
+    <button class="btn-sync" id="btnDownload" onclick="downloadCover()" style="background:#1976d2;">⬇️ 横版封面</button>
+    <button class="btn-sync" id="btnDownloadXHS" onclick="downloadCoverXHS()" style="background:#ff2442;">⬇️ 竖版封面</button>
+    <button class="btn-sync" id="btnDownloadCarousel" onclick="downloadCarousel()" style="background:#ff2442;">📕 轮播卡片×3</button>
+    <button class="btn-sync" id="btnCopy" onclick="copyArticleHTML()" style="background:#7b1fa2;">📋 复制正文</button>
+    <button class="btn-sync" id="btnCopyX" onclick="copyForX()" style="background:#000;">𝕏 复制推文</button>
+    <button class="btn-sync" onclick="copyXHSTitle()" style="background:#ff2442;">📕 标题</button>
+    <button class="btn-sync" onclick="copyXHSBody()" style="background:#ff2442;">📕 正文</button>
+    <button class="btn-sync" onclick="copyXHSTags()" style="background:#ff2442;">📕 话题</button>
+    <button class="btn-sync" id="btnSyncWx" onclick="doSyncWeChat()" style="background:#07c160;">📤 公众号同步</button>
+    <button class="btn-sync" id="btnSyncOther" onclick="doSyncOther()" style="background:#ff6d00;">📤 多平台同步</button>
+  </div>
+</nav>
+
+<div class="file-warning" id="fileWarning">
+  <h3>⚠️ 当前为本地文件模式（file://）</h3>
+  <p>在终端运行：<code>node scripts/publish-server.mjs content/fde</code></p>
+  <p>然后打开 <code>http://localhost:8787/01-技术转FDE最大门槛不是技术-wechat.html</code></p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 素材区 ==================== -->
+<div class="assets-panel" id="assetsPanel">
+<div class="inner">
+  <h2>公众号 / 多平台封面（16:9 横版）</h2>
+  <div class="cover" id="coverEl">
+    <h1>技术转 FDE<br/>最大的门槛<em>不是技术</em></h1>
+    <div class="subtitle">外贸客服 Agent：每个需求都做对了，项目却失败了</div>
+    <div class="vs-layout">
+      <div class="vs-node left-node">需求实现 ✓</div>
+      <div class="vs-arrow">→</div>
+      <div class="vs-node right-node">业务价值 ✗</div>
+    </div>
+  </div>
+
+  <h2>小红书封面（3:4 竖版 · 1080×1440）</h2>
+  <div class="cover-xhs" id="coverXHS">
+    <div class="main-title">技术转 FDE<br/>门槛是<em>经营意识</em></div>
+    <div class="insight-block">
+      <div class="insight-row dim-row"><span class="icon">❌</span>只问"这个需求怎么实现"</div>
+      <div class="insight-row highlight-row"><span class="icon">✅</span>先问"这件事值不值得做"</div>
+    </div>
+    <div class="punchline"><strong>每个功能都做对了<br/>系统上线三个月就下线了</strong></div>
+    <div class="footer-bar">公众号「我是Bob大叔」</div>
+  </div>
+
+  <h2>小红书轮播卡片（3:4 × 3 张）</h2>
+  <div class="xhs-carousel">
+    <!-- 第1张：钩子 -->
+    <div class="xhs-card" id="card1">
+      <div class="card-num">1 / 3</div>
+      <div class="card-title">AI 客服上线了<br/>老板却说<em>不如人工</em></div>
+      <div class="card-body">
+        <p>维护费 + token = <strong>3个人的工资</strong></p>
+        <p style="margin-top:24px;">原来只用不到3个客服</p>
+        <p style="margin-top:24px;" class="dim">每个需求我都做对了<br/>做的却是无用功</p>
+      </div>
+      <div class="footer-bar">→ 滑动看问题出在哪里</div>
+    </div>
+
+    <!-- 第2张：核心论点 -->
+    <div class="xhs-card" id="card2">
+      <div class="card-num">2 / 3</div>
+      <div class="card-title" style="font-size:52px;">老板盯的<br/>是这<em>三个数</em></div>
+      <div class="card-body">
+        <div class="highlight-box">收入 · 成本 · 人均产值</div>
+        <p style="margin-top:32px;">一件事值不值得做<br/>最终都要落到这三个数上</p>
+        <p style="margin-top:24px;" class="dim">他不需要懂技术<br/>也能判断这套 AI 不该继续</p>
+        <p style="margin-top:32px;"><strong>技术是入行门槛<br/>经营意识是另一半</strong></p>
+      </div>
+      <div class="footer-bar">→ 滑动看动手前问自己的3个问题</div>
+    </div>
+
+    <!-- 第3张：引流 -->
+    <div class="xhs-card" id="card3">
+      <div class="card-num">3 / 3</div>
+      <div class="card-title" style="font-size:52px;">动手之前<br/>先问<em>三个问题</em></div>
+      <div class="card-body">
+        <div class="question-list">
+          <div class="q">① 这件事的目标是什么？</div>
+          <div class="q">② 它对业务的价值是什么？</div>
+          <div class="q">③ 如果我是老板，我会做吗？</div>
+        </div>
+      </div>
+      <div class="card-cta">完整版 → 公众号「我是Bob大叔」</div>
+      <div class="footer-bar">公众号「我是Bob大叔」</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== 正文 ==================== -->
+<article id="articleContent">
+
+  <h1 style="font-size:24px;font-weight:700;color:#1a1a1a;text-align:center;margin-bottom:8px;line-height:1.5;">技术转 FDE，最大的门槛不是技术</h1>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">每个需求都做对了，项目却失败了</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我给一家外贸公司落地过一个 AI 客服 Agent，用来回复他们客户的咨询。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">整个过程很顺利。客户提什么需求，我就实现什么需求。功能一个个上线，没有哪个做不出来。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">问题出在上线之后。客户算了一笔账：系统的维护成本加上 token 消耗，相当于三个人的人力成本。而原来负责这项工作的客服不到三个人。结论是，这套 AI 还不如继续用人工划算。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">每一个需求我都做对了，做出来的东西却没有人愿意用。</strong></p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">我只做到了上线</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">FDE 是驻扎在客户业务现场的工程师，既要能写出生产级的代码，也要能把客户的业务痛点转化成可执行的技术需求。<strong style="color:#1a1a1a;">衡量这个角色的标准不是 AI 上线了，而是客户用起来了，并且拿到了业务结果。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">那个项目里，我只做到了上线。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">回头看，我的技术没有问题。我问的一直是「这个需求怎么实现」「能不能实现」，这是多年研发工作养成的习惯。我没有问过的是：<strong style="color:#1a1a1a;">这件事值不值得做，客户的老板会怎么算这笔账。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">所以我的看法是：技术转做 FDE，最大的门槛不是技术，是经营意识。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">什么是经营意识</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">我的理解很简单：<strong style="color:#1a1a1a;">把自己放在客户老板的位置上，考虑他的公司怎么活下去，怎么持续发展。</strong></p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">老板每天盯着的是几个数：收入、成本、人均产值。一件事值不值得做，最后都要落到这几个数上。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">用这几个数回头看那个项目，结论一目了然。老板引入 AI 客服，图的是用更低的成本回复同样多的咨询，让同样的人创造更多的产值。结果这套系统自己就要花掉三个人的成本。<strong style="color:#1a1a1a;">他不需要懂技术，也能判断它不该继续。</strong></p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">技术人为什么偏偏缺这个</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">因为日常工作接触不到经营。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">技术的日常是分析需求、设计技术方案、解决 bug。需求到我们手里的时候，值不值得做，已经有人判断过了。日复一日，养成的惯性是只问一个问题：这个需求怎么实现。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">在研发岗位上，这个惯性没有问题。<strong style="color:#1a1a1a;">但 FDE 身在客户现场，没有人替你做前面那道判断。</strong></p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">技术是入行门槛，但只是一半</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">有人会说：技术不过关，一切免谈。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">这话没错。技术是入行的门槛，没有技术，AI 根本落不了地。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">但只有技术、没有经营意识，做出来的就是那个外贸客服项目：功能都对，做的却是无用功。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">两者都必须具备。</strong>只是对从技术转过来的人来说，技术已经在手里了，缺的是另一半。</p>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">动手之前，先问三个问题</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">怎么补？我现在的做法是，先站到客户老板的视角问自己：</p>
+
+  <ul style="padding-left:24px;margin-bottom:16px;">
+    <li style="font-size:16px;color:#333;line-height:2;margin-bottom:8px;">这件事的目标是什么？</li>
+    <li style="font-size:16px;color:#333;line-height:2;margin-bottom:8px;">它对业务的价值是什么？</li>
+    <li style="font-size:16px;color:#333;line-height:2;margin-bottom:8px;">如果我是老板，我会做这个吗？</li>
+  </ul>
+
+  <p style="text-align:center;color:#ccc;margin:28px 0;font-size:20px;letter-spacing:12px;">· · ·</p>
+
+  <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #333;">如果重做一次</h2>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">如果重做那个项目，我不会从客户提的需求清单开始，而是<strong style="color:#1a1a1a;">从老板要的结果开始</strong>：是降低成本，是提高销量，还是开拓新产品。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;">目标定了，再倒推方案。对目标贡献小的功能砍掉，贡献大的保留。最后的系统会比原来简单得多，成本也低得多。</p>
+
+  <p style="font-size:16px;color:#333;margin-bottom:16px;line-height:2;text-align:justify;"><strong style="color:#1a1a1a;">只有业务结果体现出价值，企业才会持续投入 AI 建设。</strong></p>
+
+  <!-- 互动问题 -->
+  <section style="background:#f9f9f9;border-radius:8px;padding:24px;margin-top:32px;">
+    <p style="font-size:16px;color:#333;font-weight:600;line-height:2;margin:0;"><strong style="color:#1a1a1a;">你在 AI 项目落地中遇到过类似的困境吗？</strong>是技术本身卡住了你，还是需求判断出了问题？欢迎留言聊聊。</p>
+  </section>
+
+
+  <!-- 引流尾部（多平台同步时显示） -->
+  <section id="crossPlatformCTA" style="display:none;margin-top:32px;padding:24px;background:linear-gradient(135deg,#f8f9ff,#f0f7ff);border-radius:8px;border:1px solid #e0e8f0;">
+    <p style="font-size:17px;color:#1a1a1a;font-weight:700;margin:0 0 12px;line-height:1.6;">《AI 落地实战》系列连载中</p>
+    <p style="font-size:15px;color:#555;margin:0 0 8px;line-height:1.8;">记录 AI 在真实业务中的落地经验——需求判断、成本核算、拆解方案，做出真正有价值的 AI 系统。</p>
+    <p style="font-size:15px;color:#555;margin:0 0 12px;line-height:1.8;">下一篇：《如何把老板的"降成本"翻译成 Agent 能执行的需求》</p>
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0;line-height:1.8;">系列首发 → 公众号「我是Bob大叔」</p>
+  </section>
+
+</article>
+
+<script>
+var TITLE = '技术转 FDE，最大的门槛不是技术';
+var DESC = '给外贸公司落地 AI 客服 Agent，每个需求都做对了，项目却以失败告终。从技术转 FDE，缺的不是技术，是经营意识——站在老板视角，用收入、成本、人均产值衡量每个决策。';
+var coverPng = null, coverHttpUrl = null, coverXHSPng = null;
+
+function showToast(msg, ms) { var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(function() { t.classList.remove('show'); }, ms || 3000); }
+
+async function saveImageToServer(name, dataUrl) {
+  try { var r = await fetch('/save-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, data: dataUrl }) }); var j = await r.json(); if (j.ok) return j.url; } catch (e) {} return null;
+}
+
+async function renderCover() { var el = document.getElementById('coverEl'); if (!el || typeof html2canvas !== 'function') return; try { var c = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: null }); coverPng = c.toDataURL('image/png'); coverHttpUrl = await saveImageToServer('cover.png', coverPng); } catch (e) {} }
+async function downloadCover() { if (!coverPng) await renderCover(); if (!coverPng) { showToast('封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverPng; a.download = '封面-技术转FDE-横版.png'; a.click(); showToast('⬇️ 横版封面已下载'); }
+async function renderCoverXHS() { var el = document.getElementById('coverXHS'); if (!el || typeof html2canvas !== 'function') return; try { var c = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null }); coverXHSPng = c.toDataURL('image/png'); await saveImageToServer('cover-xhs.png', coverXHSPng); } catch (e) {} }
+async function downloadCoverXHS() { if (!coverXHSPng) await renderCoverXHS(); if (!coverXHSPng) { showToast('小红书封面渲染失败'); return; } var a = document.createElement('a'); a.href = coverXHSPng; a.download = '封面-技术转FDE-小红书.png'; a.click(); showToast('⬇️ 小红书竖版封面已下载'); }
+
+async function downloadCarousel() {
+  if (typeof html2canvas !== 'function') { showToast('html2canvas 未加载'); return; }
+  showToast('🔄 正在渲染 3 张卡片…');
+  for (var i = 1; i <= 3; i++) {
+    var el = document.getElementById('card' + i);
+    if (!el) continue;
+    try {
+      var canvas = await html2canvas(el, { scale: 1, useCORS: true, backgroundColor: null });
+      var dataUrl = canvas.toDataURL('image/png');
+      var a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = '小红书-技术转FDE-' + i + '.png';
+      a.click();
+      await saveImageToServer('xhs-card-' + i + '.png', dataUrl);
+      await new Promise(function(r) { setTimeout(r, 500); });
+    } catch (e) {
+      console.warn('卡片' + i + '渲染失败:', e);
+    }
+  }
+  showToast('✅ 3 张轮播卡片已下载');
+}
+
+async function copyArticleHTML() { var article = document.getElementById('articleContent'); try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([article.innerHTML], { type: 'text/html' }), 'text/plain': new Blob([article.innerText], { type: 'text/plain' }) })]); showToast('✅ 已复制富文本'); } catch (e) { try { await navigator.clipboard.writeText(article.innerHTML); showToast('✅ 已复制 HTML 源码'); } catch (e2) { showToast('❌ 复制失败'); } } }
+
+async function copyForX() {
+  var tweet = '给外贸公司落地 AI 客服 Agent，每个需求都做对了。\n\n上线三个月后，客户把它关了。\n\n原因：系统维护费 + token = 3 个人的工资。原来只需要不到 3 个客服。\n\n技术没问题。我从没问过：这件事值不值得做？\n\n技术转 FDE，缺的不是技术，是经营意识。\n\n公众号「我是Bob大叔」';
+  try { await navigator.clipboard.writeText(tweet); showToast('✅ 推文已复制（' + tweet.length + ' 字符）', 4000); } catch (e) { prompt('复制：', tweet); }
+}
+
+async function copyXHSTitle() {
+  var title = 'AI客服上线三个月就关了，问题出在这里';
+  try { await navigator.clipboard.writeText(title); showToast('✅ 标题已复制（' + title.length + '/20字）', 4000); } catch (e) { prompt('复制标题：', title); }
+}
+
+async function copyXHSBody() {
+  var body = '给外贸公司做了个 AI 客服 Agent，每个需求都实现了。\n\n上线三个月后，客户把它关了。\n\n原因：维护成本 + token = 3个人工资。原来只需要不到3个客服。\n\n我的技术没问题。但我从没问过：这件事值不值得做？\n\n老板盯的是三个数：收入、成本、人均产值。\n他不需要懂技术，也能算出这套 AI 不划算。\n\n从技术转 FDE，缺的不是技术，是经营意识。\n动手之前先问自己：\n① 目标是什么？\n② 业务价值是什么？\n③ 如果我是老板，会做吗？\n\n完整故事 → 公众号「我是Bob大叔」';
+  try { await navigator.clipboard.writeText(body); showToast('✅ 正文已复制（' + body.length + '字）', 4000); } catch (e) { prompt('复制正文：', body); }
+}
+
+async function copyXHSTags() {
+  var tags = '#AI落地 #FDE #经营意识 #技术转型 #AIAgent';
+  try { await navigator.clipboard.writeText(tags); showToast('✅ 话题已复制，逐个添加到 # 话题', 4000); } catch (e) { prompt('复制话题：', tags); }
+}
+
+function doSyncWeChat() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: document.getElementById('articleContent').innerHTML, desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 公众号同步中...'); } else { alert('请点击 Chrome 工具栏的 WechatSync 图标。'); } }
+function getContentWithCTA() { var c = document.getElementById('articleContent').cloneNode(true); var cta = c.querySelector('#crossPlatformCTA'); if (cta) cta.style.display = 'block'; return c.innerHTML; }
+function doSyncOther() { if (location.protocol === 'file:') { alertFileProtocol(); return; } var p = { title: TITLE, content: getContentWithCTA(), desc: DESC }; if (coverHttpUrl) p.thumb = coverHttpUrl; else if (coverPng) p.thumb = coverPng; if (typeof window.syncPost === 'function') { window.syncPost(p); showToast('📤 多平台同步（含引流尾部）'); } else { alert('请点击 WechatSync 图标。\n适用于：知乎、掘金、CSDN 等。'); } }
+function alertFileProtocol() { alert('当前为 file:// 本地文件。\n\n请运行：\nnode scripts/publish-server.mjs content/fde\n\n然后打开 http://localhost:8787/01-技术转FDE最大门槛不是技术-wechat.html'); }
+function toggleAssets() { document.getElementById('assetsPanel').classList.toggle('collapsed'); }
+
+window.addEventListener('DOMContentLoaded', function() {
+  if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');
+  renderCover(); renderCoverXHS();
+});
+</script>
+
+</body>
+</html>
